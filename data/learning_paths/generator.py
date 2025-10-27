@@ -1,4 +1,22 @@
+# =================== ابدأ النسخ من هنا ===================
+
 import json
+import os # <-- التغيير الأول: لقد استوردنا مكتبة جديدة اسمها "os"
+
+# --- هذا هو الجزء الجديد والمهم جدًا ---
+# لقد أضفنا هذا الجزء لنجعل الكود يعرف مكانه على الكمبيوتر
+# __file__ هو متغير خاص في بايثون يعني "هذا الملف الذي أعمل فيه الآن"
+# os.path.abspath(__file__) يحول اسم الملف إلى مسار كامل (مثال: C:\Users\YourName\SKILLS\data\learning_paths\generator.py)
+# os.path.dirname(...) يأخذ المسار الكامل ويعطينا فقط اسم المجلد الذي يحتوي على الملف
+# النتيجة: BASE_DIR سيحتوي دائمًا على مسار المجلد "learning_paths"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# الآن، سنقوم بإنشاء مسارات كاملة لملفاتنا باستخدام المسار الأساسي الذي حددناه
+# os.path.join هو الطريقة الصحيحة لدمج المسارات مع أسماء الملفات
+RULES_PATH = os.path.join(BASE_DIR, 'rules.json')
+RESOURCES_PATH = os.path.join(BASE_DIR, 'resources.json')
+# ----------------------------------------------------
+
 
 def generate_path(profile, goal, weekly_hours, preferences):
     """
@@ -13,12 +31,14 @@ def generate_path(profile, goal, weekly_hours, preferences):
     Returns:
         dict: قاموس بصيغة JSON يحتوي على المسار التعليمي المقترح.
     """
+    # التغيير الثاني: سنستخدم الآن المسارات الكاملة التي أنشأناها في الأعلى
     # 1. قراءة قواعد المسارات من ملف JSON
-    with open('rules.json', 'r', encoding='utf-8') as f:
+    with open(RULES_PATH, 'r', encoding='utf-8') as f:
         rules = json.load(f)
 
+    # التغيير الثالث: نفس الشيء هنا لملف الموارد
     # 2. قراءة الموارد المتاحة من ملف JSON
-    with open('resources.json', 'r', encoding='utf-8') as f:
+    with open(RESOURCES_PATH, 'r', encoding='utf-8') as f:
         all_resources = json.load(f)
 
     # التحقق من وجود الهدف في القواعد
@@ -77,3 +97,5 @@ def generate_path(profile, goal, weekly_hours, preferences):
     }
 
     return result
+
+# =================== انتهى النسخ هنا ===================
