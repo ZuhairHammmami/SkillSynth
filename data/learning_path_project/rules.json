@@ -1,0 +1,58 @@
+{
+  "frontend_developer": [
+    {
+      "skill": "HTML",
+      "hours": 6,
+      "tag": "html"
+    },
+    {
+      "skill": "CSS",
+      "hours": 8,
+      "tag": "css"
+    },
+    {
+      "skill": "JavaScript",
+      "hours": 20,
+      "tag": "javascript"
+    },
+    {
+        "skill": "React",
+        "hours": 25,
+        "tag": "react"
+    }
+  ],
+  "data_scientist": [
+    {
+      "skill": "Python",
+      "hours": 20,
+      "tag": "python"
+    },
+    {
+      "skill": "Pandas",
+      "hours": 15,
+      "tag": "pandas"
+    },
+    {
+        "skill": "NumPy",
+        "hours": 12,
+        "tag": "numpy"
+    }
+  ],
+"backend_developer": [
+  {
+    "skill": "Python",
+    "hours": 20,
+    "tag": "python"
+  },
+  {
+    "skill": "Django",
+    "hours": 30,
+    "tag": "django"
+  },
+  {
+    "skill": "Databases",
+    "hours": 15,
+    "tag": "databases"
+  }
+]
+}

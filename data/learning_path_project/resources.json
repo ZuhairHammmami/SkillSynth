@@ -1,0 +1,66 @@
+{
+  "html": [
+    {
+      "title": "Intro to HTML",
+      "url": "https://www.w3schools.com/html/",
+      "format": "article"
+    },
+    {
+        "title": "HTML Full Course for Beginners",
+        "url": "https://www.youtube.com/watch?v=kUMe1FH4CHE",
+        "format": "video"
+    }
+  ],
+  "css": [
+    {
+        "title": "Learn CSS",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/CSS",
+        "format": "article"
+    },
+    {
+        "title": "CSS Crash Course For Absolute Beginners",
+        "url": "https://www.youtube.com/watch?v=yfoY53QXEnI",
+        "format": "video"
+    }
+  ],
+  "javascript": [
+    {
+        "title": "JavaScript Tutorial",
+        "url": "https://www.javascript.info",
+        "format": "article"
+    },
+    {
+        "title": "Learn JavaScript - Full Course for Beginners",
+        "url": "https://www.youtube.com/watch?v=PkZNo7MFNFg",
+        "format": "video"
+    }
+  ],
+  "react": [
+      {
+          "title": "React Official Docs",
+          "url": "https://reactjs.org/docs/getting-started.html",
+          "format": "article"
+      }
+  ],
+"python": [
+    {
+        "title": "Python for Everybody",
+        "url": "https://www.py4e.com/",
+        "format": "article"
+    }
+],
+"django": [
+    {
+        "title": "Django Girls Tutorial",
+        "url": "https://tutorial.djangogirls.org/en/",
+        "format": "article"
+    }
+],
+"databases": [
+    {
+        "title": "SQL Basics on Khan Academy",
+        "url": "https://www.khanacademy.org/computing/computer-programming/sql",
+        "format": "video"
+    }
+]
+}
