@@ -1,0 +1,58 @@
+# اسم سير العمل (سيظهر في قسم Actions في GitHub)
+name: Continuous Integration
+
+# متى يتم تشغيل هذا السير؟
+# هنا، سيتم تشغيله مع كل طلب دمج (Pull Request) يتم فتحه أو تحديثه
+on:
+  pull_request:
+    branches: [ main ]
+
+# المهام التي سيتم تنفيذها
+jobs:
+  build-and-test:
+    # نوع الجهاز الذي ستعمل عليه المهام (خادم لينكس مجاني من GitHub)
+    runs-on: ubuntu-latest
+
+    # الخطوات التي سيتم تنفيذها بالترتيب
+    steps:
+      # الخطوة 1: تحميل نسخة من الكود الخاص بك إلى الخادم
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # --- قسم الواجهة الأمامية (Frontend) ---
+
+      # الخطوة 2: إعداد بيئة Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18' # يمكنك تغيير الإصدار حسب مشروعك
+
+      # الخطوة 3: تثبيت مكتبات الواجهة
+      - name: Install Frontend Dependencies
+        run: npm install --prefix ./frontend # الأمر --prefix يحدد المجلد
+
+      # الخطوة 4: تشغيل فحص الكود (Lint) للواجهة
+      - name: Lint Frontend
+        run: npm run lint --prefix ./frontend # يفترض وجود أمر "lint" في مشروعك
+
+      # الخطوة 5: بناء الواجهة للتأكد من عدم وجود أخطاء
+      - name: Build Frontend
+        run: npm run build --prefix ./frontend # يفترض وجود أمر "build"
+
+      # --- قسم الواجهة الخلفية (Backend) ---
+
+      # الخطوة 6: إعداد بيئة Python
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' # يمكنك تغيير الإصدار
+
+      # الخطوة 7: تثبيت مكتبات الواجهة الخلفية
+      - name: Install Backend Dependencies
+        run: pip install -r ./backend/requirements.txt # يفترض وجود ملف requirements.txt
+
+      # الخطوة 8: تشغيل فحص الكود (Lint) للواجهة الخلفية (باستخدام flake8 كمثال)
+      - name: Lint Backend
+        run: |
+          pip install flake8
+          flake8 ./backend
