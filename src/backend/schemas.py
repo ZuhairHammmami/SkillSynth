@@ -1,0 +1,47 @@
+from pydantic import BaseModel, EmailStr
+from typing import List, Optional
+
+class PathStepBase(BaseModel):
+    step_number: int
+    title: str
+    content: Optional[str] = None
+
+class PathStep(PathStepBase):
+    id: int
+    class Config:
+        from_attributes = True
+
+class PathBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+
+class Path(PathBase):
+    id: int
+    steps: List[PathStep] = []
+    class Config:
+        from_attributes = True
+
+class ProfileBase(BaseModel):
+    email: EmailStr
+    full_name: Optional[str] = None
+
+class ProfileCreate(ProfileBase):
+    password: str
+
+class Profile(ProfileBase):
+    id: int
+    paths: List[Path] = []
+    class Config:
+        from_attributes = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
+class GeneratePathInput(BaseModel):
+    goal: str
+    weekly_hours: int
+    preferences: dict

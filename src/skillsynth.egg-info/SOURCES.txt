@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+src/backend/__init__.py
+src/backend/auth.py
+src/backend/crud.py
+src/backend/database.py
+src/backend/main.py
+src/backend/models.py
+src/backend/schemas.py
+src/data/__init__.py
+src/data/learning_paths/__init__.py
+src/data/learning_paths/example_run.py
+src/data/learning_paths/generator.py
+src/skillsynth.egg-info/PKG-INFO
+src/skillsynth.egg-info/SOURCES.txt
+src/skillsynth.egg-info/dependency_links.txt
+src/skillsynth.egg-info/top_level.txt
