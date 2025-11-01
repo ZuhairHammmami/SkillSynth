@@ -1,4 +1,6 @@
-from pydantic import BaseModel, EmailStr
+# src/backend/schemas.py
+
+from pydantic import BaseModel, EmailStr, Field # <-- هذا هو التعديل الوحيد والمهم
 from typing import List, Optional
 
 class PathStepBase(BaseModel):
@@ -42,6 +44,7 @@ class TokenData(BaseModel):
     email: Optional[str] = None
 
 class GeneratePathInput(BaseModel):
-    goal: str
-    weekly_hours: int
-    preferences: dict
+    # الآن الكود سيعمل لأننا قمنا باستيراد Field
+    goal: str = Field(..., example="frontend_developer")
+    weekly_hours: int = Field(..., example=10)
+    preferences: dict = Field(..., example={"format": "video", "skills": {"html": 2}})
