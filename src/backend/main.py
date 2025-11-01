@@ -1,71 +1,43 @@
+# src/backend/main.py
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import Field
+
+# لم نعد بحاجة لتعديل المسار، كل شيء يعمل الآن بشكل طبيعي
 from backend import models
 from backend.database import engine
 from backend.routers import auth_router, paths_router
-import os
-import sys
-import uvicorn
-from dotenv import load_dotenv
 
-# -------------------------------
-# تحميل متغيرات البيئة
-# -------------------------------
-load_dotenv()
-
-# -------------------------------
-# إصلاح المسار لضمان رؤية الموديولات
-# -------------------------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-SRC_PATH = os.path.dirname(BASE_DIR)
-if SRC_PATH not in sys.path:
-    sys.path.insert(0, SRC_PATH)
-os.environ["PYTHONPATH"] = SRC_PATH
-
-# -------------------------------
-# إعداد قاعدة البيانات
-# -------------------------------
-models.Base.metadata.create_all(bind=engine)
-
-# -------------------------------
-# إنشاء تطبيق FastAPI
-# -------------------------------
+# --- الخطوة 1: إنشاء التطبيق ---
 app = FastAPI(title="SkillSynth API")
 
-origins = ["http://localhost", "http://localhost:3000"]
+# --- الخطوة 2: تطبيق CORSMiddleware (الحل الأكثر مرونة) ---
+
+# نستخدم "*" للسماح بأي مصدر. هذا مثالي لمرحلة التطوير.
+# في مرحلة الإنتاج، يجب استبدال "*" بقائمة العناوين المحددة.
+origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"], # السماح بكل أنواع الطلبات
+    allow_headers=["*"], # السماح بكل أنواع الهيدرات
 )
 
-# -------------------------------
-# إضافة الروترات
-# -------------------------------
-app.include_router(auth_router.router, prefix="/api/auth")
-app.include_router(paths_router.router, prefix="/api")
 
-# -------------------------------
-# Endpoint افتراضي
-# -------------------------------
+# --- الخطوة 3: ربط الرواترز ---
+# من الأفضل ربط الرواترز بعد تطبيق الـ Middleware
+app.include_router(auth_router.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(paths_router.router, prefix="/api", tags=["Learning Paths"])
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to SkillSynth API"}
 
-# -------------------------------
-# تشغيل الخادم
-# -------------------------------
-if __name__ == "__main__":
-    HOST = os.getenv("HOST", "127.0.0.1")
-    PORT = int(os.getenv("PORT", "8000"))
-    RELOAD = os.getenv("MODE", "prod").lower() == "dev"
-
-    uvicorn.run(
-        "backend.main:app",
-        host=HOST,
-        port=PORT,
-        reload=RELOAD,
-        log_level="info"
-    )
+# --- الخطوة 4: إنشاء جداول قاعدة البيانات ---
+# هذا الأمر آمن لتشغيله عند بدء التشغيل
+@app.on_event("startup")
+def on_startup():
+    models.Base.metadata.create_all(bind=engine)
