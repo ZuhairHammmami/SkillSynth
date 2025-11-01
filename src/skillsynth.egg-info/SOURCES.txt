@@ -7,6 +7,9 @@ src/backend/database.py
 src/backend/main.py
 src/backend/models.py
 src/backend/schemas.py
+src/backend/routers/__init__.py
+src/backend/routers/auth_router.py
+src/backend/routers/paths_router.py
 src/data/__init__.py
 src/data/learning_paths/__init__.py
 src/data/learning_paths/example_run.py
