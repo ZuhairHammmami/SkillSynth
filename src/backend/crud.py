@@ -1,0 +1,27 @@
+from sqlalchemy.orm import Session
+from backend import models, schemas, auth
+
+def get_profile_by_email(db: Session, email: str):
+    return db.query(models.Profile).filter(models.Profile.email == email).first()
+
+def create_profile(db: Session, profile: schemas.ProfileCreate):
+    hashed_password = auth.get_password_hash(profile.password)
+    db_profile = models.Profile(
+        email=profile.email,
+        full_name=profile.full_name,
+        hashed_password=hashed_password
+    )
+    db.add(db_profile)
+    db.commit()
+    db.refresh(db_profile)
+    return db_profile
+
+def create_path_for_profile(db: Session, title: str, description: str, profile_id: int):
+    db_path = models.Path(title=title, description=description, profile_id=profile_id)
+    db.add(db_path)
+    db.commit()
+    db.refresh(db_path)
+    return db_path
+
+def get_paths_by_profile(db: Session, profile_id: int):
+    return db.query(models.Path).filter(models.Path.profile_id == profile_id).all()
