@@ -20,4 +20,10 @@ __pycache__/
 *.egg-info/
 
 # Environment variables file (VERY IMPORTANT)
+
 .env
+
+*.egg-info/
+
+.env
+
