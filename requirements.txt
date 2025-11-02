@@ -1,0 +1,17 @@
+# FastAPI and ASGI Server
+fastapi
+uvicorn
+python-multipart
+
+# Database
+SQLAlchemy
+psycopg2-binary
+
+# Pydantic and Settings
+pydantic
+python-dotenv
+email-validator
+
+# Authentication & Security
+passlib[bcrypt]
+python-jose
