@@ -13,3 +13,24 @@ __pycache__/
 # IDE settings
 .idea/
 .vscode/
+
+# =========================
+# Frontend - Next.js Specific Ignores
+# =========================
+
+# Dependency directories
+src/frontend/node_modules/
+
+# Build directory
+src/frontend/.next/
+
+# Production build files
+src/frontend/out/
+
+# Environment variables
+src/frontend/.env*.local
+
+# Log files
+src/frontend/npm-debug.log*
+src/frontend/yarn-debug.log*
+src/frontend/yarn-error.log*
