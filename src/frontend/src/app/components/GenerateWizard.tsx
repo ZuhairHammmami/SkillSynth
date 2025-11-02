@@ -1,124 +1,73 @@
-// app/components/GenerateWizard.tsx
+// المسار: src/frontend/src/app/components/GenerateWizard.tsx
 'use client';
 
 import { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useAuth } from '@/context/AuthContext'; // <-- 1. استيراد خطاف المصادقة
 
-// تعريف أنواع البيانات
-interface GeneratePathPayload {
-  goal: string;
-  weekly_hours: number;
-  preferences: { [key: string]: any };
-}
-
-interface GeneratePathResponse {
-  path_id: string;
-  // أضف أي بيانات أخرى تأتي من الـ API
-}
+// ... الواجهات تبقى كما هي
 
 export default function GenerateWizard() {
   const router = useRouter();
-  
-  // States للنموذج
-  const [goal, setGoal] = useState('');
+  const { token, isAuthenticated } = useAuth(); // <-- 2. الحصول على التوكن وحالة المصادقة
+  // ... بقية الـ states تبقى كما هي
+  const [goal, setGoal] = useState('frontend_developer');
   const [hours, setHours] = useState(10);
-  const [preferences, setPreferences] = useState('');
-
-  // States لحالة الـ API
+  const [preferences, setPreferences] = useState('video,article');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // <-- 3. التحقق من تسجيل الدخول قبل إرسال الطلب
+    if (!isAuthenticated) {
+      setError('يجب عليك تسجيل الدخول أولاً لتوليد مسار.');
+      // يمكنك أيضًا توجيه المستخدم إلى صفحة تسجيل الدخول
+      // router.push('/login');
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
-
-    const payload: GeneratePathPayload = {
-      goal,
-      weekly_hours: hours,
-      preferences: {
-        tags: preferences.split(',').map(tag => tag.trim()).filter(tag => tag),
-      },
-    };
+    const payload = { goal, weekly_hours: hours, preferences: { format: preferences } };
 
     try {
-      // استدعاء الـ API
-      const response = await axios.post<GeneratePathResponse>(
-        '${process.env.NEXT_PUBLIC_API_BASE_URL}', // هذا مسار وهمي، سيتم استبداله
-        payload
+      // <-- 4. إضافة هيدر المصادقة إلى الطلب
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/generate-path/`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // هذا هو "المفتاح"
+          },
+        }
       );
-      
-      console.log('API Response:', response.data);
+      // ... لاحقًا، سنقوم بتوجيه المستخدم إلى صفحة المسار
+      console.log('Path Generated:', response.data);
 
-      // بعد النجاح، انتقل إلى صفحة المسار
-      router.push(`/paths/${response.data.path_id}`);
-
-    } catch (err) {
+    } catch (err: any) {
       console.error('API Error:', err);
-      setError('حدث خطأ أثناء إنشاء المسار. يرجى المحاولة مرة أخرى.');
+      setError(err.response?.data?.detail || 'حدث خطأ أثناء إنشاء المسار.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ... قسم ה-return يبقى كما هو
   return (
-    <form onSubmit={handleSubmit} className="p-8 bg-white rounded-lg shadow-lg space-y-6">
-      {/* ... حقول النموذج كما هي ... */}
-        <div>
-            <label htmlFor="goal" className="block text-sm font-medium text-gray-700">
-              ما هو هدفك التعليمي؟ (مثال: تعلم تطوير الواجهات الأمامية)
-            </label>
-            <textarea
-              id="goal"
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
-              rows={3}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-              required
-              disabled={isLoading}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="hours" className="block text-sm font-medium text-gray-700">
-              كم ساعة يمكنك تخصيصها أسبوعيًا؟
-            </label>
-            <input
-              id="hours"
-              type="number"
-              value={hours}
-              onChange={(e) => setHours(Number(e.target.value))}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-              required
-              disabled={isLoading}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="preferences" className="block text-sm font-medium text-gray-700">
-              ما هي تفضيلاتك؟ (فيديو، مقالات، مشاريع عملية - افصل بينها بفاصلة)
-            </label>
-            <input
-              id="preferences"
-              type="text"
-              value={preferences}
-              onChange={(e) => setPreferences(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-              disabled={isLoading}
-            />
-          </div>
-
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-
-      <button
-        type="submit"
-        className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-        disabled={isLoading}
-      >
-        {isLoading ? 'جارٍ التوليد...' : 'ولّد المسار'}
-      </button>
+    <form
+      onSubmit={handleSubmit}
+      className="p-8 bg-card text-card-foreground rounded-lg border shadow-lg space-y-6 w-full max-w-md mx-auto"
+    >
+        {/* ... */}
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? '⏳ جارٍ التوليد...' : '🚀 ولّد المسار'}
+        </Button>
     </form>
   );
-  
 }

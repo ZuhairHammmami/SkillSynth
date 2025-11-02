@@ -1,20 +1,27 @@
-// app/page.tsx
+// المسار: src/frontend/src/app/page.tsx
+
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react'; // <-- استيراد أيقونة السهم
 
 export default function LandingPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <h1 className="text-5xl font-bold text-gray-900 mb-4">SkillSynth</h1>
-        <p className="text-lg text-gray-600 mb-8">
-          أنشئ مسار تعلمك المخصص والذكي
-        </p>
-        <Link href="/wizard">
-          <button className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors">
+    <div className="flex flex-col items-center justify-center text-center px-4 py-24 md:py-32">
+      <h1 className="text-4xl font-bold tracking-tight text-primary sm:text-5xl md:text-6xl">
+        SkillSynth
+      </h1>
+      <p className="mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
+        أنشئ مسار تعلمك المخصص والذكي. حوّل أهدافك إلى خطة عمل واضحة وفعالة
+        مدعومة بالذكاء الاصطناعي.
+      </p>
+      <div className="mt-10">
+        <Button asChild size="lg">
+          <Link href="/wizard">
             ابدأ الآن
-          </button>
-        </Link>
+            <ArrowLeft className="mr-2 h-5 w-5" />
+          </Link>
+        </Button>
       </div>
-    </main>
+    </div>
   );
 }

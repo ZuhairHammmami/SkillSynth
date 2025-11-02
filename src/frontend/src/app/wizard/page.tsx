@@ -1,15 +1,20 @@
-// app/wizard/page.tsx
-// سنقوم بإضافة المكونات لاحقًا
+// المسار: src/frontend/src/app/wizard/page.tsx
+
+// استيراد المكون الذي يحتوي على النموذج
+import GenerateWizard from "@/app/components/GenerateWizard";
+
 export default function WizardPage() {
   return (
-    <main className="container mx-auto p-8 flex justify-center">
-        <div className="w-full max-w-2xl">
-            <h1 className="text-3xl font-bold mb-6 text-center">أنشئ مسارك التعليمي</h1>
-            <p className="text-center text-gray-600 mb-8">
-                أخبرنا عن هدفك، وسنقوم بتوليد خطة مخصصة لك.
-            </p>
-            {/* سيتم إضافة مكون GenerateWizard هنا */}
-        </div>
-    </main>
+    <div className="container mx-auto max-w-2xl px-4 py-16">
+      <div className="text-center mb-10">
+        <h1 className="text-4xl font-bold text-primary">أنشئ مسارك التعليمي</h1>
+        <p className="mt-4 text-lg text-muted-foreground">
+          أخبرنا عن هدفك، وسنقوم بتوليد خطة مخصصة لك.
+        </p>
+      </div>
+      
+      {/* هنا نضع النموذج الذي قمنا بتصميمه سابقًا */}
+      <GenerateWizard />
+    </div>
   );
 }

@@ -1,26 +1,31 @@
-// app/layout.tsx
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+// المسار: src/frontend/src/app/layout.tsx
+
+import { Tajawal } from "next/font/google";
 import "./globals.css";
-import Header from '@/app/components/Header'; // استيراد المكون
+import Header from "@/app/components/Header";
+import { AuthProvider } from "@/context/AuthContext"; // <-- 1. استيراد المزود
 
-const inter = Inter({ subsets: ["latin"] });
+const tajawal = Tajawal({
+  subsets: ["arabic"],
+  weight: ["400", "700"],
+});
 
-export const metadata: Metadata = {
+export const metadata = {
   title: "SkillSynth",
-  description: "AI-Powered Learning Path Generator",
+  description: "أنشئ مسار تعلمك المخصص والذكي",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar" dir="rtl">
-      <body className={inter.className}>
-        <Header userName="مستخدم جديد" /> {/* استخدام المكون */}
-        {children}
+      <body
+        className={`${tajawal.className} bg-background text-foreground antialiased`}
+      >
+        {/* 2. تغليف كل شيء داخل المزود */}
+        <AuthProvider>
+          <Header userName="مستخدم جديد" />
+          <main>{children}</main>
+        </AuthProvider>
       </body>
     </html>
   );
