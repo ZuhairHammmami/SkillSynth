@@ -1,0 +1,6 @@
+[project]
+name = "skillsynth"
+version = "0.1.0"
+
+[tool.setuptools.packages.find]
+where = ["src"]  # <-- هذا هو التغيير الحاسم
