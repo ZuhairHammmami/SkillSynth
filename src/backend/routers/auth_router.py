@@ -28,3 +28,11 @@ def login_for_access_token(db: Session = Depends(get_db), form_data: OAuth2Passw
         data={"sub": user.email}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+@router.get("/users/me", response_model=schemas.Profile)
+def read_users_me(current_user: models.Profile = Depends(auth.get_current_user)):
+    """
+    نقطة نهاية محمية تعيد بيانات المستخدم المسجل دخوله حاليًا.
+    الفرونت اند سيستدعي هذه النقطة بعد تسجيل الدخول مباشرة 
+    لعرض اسم المستخدم في الشريط العلوي.
+    """
+    return current_user
