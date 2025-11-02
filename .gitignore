@@ -1,0 +1,25 @@
+# Virtual Environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+
+# Local database files
+*.db
+*.sqlite3
+
+# IDE and OS files
+.idea/
+.vscode/
+
+# Compiled Python files
+*.pyc
+
+# Dependency installation folders
+*.egg-info/
+
+# Environment variables file (VERY IMPORTANT)
+.env
+
+*.egg-info/
