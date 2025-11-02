@@ -1,24 +1,26 @@
-// app/components/Header.tsx
+// المسار: src/frontend/src/app/components/Header.tsx
+
 import Link from 'next/link';
+import { Button } from '@/components/ui/button'; // <-- استيراد الزر الجديد
 
 type HeaderProps = {
-  userName?: string; // Optional user name
+  userName?: string;
 };
 
 export default function Header({ userName }: HeaderProps) {
   return (
-    <header className="bg-white shadow-sm">
-      <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
-        <Link href="/" className="text-2xl font-bold text-blue-600">
+    <header className="bg-background sticky top-0 z-50 w-full border-b">
+      <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
+        <Link href="/" className="text-xl font-bold text-primary">
           SkillSynth
         </Link>
         <div>
           {userName ? (
-            <span className="text-gray-800">مرحباً، {userName}</span>
+            <span className="text-foreground">مرحباً، {userName}</span>
           ) : (
-            <Link href="/login" className="text-blue-600 hover:underline">
-              تسجيل الدخول
-            </Link>
+            <Button asChild variant="ghost">
+              <Link href="/login">تسجيل الدخول</Link>
+            </Button>
           )}
         </div>
       </nav>
