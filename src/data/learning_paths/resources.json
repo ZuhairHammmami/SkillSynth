@@ -1,0 +1,58 @@
+{
+  "html": [
+    {
+      "title": "Intro to HTML",
+      "url": "https://www.w3schools.com/html/",
+      "format": "article",
+      "language": "en"
+    },
+    {
+      "title": "HTML Full Course for Beginners",
+      "url": "https://www.youtube.com/watch?v=kUMe1FH4CHE",
+      "format": "video",
+      "language": "en"
+    },
+    {
+      "title": "شرح HTML بالكامل في فيديو واحد",
+      "url": "https://www.youtube.com/watch?v=6QAELgirvjs",
+      "format": "video",
+      "language": "ar"
+    }
+  ],
+  "css": [
+    {
+      "title": "Learn CSS",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/CSS",
+      "format": "article",
+      "language": "en"
+    },
+    {
+      "title": "CSS Crash Course For Absolute Beginners",
+      "url": "https://www.youtube.com/watch?v=yfoY53QXEnI",
+      "format": "video",
+      "language": "en"
+    }
+  ],
+  "javascript": [
+    {
+      "title": "JavaScript Tutorial",
+      "url": "https://www.javascript.info",
+      "format": "article",
+      "language": "en"
+    },
+    {
+      "title": "Learn JavaScript - Full Course for Beginners",
+      "url": "https://www.youtube.com/watch?v=PkZNo7MFNFg",
+      "format": "video",
+      "language": "en"
+    }
+  ],
+  "react": [
+    {
+      "title": "React Official Docs",
+      "url": "https://reactjs.org/docs/getting-started.html",
+      "format": "article",
+      "language": "en"
+    }
+  ]
+}
