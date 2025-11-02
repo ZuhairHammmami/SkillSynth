@@ -1,25 +1,27 @@
+# Environment variables file (VERY IMPORTANT)
+# لا تقم أبدًا برفع هذا الملف إلى GitHub
+.env
+
 # Virtual Environment
 .venv/
 venv/
 
-# Python cache
+# Python cache & compiled files
 __pycache__/
-
-# Local database files
-*.db
-*.sqlite3
-
-# IDE and OS files
-.idea/
-.vscode/
-
-# Compiled Python files
 *.pyc
 
 # Dependency installation folders
 *.egg-info/
 
-# Environment variables file (VERY IMPORTANT)
-.env
+# Local database files
+*.db
+*.sqlite3
 
-*.egg-info/
+# IDE and OS specific files
+.idea/
+.vscode/
+
+node_modules
+.next
+.DS_Store
+*.log
