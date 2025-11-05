@@ -1,4 +1,4 @@
-# =================== ابدأ النسخ من هنا (النسخة النهائية الكاملة) ===================
+
 
 import json
 import os
@@ -33,35 +33,54 @@ def generate_path(profile, goal, weekly_hours, preferences):
             continue
 
         resource_tag = step["tag"]
+        all_tagged_resources = all_resources.get(resource_tag, [])
+
+        # --- الجزء الذي تم تطويره: منطق الفلترة والأولوية الجديد ---
+
+        # 1. استخلاص كل تفضيلات المستخدم مع قيم افتراضية
         preferred_language = preferences.get("language", "en")
         preferred_format = preferences.get("format", "any")
-        all_tagged_resources = all_resources.get(resource_tag, [])
+        # نفترض أن المستخدم يريد محتوى مجانيًا ما لم يحدد خلاف ذلك
+        wants_free = preferences.get("is_free", True)
+
+        # 2. الفلترة الأولية بناءً على التفضيل الأساسي (مجاني/مدفوع)
+        available_resources = [res for res in all_tagged_resources if res.get("is_free") == wants_free]
+
+        # 3. منطق البحث بالأولويات (هذا هو العقل الجديد)
+        #    سنبحث عن أفضل مورد متاح بناءً على قائمة من الأولويات.
         
+        # قائمة الأولويات: من الأفضل إلى الأقل تفضيلاً
+        priority_searches = [
+            # الحالة المثالية: رسمي، يطابق اللغة والصيغة
+            {"is_official": True, "language": preferred_language, "format": preferred_format},
+            # رسمي، يطابق اللغة (بأي صيغة)
+            {"is_official": True, "language": preferred_language, "format": "any"},
+            # غير رسمي، يطابق اللغة والصيغة
+            {"is_official": False, "language": preferred_language, "format": preferred_format},
+            # غير رسمي، يطابق اللغة (بأي صيغة)
+            {"is_official": False, "language": preferred_language, "format": "any"},
+            
+            # --- خطط بديلة (Fallback) باللغة الإنجليزية ---
+            {"is_official": True, "language": "en", "format": preferred_format},
+            {"is_official": True, "language": "en", "format": "any"},
+            {"is_official": False, "language": "en", "format": preferred_format},
+            {"is_official": False, "language": "en", "format": "any"},
+        ]
+
         selected_resource = None
-
-        # --- منطق البحث المطور بأربع مراحل (الأكثر مرونة) ---
-        # 1. المحاولة الأولى: تطابق مثالي (اللغة + الصيغة)
-        perfect_match = [res for res in all_tagged_resources if res.get("language") == preferred_language and (preferred_format == "any" or res.get("format") == preferred_format)]
-        if perfect_match:
-            selected_resource = perfect_match[0]
-        
-        # 2. المحاولة الثانية: تطابق اللغة فقط (بأي صيغة)
-        if not selected_resource:
-            language_match = [res for res in all_tagged_resources if res.get("language") == preferred_language]
-            if language_match:
-                selected_resource = language_match[0]
-
-        # 3. المحاولة الثالثة: تطابق الصيغة باللغة الإنجليزية
-        if not selected_resource:
-            format_fallback_match = [res for res in all_tagged_resources if res.get("language") == "en" and (preferred_format == "any" or res.get("format") == preferred_format)]
-            if format_fallback_match:
-                selected_resource = format_fallback_match[0]
-                
-        # 4. المحاولة الرابعة (الأخيرة): أي مورد باللغة الإنجليزية
-        if not selected_resource:
-            any_english_match = [res for res in all_tagged_resources if res.get("language") == "en"]
-            if any_english_match:
-                selected_resource = any_english_match[0]
+        for search_criteria in priority_searches:
+            # نبحث في الموارد المتاحة عن أي مورد يطابق معايير البحث الحالية
+            result = [
+                res for res in available_resources
+                if res.get("is_official") == search_criteria["is_official"]
+                and res.get("language") == search_criteria["language"]
+                and (search_criteria["format"] == "any" or res.get("format") == search_criteria["format"])
+            ]
+            
+            if result:
+                # إذا وجدنا نتيجة، نختارها ونتوقف عن البحث
+                selected_resource = result[0]
+                break
         # -------------------------------------------------------------
 
         path_steps.append({
@@ -79,7 +98,7 @@ def generate_path(profile, goal, weekly_hours, preferences):
         "path_title": f"{goal.replace('_', ' ').title()} - {total_weeks}w",
         "steps": path_steps,
         "metadata": {
-            "method": "rule-based-v1",
+            "method": "rule-based-v2-prioritized", # قمنا بتحديث الإصدار
             "total_estimated_hours": total_estimated_hours,
             "estimated_weeks": total_weeks,
             "user_preferences": preferences
@@ -88,4 +107,3 @@ def generate_path(profile, goal, weekly_hours, preferences):
 
     return result
 
-# =================== انتهى النسخ هنا ===================
