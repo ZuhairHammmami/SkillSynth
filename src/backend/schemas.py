@@ -45,3 +45,11 @@ class GeneratePathInput(BaseModel):
     goal: str
     weekly_hours: int
     preferences: dict
+
+class UserAnswer(BaseModel):
+    # مثال: {"html_q1": 0, "css_q2": 1}
+    answers: dict[str, int]
+
+class AssessmentSubmit(BaseModel):
+    goal: str
+    user_answers: UserAnswer
