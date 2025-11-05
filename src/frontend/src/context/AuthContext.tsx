@@ -2,51 +2,68 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import Cookies from 'js-cookie';
+import axios from 'axios';
 
-// تعريف أنواع البيانات التي سنحتفظ بها
+// 1. تعريف شكل بيانات المستخدم
+interface User {
+  email: string;
+  full_name: string;
+  id: number;
+}
+
 interface AuthState {
   token: string | null;
+  user: User | null; // <-- إضافة بيانات المستخدم
   isAuthenticated: boolean;
-  login: (token: string) => void;
+  login: (token: string) => Promise<void>; // <-- ستصبح async
   logout: () => void;
 }
 
-// إنشاء السياق بقيمة ابتدائية
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
-// إنشاء المزود (Provider) الذي سيحتوي على المنطق
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
-  // عند تحميل التطبيق، تحقق مما إذا كان هناك توكن محفوظ في localStorage
+  const fetchUser = async (currentToken: string) => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/me`,
+        { headers: { Authorization: `Bearer ${currentToken}` } }
+      );
+      setUser(response.data);
+    } catch (error) {
+      console.error("Failed to fetch user", error);
+      logout(); // إذا فشل جلب المستخدم (توكن منتهي الصلاحية)، سجله خروج
+    }
+  };
+
   useEffect(() => {
-    const storedToken = localStorage.getItem('authToken');
+    const storedToken = Cookies.get('authToken');
     if (storedToken) {
       setToken(storedToken);
+      fetchUser(storedToken); // <-- جلب بيانات المستخدم عند تحميل الصفحة
     }
   }, []);
 
-  const login = (newToken: string) => {
+  const login = async (newToken: string) => {
     setToken(newToken);
-    localStorage.setItem('authToken', newToken); // احفظ التوكن للاستخدام لاحقًا
+    Cookies.set('authToken', newToken, { expires: 7, secure: true });
+    await fetchUser(newToken); // <-- جلب بيانات المستخدم فور تسجيل الدخول
   };
 
   const logout = () => {
     setToken(null);
-    localStorage.removeItem('authToken'); // احذف التوكن عند تسجيل الخروج
+    setUser(null);
+    Cookies.remove('authToken');
   };
 
-  const value = {
-    token,
-    isAuthenticated: !!token, // será `true` si el token existe
-    login,
-    logout,
-  };
+  const value = { token, user, isAuthenticated: !!token, login, logout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// إنشاء "خطاف" (Hook) مخصص ليسهل الوصول إلى السياق
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

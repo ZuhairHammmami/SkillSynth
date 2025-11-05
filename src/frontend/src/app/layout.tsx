@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       >
         {/* 2. تغليف كل شيء داخل المزود */}
         <AuthProvider>
-          <Header userName="مستخدم جديد" />
+          <Header />
           <main>{children}</main>
         </AuthProvider>
       </body>
