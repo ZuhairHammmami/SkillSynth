@@ -1,19 +1,19 @@
-// app/components/PathCard.tsx
+// المسار: src/frontend/src/app/components/PathCard.tsx
+import Link from 'next/link';
+
 type PathCardProps = {
+  id: number;
   title: string;
   totalHours: number;
 };
 
-export default function PathCard({ title, totalHours }: PathCardProps) {
+export default function PathCard({ id, title, totalHours }: PathCardProps) {
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md border flex justify-between items-center">
-      <div>
-        <h3 className="text-xl font-bold">{title}</h3>
-        <p className="text-gray-500">{totalHours} ساعة لإكماله</p>
-      </div>
-      <button className="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600">
-        حفظ
-      </button>
-    </div>
+    <Link href={`/paths/${id}`} className="block">
+        <div className="bg-card p-6 rounded-lg border shadow hover:shadow-lg transition-shadow h-full">
+            <h3 className="text-xl font-bold text-primary">{title}</h3>
+            <p className="text-muted-foreground mt-2">{totalHours} ساعة لإكماله</p>
+        </div>
+    </Link>
   );
 }

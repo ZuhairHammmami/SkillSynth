@@ -1,65 +1,84 @@
 // المسار: src/frontend/src/app/paths/[id]/page.tsx
+'use client';
 
-// 1. استيراد المكونات التي سنستخدمها
-// المسار النسبي الصحيح من هذا الملف إلى مجلد المكونات
-// المسار الصحيح
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import { useAuth } from '@/context/AuthContext';
 import StepItem from '@/app/components/StepItem';
 
-// 2. تعريف أنواع البيانات للمدخلات (Props)
+// تعريف شكل البيانات المفصلة للمسار الواحد
+interface StepResource {
+  title: string;
+  url: string;
+  format: 'video' | 'article';
+}
+interface PathStep {
+  index: number;
+  title: string;
+  estimated_hours: number;
+  resource: StepResource | null;
+}
+interface PathDetails {
+  path_title: string;
+  steps: PathStep[];
+  total_estimated_hours: number;
+}
+
 type PageProps = {
-  params: { id: string }; // Next.js يمرر الـ id داخل كائن params
+  params: { id: string };
 };
 
-// 3. بيانات وهمية (مؤقتة) لعرضها في الواجهة
-const dummyPathData = {
-  title: 'مسار تعلم تطوير الواجهات الأمامية',
-  steps: [
-    {
-      title: 'الخطوة 1: أساسيات HTML',
-      description: 'تعلم الهيكل الأساسي لصفحات الويب.',
-      resourceUrl: 'https://developer.mozilla.org/ar/docs/Web/HTML',
-    },
-    {
-      title: 'الخطوة 2: تنسيق الصفحات بـ CSS',
-      description: 'أضف الألوان والخطوط والتخطيطات لجعل صفحتك جذابة.',
-      resourceUrl: 'https://developer.mozilla.org/ar/docs/Web/CSS',
-    },
-    {
-      title: 'الخطوة 3: التفاعلية مع JavaScript',
-      description: 'اجعل موقعك يتفاعل مع المستخدم.',
-      resourceUrl: 'https://developer.mozilla.org/ar/docs/Web/JavaScript',
-    },
-  ],
-};
-
-
-// 4. المكون الأساسي للصفحة
 export default function PathDetailPage({ params }: PageProps) {
-  // `params.id` يحتوي على الرقم أو النص الموجود في رابط المتصفح
-  const { id } = params;
-  const { title, steps } = dummyPathData;
+  const { token } = useAuth();
+  const [pathDetails, setPathDetails] = useState<PathDetails | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPathDetails = async () => {
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/paths/${params.id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setPathDetails(response.data);
+      } catch (err) {
+        setError('فشل في جلب تفاصيل المسار.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPathDetails();
+  }, [token, params.id]);
+
+  if (isLoading) {
+    return <div className="text-center p-10">⏳ جارٍ تحميل تفاصيل المسار...</div>;
+  }
+
+  if (error || !pathDetails) {
+    return <div className="text-center p-10 text-destructive">{error || 'لم يتم العثور على المسار.'}</div>;
+  }
 
   return (
-    <main className="container mx-auto max-w-4xl p-4 md:p-8">
-      {/* قسم العنوان الرئيسي */}
-      <div className="bg-white p-6 rounded-lg shadow-md mb-8 border-l-4 border-blue-500">
-        <h1 className="text-3xl font-bold text-gray-900">
-          {title}
-        </h1>
-        <p className="text-gray-500 mt-2">
-          المعرف الفريد للمسار: {id}
+    <main className="container mx-auto max-w-4xl p-8">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-primary">{pathDetails.path_title}</h1>
+        <p className="text-muted-foreground mt-2">
+          إجمالي الساعات التقديرية: {pathDetails.total_estimated_hours} ساعة
         </p>
       </div>
 
-      {/* قسم خطوات المسار */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">الخطوات</h2>
-        {steps.map((step, index) => (
+      <div className="space-y-6">
+        {pathDetails.steps.map((step) => (
           <StepItem
-            key={index} // مفتاح فريد لكل عنصر في القائمة
+            key={step.index}
             title={step.title}
-            description={step.description}
-            resourceUrl={step.resourceUrl}
+            description={`الساعات التقديرية: ${step.estimated_hours}`}
+            resourceUrl={step.resource?.url || '#'}
           />
         ))}
       </div>

@@ -1,18 +1,17 @@
-// المسار الكامل: src/frontend/src/app/(auth)/login/page.tsx
+// المسار: src/frontend/src/app/(auth)/register/page.tsx
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link'; // <-- تأكد من استيراد Link
+import Link from 'next/link';
 import axios from 'axios';
-import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -22,57 +21,64 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    const params = new URLSearchParams();
-    params.append('username', email);
-    params.append('password', password);
-    params.append('grant_type', 'password');
+
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/token`,
-        params,
-        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/register`,
+        {
+          full_name: fullName,
+          email: email,
+          password: password,
+        }
       );
-      const { access_token } = response.data;
-      await login(access_token); // <-- أضفنا await هنا
-      router.push('/dashboard'); // <-- توجيه إلى لوحة التحكم بعد الدخول
+      // عند النجاح، وجه المستخدم إلى صفحة تسجيل الدخول ليكمل العملية
+      router.push('/login');
+
     } catch (err: any) {
-      console.error('Login Error:', err);
-      setError(err.response?.data?.detail || 'فشل تسجيل الدخول. تأكد من بياناتك.');
+      console.error('Registration Error:', err);
+      setError(err.response?.data?.detail || 'فشل إنشاء الحساب. قد يكون البريد الإلكتروني مستخدمًا.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="container mx-auto flex items-center justify-center py-24">
+    <div className="container mx-auto flex items-center justify-center py-16">
       <form
         onSubmit={handleSubmit}
         className="p-8 bg-card text-card-foreground rounded-lg border shadow-lg space-y-6 w-full max-w-sm"
       >
         <div className="text-center">
-            <h2 className="text-2xl font-bold text-primary">تسجيل الدخول</h2>
+            <h2 className="text-2xl font-bold text-primary">إنشاء حساب جديد</h2>
         </div>
+        
+        <div className="grid w-full items-center gap-1.5">
+          <Label htmlFor="fullName">الاسم الكامل</Label>
+          <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required disabled={isLoading} />
+        </div>
+        
         <div className="grid w-full items-center gap-1.5">
           <Label htmlFor="email">البريد الإلكتروني</Label>
           <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={isLoading} />
         </div>
+        
         <div className="grid w-full items-center gap-1.5">
           <Label htmlFor="password">كلمة المرور</Label>
           <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isLoading} />
         </div>
-        {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? 'جارٍ التحقق...' : 'دخول'}
-        </Button>
         
-        {/* ===== هذا هو الجزء الجديد ===== */}
+        {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+        
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? 'جارٍ الإنشاء...' : 'تسجيل'}
+        </Button>
+
         <p className="text-center text-sm text-muted-foreground">
-          ليس لديك حساب؟{' '}
-          <Link href="/register" className="font-semibold text-primary hover:underline">
-            أنشئ حسابًا جديدًا
-          </Link>
+            لديك حساب بالفعل؟{' '}
+            <Link href="/login" className="font-semibold text-primary hover:underline">
+                سجل الدخول
+            </Link>
         </p>
-        {/* ============================= */}
       </form>
     </div>
   );
