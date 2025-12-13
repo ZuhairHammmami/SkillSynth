@@ -1,49 +1,24 @@
 # src/backend/routers/paths_router.py
 
-import json # <-- هذا هو التعديل الوحيد والمهم. لقد نقلناه إلى الأعلى.
+import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-# نستورد كل الوحدات التي نحتاجها
+# نستورد كل الوحدات التي نحتاجها، بما في ذلك 'auth' الذي يحتوي على الحارس
 from backend import crud, models, schemas, auth
 from backend.database import get_db
-
-# نستورد المولد الحقيقي من فريق البيانات
 from data.learning_paths.generator import generate_path
 
 router = APIRouter()
 
-
-def get_current_user(db: Session = Depends(get_db), token: str = Depends(auth.oauth2_scheme)):
-    """
-    هذه الدالة هي "الحارس" لنقاط النهاية المحمية.
-    """
-    credentials_exception = HTTPException(
-        status_code=401,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = auth.jwt.decode(token, auth.SECRET_KEY, algorithms=[auth.ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-    except auth.JWTError:
-        raise credentials_exception
-    
-    user = crud.get_profile_by_email(db, email=email)
-    if user is None:
-        raise credentials_exception
-    
-    return user
-
+# (تم حذف السطر الخاطئ 'current_user: ... = Depends(get_current_user)' من هنا)
 
 @router.post("/generate-path/", response_model=schemas.Path)
 def generate_new_path(
     path_input: schemas.GeneratePathInput, 
     db: Session = Depends(get_db),
-    current_user: models.Profile = Depends(get_current_user)
+    current_user: models.Profile = Depends(auth.get_current_user)
 ):
     skill_profile = path_input.preferences.get("skills", {})
     
@@ -77,10 +52,20 @@ def generate_new_path(
     db.refresh(db_path)
     return db_path
 
+@router.get("/paths/{path_id}", response_model=schemas.Path)
+def read_single_path(
+    path_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(auth.get_current_user)
+):
+    db_path = crud.get_path_by_id(db, path_id=path_id, profile_id=current_user.id)
+    if db_path is None:
+        raise HTTPException(status_code=404, detail="Path not found")
+    return db_path
 
 @router.get("/paths/", response_model=List[schemas.Path])
 def read_paths_for_current_user(
     db: Session = Depends(get_db), 
-    current_user: models.Profile = Depends(get_current_user)
+    current_user: models.Profile = Depends(auth.get_current_user)
 ):
     return crud.get_paths_by_profile(db, profile_id=current_user.id)

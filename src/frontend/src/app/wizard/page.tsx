@@ -1,20 +1,18 @@
-// المسار: src/frontend/src/app/wizard/page.tsx
-
-// استيراد المكون الذي يحتوي على النموذج
 import GenerateWizard from "@/app/components/GenerateWizard";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function WizardPage() {
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-16">
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold text-primary">أنشئ مسارك التعليمي</h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          أخبرنا عن هدفك، وسنقوم بتوليد خطة مخصصة لك.
-        </p>
-      </div>
-      
-      {/* هنا نضع النموذج الذي قمنا بتصميمه سابقًا */}
-      <GenerateWizard />
+    <div className="container mx-auto flex justify-center py-16 px-4">
+      <Card className="w-full max-w-2xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl">أنشئ مسارك التعليمي</CardTitle>
+          <CardDescription className="pt-2">أخبرنا عن هدفك، وسنقوم بتوليد خطة مخصصة لك مدعومة بالذكاء الاصطناعي.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <GenerateWizard />
+        </CardContent>
+      </Card>
     </div>
   );
 }
