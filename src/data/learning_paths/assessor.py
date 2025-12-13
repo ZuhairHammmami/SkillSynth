@@ -1,52 +1,42 @@
 
+
 import json
 import os
 
-# --- 1. تحديد المسارات للملفات التي سنحتاجها ---
-# نستخدم نفس الطريقة الذكية لتحديد المسارات كما في generator.py
+# --- التغيير 1: استيراد أدوات قاعدة البيانات بدلاً من مسار rules.json ---
+from .db_connector import fetch_skills_for_job_role
+
+# لم نعد بحاجة إلى RULES_PATH
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-RULES_PATH = os.path.join(BASE_DIR, 'rules.json')
 ASSESSMENTS_PATH = os.path.join(BASE_DIR, 'assessments.json')
 
 
 def run_assessment(goal, user_answers):
     """
-    يقوم بتشغيل تقييم للمستخدم بناءً على هدفه وإجاباته،
-    ويعيد قاموسًا بمستويات المهارة المقدرة.
-
-    Args:
-        goal (str): الهدف التعليمي للمستخدم (مثل 'frontend_developer').
-        user_answers (dict): قاموس يحتوي على إجابات المستخدم.
-                             الشكل: {"question_id": answer_index}
-                             مثال: {"html_q1": 0, "css_q1": 1}
-
-    Returns:
-        dict: قاموس يمثل ملف مهارات المستخدم (profile).
-              مثال: {"html": 2, "css": 1, "javascript": 0}
+    يقوم بتشغيل تقييم للمستخدم بناءً على هدفه الوظيفي (من قاعدة البيانات) وإجاباته.
     """
-    # --- 2. قراءة ملفات القواعد والأسئلة ---
+    # --- التغيير 2: قراءة ملف الأسئلة فقط ---
     try:
-        with open(RULES_PATH, 'r', encoding='utf-8') as f:
-            rules = json.load(f)
         with open(ASSESSMENTS_PATH, 'r', encoding='utf-8') as f:
             all_questions = json.load(f)
-    except FileNotFoundError as e:
-        return {"error": f"Configuration file not found: {e}"}
+    except FileNotFoundError:
+        return {"error": f"Assessments file not found at: {ASSESSMENTS_PATH}"}
 
-    if goal not in rules:
-        return {"error": f"Goal '{goal}' not found in rules."}
-
-    # --- 3. تحديد المهارات التي يجب اختبارها ---
-    # نستخرج قائمة المهارات من ملف القواعد بناءً على هدف المستخدم
-    skills_to_test = [step['skill'].lower() for step in rules[goal]]
+    # --- التغيير 3: تحديد المهارات للاختبار من قاعدة البيانات ---
+    # نستدعي الدالة من db_connector لجلب المهارات المرتبطة بالوظيفة
+    skills_to_test_data = fetch_skills_for_job_role(goal)
+    if not skills_to_test_data:
+        return {"error": f"Could not find skills for job role '{goal}' in the database."}
+    
+    # نستخرج أسماء المهارات فقط من البيانات التي حصلنا عليها
+    skills_to_test = [skill['name'].lower() for skill in skills_to_test_data]
     
     skill_levels = {}
 
-    # --- 4. حساب مستوى كل مهارة على حدة ---
+    # --- باقي المنطق يبقى كما هو تمامًا ---
     for skill in skills_to_test:
         questions_for_skill = all_questions.get(skill, [])
         if not questions_for_skill:
-            # إذا لم تكن هناك أسئلة لهذه المهارة، نفترض أن المستوى 0
             skill_levels[skill] = 0
             continue
 
@@ -61,21 +51,18 @@ def run_assessment(goal, user_answers):
             if user_answer_index == correct_answer_index:
                 correct_count += 1
         
-        # --- 5. منطق تحويل النتيجة إلى مستوى ---
-        # هذا هو الجزء الذي يترجم "كم إجابة صحيحة" إلى "ما هو مستواك"
         score_percentage = (correct_count / total_questions) * 100 if total_questions > 0 else 0
         
-        level = 0 # القيمة الافتراضية
+        level = 0
         if score_percentage == 100:
-            level = 3 # أتقن كل شيء -> خبير (يمكنه تخطي الخطوة)
+            level = 3
         elif score_percentage >= 50:
-            level = 2 # يعرف نصف الإجابات أو أكثر -> متوسط
+            level = 2
         elif score_percentage > 0:
-            level = 1 # يعرف شيئًا ما ولكن ليس الكثير -> مبتدئ لديه فكرة
+            level = 1
         else:
-            level = 0 # لم يجب على أي سؤال بشكل صحيح -> مبتدئ تمامًا
+            level = 0
             
         skill_levels[skill] = level
 
     return skill_levels
-

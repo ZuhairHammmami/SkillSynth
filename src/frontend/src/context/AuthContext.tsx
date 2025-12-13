@@ -3,65 +3,53 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import Cookies from 'js-cookie';
-import axios from 'axios';
 
-// 1. تعريف شكل بيانات المستخدم
-interface User {
-  email: string;
-  full_name: string;
-  id: number;
-}
+// سنقوم بإزالة واجهة User مؤقتًا
+// interface User { ... }
 
 interface AuthState {
-  token: string | null;
-  user: User | null; // <-- إضافة بيانات المستخدم
+  // user: User | null; // <-- إزالة
   isAuthenticated: boolean;
-  login: (token: string) => Promise<void>; // <-- ستصبح async
+  login: (token: string) => void; // <-- إزالة Promise
   logout: () => void;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [token, setToken] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-
-  const fetchUser = async (currentToken: string) => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/me`,
-        { headers: { Authorization: `Bearer ${currentToken}` } }
-      );
-      setUser(response.data);
-    } catch (error) {
-      console.error("Failed to fetch user", error);
-      logout(); // إذا فشل جلب المستخدم (توكن منتهي الصلاحية)، سجله خروج
-    }
-  };
+  // const [user, setUser] = useState<User | null>(null); // <-- إزالة
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = Cookies.get('authToken');
-    if (storedToken) {
-      setToken(storedToken);
-      fetchUser(storedToken); // <-- جلب بيانات المستخدم عند تحميل الصفحة
+    // الآن، سنتحقق فقط من وجود التوكن، بدون جلب بيانات المستخدم
+    const token = Cookies.get('authToken');
+    if (token) {
+      setIsAuthenticated(true);
     }
+    setIsLoading(false); // ننهي التحميل فورًا
   }, []);
 
-  const login = async (newToken: string) => {
-    setToken(newToken);
-    Cookies.set('authToken', newToken, { expires: 7, secure: true });
-    await fetchUser(newToken); // <-- جلب بيانات المستخدم فور تسجيل الدخول
+  const login = (token: string) => {
+    Cookies.set('authToken', token, { expires: 7, secure: true });
+    setIsAuthenticated(true);
+    // لم نعد بحاجة لجلب بيانات المستخدم من هنا
   };
 
   const logout = () => {
-    setToken(null);
-    setUser(null);
     Cookies.remove('authToken');
+    // setUser(null); // <-- إزالة
+    setIsAuthenticated(false);
   };
 
-  const value = { token, user, isAuthenticated: !!token, login, logout };
+  const value = { isAuthenticated, login, logout, isLoading };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {!isLoading && children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {

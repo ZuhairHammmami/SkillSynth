@@ -1,31 +1,54 @@
-// المسار: src/frontend/src/components/StepItem.tsx
+// المسار: src/app/components/StepItem.tsx
+'use client'; // <-- مهم لأن المكون يستخدم أيقونات
 
+// 1. استيراد المكونات التي نستخدمها من shadcn/ui
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+// 2. استيراد الأيقونات التي نستخدمها من lucide-react
+import { Check, Link as LinkIcon } from "lucide-react";
+
+// 3. تعريف أنواع البيانات للمدخلات (Props)
 type StepItemProps = {
+  stepNumber: number;
   title: string;
-  description: string;
+  resourceTitle: string;
   resourceUrl: string;
 };
 
-export default function StepItem({ title, description, resourceUrl }: StepItemProps) {
+// 4. المكون نفسه
+export default function StepItem({
+  stepNumber,
+  title,
+  resourceTitle,
+  resourceUrl,
+}: StepItemProps) {
   return (
-    <div className="bg-white p-5 rounded-lg shadow border transition-transform hover:scale-[1.02]">
-      <div className="flex justify-between items-start">
-        <div>
-          <h4 className="text-lg font-semibold text-gray-800">{title}</h4>
-          <p className="text-gray-600 mt-1">{description}</p>
-          <a
-            href={resourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline mt-3 inline-block font-medium"
-          >
-            اذهب إلى المورد &larr;
-          </a>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
+              {stepNumber}
+            </div>
+            <CardTitle>{title}</CardTitle>
+          </div>
+          <Button variant="outline" size="icon" title="Mark as complete">
+            <Check className="h-4 w-4" />
+          </Button>
         </div>
-        <button className="bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded-full hover:bg-green-200 hover:text-green-800 transition-colors">
-          تم
-        </button>
-      </div>
-    </div>
+      </CardHeader>
+      <CardContent>
+        <a
+          href={resourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+        >
+          <LinkIcon className="h-4 w-4" />
+          <span>{resourceTitle}</span>
+        </a>
+      </CardContent>
+    </Card>
   );
 }

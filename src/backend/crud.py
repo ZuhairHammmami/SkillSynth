@@ -25,3 +25,13 @@ def create_path_for_profile(db: Session, title: str, description: str, profile_i
 
 def get_paths_by_profile(db: Session, profile_id: int):
     return db.query(models.Path).filter(models.Path.profile_id == profile_id).all()
+
+def get_path_by_id(db: Session, path_id: int, profile_id: int):
+    """
+    يسترجع مسارًا واحدًا محددًا بالـ ID، 
+    ويتأكد من أنه ينتمي للمستخدم الحالي لمنع الوصول غير المصرح به.
+    """
+    return db.query(models.Path).filter(
+        models.Path.id == path_id,
+        models.Path.profile_id == profile_id
+    ).first()
