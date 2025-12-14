@@ -66,3 +66,11 @@ def mark_step_as_complete(db: Session, profile_id: int, step_id: int) -> models.
     db.refresh(db_completion)
     return db_completion
 
+def update_profile(db: Session, profile_id: int, profile_data: schemas.ProfileUpdate):
+    db.query(models.Profile).filter(models.Profile.id == profile_id).update(profile_data.dict(exclude_unset=True))
+    db.commit()
+    return db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+
+def update_password(db: Session, profile_id: int, new_password_hash: str):
+    db.query(models.Profile).filter(models.Profile.id == profile_id).update({"hashed_password": new_password_hash})
+    db.commit()

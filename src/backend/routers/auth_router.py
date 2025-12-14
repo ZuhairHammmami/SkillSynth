@@ -3,14 +3,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, EmailStr # <-- استيراد BaseModel و EmailStr
 
-# --- هذا هو التعديل الوحيد والمهم ---
-# لقد أضفنا 'models' إلى قائمة الاستيراد
-from backend import crud, schemas, auth, models
+# نستورد كل الوحدات التي نحتاجها
+from backend import crud, schemas, auth, models, email_service # <-- استيراد email_service
 from backend.database import get_db
+from jose import JWTError, jwt # <-- استيراد JWTError و jwt
 
 router = APIRouter()
 
+# --- نقاط نهاية التسجيل وتسجيل الدخول (موجودة بالفعل) ---
 @router.post("/register", response_model=schemas.Profile)
 def register_user(profile: schemas.ProfileCreate, db: Session = Depends(get_db)):
     db_profile = crud.get_profile_by_email(db, email=profile.email)
@@ -30,7 +32,76 @@ def login_for_access_token(db: Session = Depends(get_db), form_data: OAuth2Passw
     access_token = auth.create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
+# --- نقاط نهاية إدارة الحساب (التي أضفناها) ---
 @router.get("/users/me", response_model=schemas.Profile)
 def read_users_me(current_user: models.Profile = Depends(auth.get_current_user)):
-    # الآن هذا السطر سيعمل لأن 'models' أصبحت معروفة
     return current_user
+
+@router.put("/users/me", response_model=schemas.Profile)
+def update_current_user(
+    profile_data: schemas.ProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(auth.get_current_user)
+):
+    return crud.update_profile(db, profile_id=current_user.id, profile_data=profile_data)
+
+@router.post("/users/me/change-password")
+def change_current_user_password(
+    password_data: schemas.PasswordChange,
+    db: Session = Depends(get_db),
+    current_user: models.Profile = Depends(auth.get_current_user)
+):
+    if not auth.verify_password(password_data.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect current password")
+    
+    new_password_hash = auth.get_password_hash(password_data.new_password)
+    crud.update_password(db, profile_id=current_user.id, new_password_hash=new_password_hash)
+    
+    return {"message": "Password updated successfully"}
+
+# --- نقاط نهاية استعادة كلمة المرور (التي أضفناها) ---
+
+# نموذج Pydantic بسيط لاستقبال البريد الإلكتروني
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+@router.post("/forgot-password")
+def forgot_password(email_data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = crud.get_profile_by_email(db, email=email_data.email)
+    if not user:
+        return {"message": "If an account with this email exists, a password reset link has been sent."}
+    
+    reset_token = auth.create_password_reset_token(email=user.email)
+    # ملاحظة: يجب أن تقوم الواجهة الأمامية ببناء هذه الصفحة
+    reset_link = f"http://localhost:3000/reset-password?token={reset_token}"
+    
+    success = email_service.send_password_reset_email(recipient_email=user.email, reset_link=reset_link)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to send password reset email.")
+    
+    return {"message": "If an account with this email exists, a password reset link has been sent."}
+
+
+class PasswordReset(BaseModel):
+    token: str
+    new_password: str
+
+@router.post("/reset-password")
+def reset_password(reset_data: PasswordReset, db: Session = Depends(get_db)):
+    try:
+        # نحن نستخدم SECRET_KEY و ALGORITHM من وحدة 'auth'
+        payload = jwt.decode(reset_data.token, auth.SECRET_KEY, algorithms=[auth.ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise HTTPException(status_code=400, detail="Invalid token: no subject")
+    except JWTError:
+        raise HTTPException(status_code=400, detail="Token has expired or is invalid")
+
+    user = crud.get_profile_by_email(db, email=email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    new_password_hash = auth.get_password_hash(reset_data.new_password)
+    crud.update_password(db, profile_id=user.id, new_password_hash=new_password_hash)
+    
+    return {"message": "Password has been reset successfully."}
