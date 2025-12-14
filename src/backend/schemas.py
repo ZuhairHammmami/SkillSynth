@@ -53,3 +53,17 @@ class UserAnswer(BaseModel):
 class AssessmentSubmit(BaseModel):
     goal: str
     user_answers: UserAnswer
+
+class WizardPreferencesOptions(BaseModel):
+    formats: List[str]
+    languages: List[str]
+
+class WizardOptionsResponse(BaseModel):
+    job_roles: List[str]
+    preferences: WizardPreferencesOptions
+
+class AssessmentQuestionResponse(BaseModel):
+    id: str
+    skill: str
+    text: str
+    options: List[str]

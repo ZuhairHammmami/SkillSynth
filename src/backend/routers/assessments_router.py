@@ -1,90 +1,68 @@
 # src/backend/routers/assessments_router.py
 
 import json
+from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pathlib import Path
+from typing import List
 
-# استيراد الوحدات الضرورية
-from backend import crud, models, schemas, auth
+from backend import models, schemas
 from backend.database import get_db
-
-# استيراد وحدات الذكاء الاصطناعي الجديدة
-from data.learning_paths.assessor import run_assessment
-from data.learning_paths.generator import generate_path
 
 router = APIRouter()
 
-# تحديد مسار ملف بيانات التقييمات
+# تحديد مسار ثابت لملف بيانات التقييمات
+# نفترض أننا نشغل الكود من المجلد الرئيسي للمشروع
 ASSESSMENTS_FILE_PATH = Path("src/data/learning_paths/assessments.json")
 
-
-# --- المهمة الأولى: مزود الأسئلة ---
-@router.get("/assessments/{goal}")
-def get_assessment_questions(goal: str):
+@router.get("/assessments/{job_role_title}", response_model=List[schemas.AssessmentQuestionResponse])
+def get_assessment_questions_for_role(job_role_title: str, db: Session = Depends(get_db)):
     """
-    يقرأ بنك الأسئلة ويعيد الأسئلة المتعلقة بهدف معين، بدون الإجابات.
+    يجلب أسئلة اختبار تحديد المستوى بناءً على الهدف الوظيفي.
+    1. يحدد المهارات المطلوبة للدور الوظيفي من قاعدة البيانات.
+    2. يقرأ بنك الأسئلة من ملف assessments.json.
+    3. يفلتر الأسئلة التي تنتمي إلى المهارات المطلوبة.
+    4. يعيد الأسئلة المجهزة (بدون الإجابات) للواجهة الأمامية.
     """
-    if not ASSESSMENTS_FILE_PATH.exists():
-        raise HTTPException(status_code=500, detail="Assessments file not found.")
+    try:
+        # 1. ابحث عن الدور الوظيفي في قاعدة البيانات
+        job_role = db.query(models.JobRole).filter(models.JobRole.title == job_role_title).first()
+        if not job_role:
+            raise HTTPException(status_code=404, detail=f"Job role '{job_role_title}' not found.")
 
-    with open(ASSESSMENTS_FILE_PATH, 'r', encoding='utf-8') as f:
-        all_assessments = json.load(f)
+        # 2. احصل على أسماء المهارات المطلوبة لهذا الدور
+        # بفضل علاقات SQLAlchemy، يمكننا الوصول إليها مباشرة
+        required_skills = {skill.name.lower() for skill in job_role.skills}
+        if not required_skills:
+            # إذا كان الدور الوظيفي موجودًا ولكن لا توجد مهارات مرتبطة به
+            return []
 
-    if goal not in all_assessments:
-        raise HTTPException(status_code=404, detail=f"Assessment for goal '{goal}' not found.")
+        # 3. اقرأ بنك الأسئلة بالكامل
+        if not ASSESSMENTS_FILE_PATH.exists():
+            raise HTTPException(status_code=500, detail="Assessments data file not found on the server.")
+        
+        with open(ASSESSMENTS_FILE_PATH, 'r', encoding='utf-8') as f:
+            all_questions_by_skill = json.load(f)
 
-    questions_for_goal = all_assessments[goal]
+        # 4. فلترة الأسئلة وتجهيزها
+        questions_to_return = []
+        for skill_name, questions in all_questions_by_skill.items():
+            if skill_name.lower() in required_skills:
+                for question in questions:
+                    # تأكد من أن السؤال يحتوي على كل الحقول المطلوبة قبل إضافته
+                    if all(k in question for k in ["id", "text", "options"]):
+                        questions_to_return.append({
+                            "id": question["id"],
+                            "skill": skill_name.capitalize(),
+                            "text": question["text"],
+                            "options": question["options"]
+                        })
+        
+        return questions_to_return
 
-    # معالجة الأسئلة لإزالة الإجابات قبل إرسالها
-    sanitized_questions = []
-    for q in questions_for_goal:
-        sanitized_questions.append({
-            "id": q["id"],
-            "text": q["text"],
-            "options": q["options"]
-        })
-
-    return sanitized_questions
-
-
-# --- المهمة الثانية: مصحح الإجابات ومولد المسارات ---
-@router.post("/assessments/submit", response_model=schemas.Path)
-def submit_assessment_and_generate_path(
-    assessment_data: schemas.AssessmentSubmit, # استخدم نموذج Pydantic الذي ستنشئه
-    db: Session = Depends(get_db),
-    current_user: models.Profile = Depends(auth.get_current_user)
-):
-    """
-    1. يستقبل إجابات المستخدم.
-    2. يستدعي 'run_assessment' لحساب بروفايل المهارات.
-    3. (مستقبلاً) يحفظ البروفايل في قاعدة البيانات.
-    4. يستدعي 'generate_path' لإنشاء مسار مخصص.
-    5. يحفظ المسار ويعيده.
-    """
-    # 1. حساب بروفايل المهارات
-    skill_profile = run_assessment(
-        goal=assessment_data.goal,
-        user_answers=assessment_data.user_answers.answers
-    )
-
-    # TODO (مهمة مستقبلية): حفظ skill_profile في جدول 'profiles' للمستخدم current_user
-
-    # 2. توليد المسار باستخدام البروفايل الدقيق
-    # (هنا نفترض أن weekly_hours و preferences تأتي من مكان آخر أو لها قيم افتراضية)
-    generated_data = generate_path(
-        profile=skill_profile,
-        goal=assessment_data.goal,
-        weekly_hours=10, # قيمة افتراضية مؤقتة
-        preferences={}    # قيمة افتراضية مؤقتة
-    )
-
-    if "error" in generated_data:
-        raise HTTPException(status_code=400, detail=generated_data["error"])
-
-    # 3. حفظ المسار في قاعدة البيانات (نفس المنطق من paths_router)
-    # ... (انسخ والصق منطق حفظ المسار والخطوات هنا) ...
-    
-    # ... (بعد الحفظ) ...
-    # return db_path
-    pass # للتوضيح فقط، يجب إكمال المنطق هنا
+    except Exception as e:
+        print(f"Error fetching assessment questions: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="An unexpected error occurred while fetching assessment questions."
+        )
