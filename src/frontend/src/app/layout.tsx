@@ -3,13 +3,17 @@ import type { Metadata } from 'next';
 import { Tajawal } from 'next/font/google';
 import { AuthProvider } from '@/context/AuthContext';
 import Header from '@/app/components/Header';
-import './globals.css'; // <--- هذا هو السطر الحاسم الذي يستورد كل تصميماتنا
+import { AnimatedBackground } from '@/app/components/AnimatedBackground';
+import './globals.css';
 
+// =====> هذا هو التصحيح <=====
+// نحدد مجموعة الحروف والأوزان التي نحتاجها
 const tajawal = Tajawal({
   subsets: ['arabic'],
   weight: ['400', '500', '700'],
-  display: 'swap',
+  display: 'swap', // يضمن ظهور النص بخط احتياطي حتى يتم تحميل خط Tajawal
 });
+// =============================
 
 export const metadata: Metadata = {
   title: 'SkillSynth',
@@ -19,7 +23,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.Node;
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="ar" dir="rtl">
@@ -28,6 +32,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <div className="relative flex min-h-screen flex-col">
+            <AnimatedBackground />
             <Header />
             <main className="flex-grow">{children}</main>
           </div>
