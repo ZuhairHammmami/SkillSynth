@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
-from pydantic import BaseModel, EmailStr, Field 
+from pydantic import BaseModel, EmailStr, Field
+from datetime import datetime
 
 class PathStepBase(BaseModel):
     step_number: int
@@ -76,3 +77,13 @@ class AssessmentQuestionResponse(BaseModel):
     skill: str
     text: str
     options: List[str]
+
+
+
+class StepCompletionResponse(BaseModel):
+    profile_id: int
+    step_id: int
+    completed_at: datetime
+
+class Config:
+    from_attributes = True
