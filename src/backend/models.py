@@ -50,6 +50,7 @@ class Profile(Base):
     # حقل لتخزين بروفايل المهارات المحسوب
     skill_profile = Column(JSON, nullable=True)
     is_admin = Column(Boolean, default=False, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
     
     paths = relationship("Path", back_populates="owner")
     completions = relationship("StepCompletion", back_populates="profile")

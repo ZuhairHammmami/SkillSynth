@@ -171,3 +171,19 @@ class Profile(ProfileBase):
     skill_profile: Optional[dict] = None
     class Config:
         from_attributes = True
+
+class UserActivityReport(BaseModel):
+    total_users: int
+    new_users_last_24h: int
+    new_users_last_7d: int
+    users_with_paths: int
+
+class ContentEngagementReport(BaseModel):
+    total_paths: int
+    total_steps: int
+    total_completions: int
+    most_completed_steps: List[dict] # Will contain {"title": str, "completions": int}
+
+class SystemHealthReport(BaseModel):
+    database_status: str
+    last_seed_run: Optional[datetime] = None # Will be implemented later

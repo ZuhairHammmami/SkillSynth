@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 from backend import models, schemas, auth
 from typing import List
+from sqlalchemy import func, desc
+from datetime import datetime, timedelta
 
 def get_profile_by_email(db: Session, email: str):
     return db.query(models.Profile).filter(models.Profile.email == email).first()
@@ -180,3 +182,47 @@ def create_job_role(db: Session, job_role: schemas.JobRoleCreate):
 # -- Profiles (للمسؤول) --
 def get_profiles(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Profile).offset(skip).limit(limit).all()
+
+def get_user_activity_stats(db: Session) -> dict:
+    total_users = db.query(models.Profile).count()
+    
+    time_24h_ago = datetime.utcnow() - timedelta(days=1)
+    new_users_last_24h = db.query(models.Profile).filter(models.Profile.created_at >= time_24h_ago).count()
+    
+    time_7d_ago = datetime.utcnow() - timedelta(days=7)
+    new_users_last_7d = db.query(models.Profile).filter(models.Profile.created_at >= time_7d_ago).count()
+
+    users_with_paths = db.query(models.Profile).filter(models.Profile.paths.any()).count()
+
+    return {
+        "total_users": total_users,
+        "new_users_last_24h": new_users_last_24h,
+        "new_users_last_7d": new_users_last_7d,
+        "users_with_paths": users_with_paths
+    }
+
+def get_content_engagement_stats(db: Session) -> dict:
+    total_paths = db.query(models.Path).count()
+    total_steps = db.query(models.PathStep).count()
+    total_completions = db.query(models.StepCompletion).count()
+
+    # استعلام معقد للحصول على أكثر 5 خطوات تم إكمالها
+    most_completed_steps_query = db.query(
+        models.PathStep.title,
+        func.count(models.StepCompletion.step_id).label('completions')
+    ).join(
+        models.StepCompletion, models.PathStep.id == models.StepCompletion.step_id
+    ).group_by(
+        models.PathStep.title
+    ).order_by(
+        desc('completions')
+    ).limit(5).all()
+
+    most_completed_steps = [{"title": title, "completions": count} for title, count in most_completed_steps_query]
+
+    return {
+        "total_paths": total_paths,
+        "total_steps": total_steps,
+        "total_completions": total_completions,
+        "most_completed_steps": most_completed_steps
+    }
