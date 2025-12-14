@@ -35,3 +35,11 @@ def get_path_by_id(db: Session, path_id: int, profile_id: int):
         models.Path.id == path_id,
         models.Path.profile_id == profile_id
     ).first()
+
+def update_profile_skills(db: Session, profile_id: int, skill_profile: dict):
+    """
+    يقوم بتحديث حقل skill_profile (من نوع JSON) لمستخدم معين.
+    """
+    db.query(models.Profile).filter(models.Profile.id == profile_id).update({"skill_profile": skill_profile})
+    db.commit()
+    return db.query(models.Profile).filter(models.Profile.id == profile_id).first()

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
+from pydantic import BaseModel, EmailStr, Field 
 
 class PathStepBase(BaseModel):
     step_number: int
@@ -41,10 +42,18 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
 
+class DetailedPreferences(BaseModel):
+    # الحقول التي طلبها الفرونت اند وفريق الذكاء الاصطناعي
+    is_free: Optional[bool] = True
+    format: Optional[str] = "any"
+    language: Optional[str] = "en"
+    skills: Optional[dict] = {} # يبقى كخيار احتياطي
+
 class GeneratePathInput(BaseModel):
-    goal: str
-    weekly_hours: int
-    preferences: dict
+    goal: str = Field(..., example="Frontend Developer")
+    weekly_hours: int = Field(..., example=10)
+    preferences: DetailedPreferences
+    answers: dict[str, int] = Field(..., example={"html_q1": 0, "css_q1": 1})
 
 class UserAnswer(BaseModel):
     # مثال: {"html_q1": 0, "css_q2": 1}
