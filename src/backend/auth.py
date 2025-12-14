@@ -65,3 +65,14 @@ def create_password_reset_token(email: str) -> str:
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+def get_current_admin_user(current_user: models.Profile = Depends(get_current_user)):
+    """
+    حارس يعتمد على الحارس الحالي، ولكنه يضيف تحققًا إضافيًا
+    للتأكد من أن المستخدم هو مسؤول.
+    """
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The user does not have administrative privileges"
+        )
+    return current_user

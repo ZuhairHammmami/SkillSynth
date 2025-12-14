@@ -23,19 +23,6 @@ class Path(PathBase):
     class Config:
         from_attributes = True
 
-class ProfileBase(BaseModel):
-    email: EmailStr
-    full_name: Optional[str] = None
-
-class ProfileCreate(ProfileBase):
-    password: str
-
-class Profile(ProfileBase):
-    id: int
-    paths: List[Path] = []
-    class Config:
-        from_attributes = True
-
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -94,3 +81,93 @@ class ProfileUpdate(BaseModel):
 class PasswordChange(BaseModel):
     current_password: str
     new_password: str
+
+class SkillBase(BaseModel):
+    name: str
+
+class SkillCreate(SkillBase):
+    pass
+
+class Skill(SkillBase):
+    id: int
+    class Config:
+        from_attributes = True
+
+class SkillUpdate(SkillBase):
+    pass
+
+class CategoryBase(BaseModel):
+    name: str
+
+class CategoryCreate(CategoryBase):
+    pass
+
+class CategoryUpdate(CategoryBase):
+    pass
+
+class Category(CategoryBase):
+    id: int
+    skills: List[Skill] = [] # لعرض المهارات المرتبطة
+    class Config:
+        from_attributes = True
+
+# --- نماذج المصادر (Resources) ---
+
+class ResourceBase(BaseModel):
+    title: str
+    url: str
+    type: str
+    is_free: bool = True
+    is_official: bool = False
+    author_or_platform: Optional[str] = None
+
+class ResourceCreate(ResourceBase):
+    pass
+
+class ResourceUpdate(ResourceBase):
+    pass
+
+class Resource(ResourceBase):
+    id: int
+    class Config:
+        from_attributes = True
+
+# --- نماذج الأدوار الوظيفية (JobRoles) ---
+
+class JobRoleBase(BaseModel):
+    title: str
+
+class JobRoleCreate(JobRoleBase):
+    pass
+
+class JobRoleUpdate(JobRoleBase):
+    pass
+
+class JobRole(JobRoleBase):
+    id: int
+    skills: List[Skill] = [] # لعرض المهارات المرتبطة
+    class Config:
+        from_attributes = True
+
+class ProfileBase(BaseModel):
+    email: EmailStr
+    full_name: Optional[str] = None
+
+class ProfileCreate(ProfileBase):
+    password: str
+    
+class ProfileUpdate(BaseModel):
+    full_name: Optional[str] = None
+    skill_profile: Optional[dict] = None
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+
+# نموذج عرض المستخدم، مع إضافة حقل is_admin
+class Profile(ProfileBase):
+    id: int
+    is_admin: bool
+    skill_profile: Optional[dict] = None
+    class Config:
+        from_attributes = True

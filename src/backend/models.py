@@ -49,6 +49,7 @@ class Profile(Base):
     hashed_password = Column(String, nullable=False)
     # حقل لتخزين بروفايل المهارات المحسوب
     skill_profile = Column(JSON, nullable=True)
+    is_admin = Column(Boolean, default=False, nullable=False)
     
     paths = relationship("Path", back_populates="owner")
     completions = relationship("StepCompletion", back_populates="profile")
