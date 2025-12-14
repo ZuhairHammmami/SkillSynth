@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend import models
 from backend.database import engine
-from backend.routers import auth_router, paths_router, options_router, assessments_router
+from backend.routers import auth_router, paths_router, options_router, assessments_router, progress_router
 
 # 1. إنشاء التطبيق
 app = FastAPI(title="SkillSynth API")
@@ -23,6 +23,7 @@ app.add_middleware(
 )
 
 # 3. ربط الروترات
+app.include_router(progress_router.router, prefix="/api", tags=["Progress Tracking"])
 app.include_router(options_router.router, prefix="/api", tags=["Wizard Options"])
 app.include_router(assessments_router.router, prefix="/api", tags=["Assessments"])
 app.include_router(auth_router.router, prefix="/api/auth", tags=["Authentication"])

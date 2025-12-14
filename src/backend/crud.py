@@ -43,3 +43,26 @@ def update_profile_skills(db: Session, profile_id: int, skill_profile: dict):
     db.query(models.Profile).filter(models.Profile.id == profile_id).update({"skill_profile": skill_profile})
     db.commit()
     return db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+
+def mark_step_as_complete(db: Session, profile_id: int, step_id: int) -> models.StepCompletion:
+    """
+    يقوم بإنشاء سجل جديد في جدول step_completions لتوثيق إكمال المستخدم لخطوة.
+    إذا كان السجل موجودًا بالفعل، فإنه يعيده ببساطة (لا يسبب خطأ).
+    """
+    # أولاً، تحقق مما إذا كان السجل موجودًا بالفعل
+    db_completion = db.query(models.StepCompletion).filter(
+        models.StepCompletion.profile_id == profile_id,
+        models.StepCompletion.step_id == step_id
+    ).first()
+
+    if db_completion:
+        # إذا كانت الخطوة قد اكتملت بالفعل، أعد السجل الموجود
+        return db_completion
+
+    # إذا لم يكن موجودًا، أنشئ سجلًا جديدًا
+    db_completion = models.StepCompletion(profile_id=profile_id, step_id=step_id)
+    db.add(db_completion)
+    db.commit()
+    db.refresh(db_completion)
+    return db_completion
+
