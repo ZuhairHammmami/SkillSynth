@@ -1,49 +1,73 @@
-// المسار: src/frontend/src/context/AuthContext.tsx
+// المسار: src/context/AuthContext.tsx
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import Cookies from 'js-cookie';
+import apiClient from '@/lib/api';
 
-// سنقوم بإزالة واجهة User مؤقتًا
-// interface User { ... }
+interface User {
+  email: string;
+  full_name: string;
+  id: number;
+  is_admin: boolean;
+}
 
 interface AuthState {
-  // user: User | null; // <-- إزالة
+  user: User | null;
   isAuthenticated: boolean;
-  login: (token: string) => void; // <-- إزالة Promise
+  login: (token: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
+  refetchUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  // const [user, setUser] = useState<User | null>(null); // <-- إزالة
+  const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // الآن، سنتحقق فقط من وجود التوكن، بدون جلب بيانات المستخدم
+  const fetchUser = async () => {
     const token = Cookies.get('authToken');
-    if (token) {
-      setIsAuthenticated(true);
+    if (!token) {
+      setIsLoading(false);
+      return;
     }
-    setIsLoading(false); // ننهي التحميل فورًا
+    try {
+      // =====> هذا هو التصحيح الحاسم <=====
+      const response = await apiClient.get<User>('/api/auth/users/me');
+      // ===================================
+      setUser(response.data);
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error("Failed to fetch user, logging out.", error);
+      logout();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
   }, []);
 
-  const login = (token: string) => {
-    Cookies.set('authToken', token, { expires: 7, secure: true });
-    setIsAuthenticated(true);
-    // لم نعد بحاجة لجلب بيانات المستخدم من هنا
+  const login = async (token: string) => {
+    Cookies.set('authToken', token, { expires: 7 });
+    await fetchUser();
   };
 
   const logout = () => {
     Cookies.remove('authToken');
-    // setUser(null); // <-- إزالة
+    setUser(null);
     setIsAuthenticated(false);
   };
 
-  const value = { isAuthenticated, login, logout, isLoading };
+  const refetchUser = async () => {
+      await fetchUser();
+  }
+
+  const value = { user, isAuthenticated, login, logout, isLoading, refetchUser };
 
   return (
     <AuthContext.Provider value={value}>

@@ -1,19 +1,22 @@
-// المسار: src/frontend/src/app/(auth)/login/page.tsx
+// المسار: src/app/(auth)/login/page.tsx
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import apiClient from '@/lib/api'; // <-- نستخدم عميل API المركزي
+import apiClient from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from "sonner"; // <--- 1. هذا هو الاستيراد الصحيح
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
+  // لم نعد بحاجة لـ useToast() من هنا
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -23,8 +26,6 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-
-    // الباك اند يتوقع بيانات form-urlencoded هنا
     const params = new URLSearchParams();
     params.append('username', email);
     params.append('password', password);
@@ -32,22 +33,23 @@ export default function LoginPage() {
 
     try {
       const response = await apiClient.post('/api/auth/token', params, {
-        // نحدد نوع المحتوى يدويًا لأننا لا نرسل JSON
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
-      // عند النجاح، نستخدم دالة login من السياق
       await login(response.data.access_token);
-      // نوجه المستخدم إلى لوحة التحكم بعد تسجيل الدخول بنجاح
+      toast.success("مرحباً بعودتك!", { // <--- 2. هذه هي طريقة الاستخدام الصحيحة
+        description: "تم تسجيل دخولك بنجاح.",
+      });
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'فشل تسجيل الدخول. تأكد من صحة بياناتك.');
+      // عرض الخطأ كرسالة حمراء بدلاً من حالة منفصلة
+      toast.error(err.response?.data?.detail || 'فشل تسجيل الدخول. تأكد من صحة بياناتك.');
+      setError(err.response?.data?.detail || 'فشل تسجيل الدخول. تأكد من صحة بياناتك.'); // يمكن إبقاء هذا للرسالة داخل النموذج
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    // هذا الكود يضمن أن النموذج سيكون في منتصف الصفحة عموديًا وأفقيًا
     <div className="container mx-auto flex items-center justify-center min-h-[calc(100vh-80px)] px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center space-y-1">
@@ -69,7 +71,12 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">كلمة المرور</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">كلمة المرور</Label>
+                <Link href="/forgot-password" className="text-sm font-medium text-primary hover:underline">
+                  نسيت كلمة المرور؟
+                </Link>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -81,6 +88,7 @@ export default function LoginPage() {
             </div>
             {error && <p className="text-sm font-medium text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLoading ? 'جارٍ التحقق...' : 'دخول'}
             </Button>
           </form>

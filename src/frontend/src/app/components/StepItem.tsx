@@ -1,40 +1,66 @@
 // المسار: src/app/components/StepItem.tsx
-'use client'; // <-- مهم لأن المكون يستخدم أيقونات
-
-// 1. استيراد المكونات التي نستخدمها من shadcn/ui
+'use client';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Check, Link as LinkIcon, Circle } from "lucide-react";
 
-// 2. استيراد الأيقونات التي نستخدمها من lucide-react
-import { Check, Link as LinkIcon } from "lucide-react";
-
-// 3. تعريف أنواع البيانات للمدخلات (Props)
 type StepItemProps = {
+  stepId: number;
   stepNumber: number;
   title: string;
   resourceTitle: string;
   resourceUrl: string;
+  isCompleted: boolean;
+  onComplete: (stepId: number) => void;
 };
 
-// 4. المكون نفسه
 export default function StepItem({
+  stepId,
   stepNumber,
   title,
   resourceTitle,
   resourceUrl,
+  isCompleted,
+  onComplete,
 }: StepItemProps) {
   return (
-    <Card>
+    // نغير شفافية البطاقة إذا كانت مكتملة
+    <Card className={`transition-opacity ${isCompleted ? "opacity-60" : "opacity-100"}`}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
-              {stepNumber}
+            <div 
+              className={`flex h-8 w-8 items-center justify-center rounded-full font-bold transition-colors
+              ${isCompleted 
+                ? "bg-green-500 text-white" 
+                : "bg-primary text-primary-foreground"}`
+              }
+            >
+              {isCompleted ? <Check className="h-5 w-5" /> : stepNumber}
             </div>
-            <CardTitle>{title}</CardTitle>
+            {/* نضيف خطًا على العنوان إذا كانت الخطوة مكتملة */}
+            <CardTitle className={isCompleted ? "text-muted-foreground line-through" : ""}>
+              {title}
+            </CardTitle>
           </div>
-          <Button variant="outline" size="icon" title="Mark as complete">
-            <Check className="h-4 w-4" />
+          <Button 
+            variant={isCompleted ? "secondary" : "outline"} 
+            size="sm"
+            onClick={() => onComplete(stepId)}
+            disabled={isCompleted}
+            aria-label={isCompleted ? "الخطوة مكتملة" : "إكمال الخطوة"}
+          >
+            {isCompleted ? (
+              <>
+                <Check className="ml-2 h-4 w-4" />
+                مكتمل
+              </>
+            ) : (
+              <>
+                <Circle className="ml-2 h-4 w-4" />
+                إكمال
+              </>
+            )}
           </Button>
         </div>
       </CardHeader>

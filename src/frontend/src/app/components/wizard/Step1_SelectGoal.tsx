@@ -1,40 +1,44 @@
 // المسار: src/app/components/wizard/Step1_SelectGoal.tsx
 'use client';
-import { useEffect, useState } from 'react';
-import apiClient from '@/lib/api';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { WizardOptions } from '@/app/wizard/page'; // استيراد النوع
 
 interface Props {
+  options: WizardOptions | null; // استقبال الخيارات
   onGoalSelect: (goal: string) => void;
 }
 
-export default function Step1_SelectGoal({ onGoalSelect }: Props) {
-  const [roles, setRoles] = useState<string[]>([]);
+export default function Step1_SelectGoal({ options, onGoalSelect }: Props) {
   const [selectedRole, setSelectedRole] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    apiClient.get<{ job_roles: string[] }>('/api/wizard-options')
-      .then(res => setRoles(res.data.job_roles))
-      .catch(err => console.error(err))
-      .finally(() => setIsLoading(false));
-  }, []);
-
-  if (isLoading) return <p>جارٍ تحميل الخيارات...</p>;
+  if (!options) {
+      // عرض رسالة في حالة عدم توفر الخيارات بعد
+      return <div className="text-center text-muted-foreground">جاري التحضير...</div>;
+  }
 
   return (
     <div className="space-y-6 flex flex-col items-center">
       <Select onValueChange={setSelectedRole} value={selectedRole}>
-        <SelectTrigger className="w-full">
+        <SelectTrigger className="w-full max-w-sm mx-auto">
           <SelectValue placeholder="اختر هدفك الوظيفي..." />
         </SelectTrigger>
         <SelectContent>
-          {roles.map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
+          <SelectGroup>
+            <SelectLabel>الأهداف المتاحة</SelectLabel>
+            {options.job_roles.map(role => (
+              <SelectItem key={role} value={role}>{role}</SelectItem>
+            ))}
+          </SelectGroup>
         </SelectContent>
       </Select>
-      <Button onClick={() => onGoalSelect(selectedRole)} disabled={!selectedRole}>
-        ابدأ اختبار تحديد المستوى
+      <Button 
+        onClick={() => onGoalSelect(selectedRole)} 
+        disabled={!selectedRole}
+        className="w-full sm:w-auto px-8"
+      >
+        التالي
       </Button>
     </div>
   );

@@ -65,20 +65,15 @@ def change_current_user_password(
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
 
-@router.post("/forgot-password")
-def forgot_password(email_data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+@router.post("/request-password-reset", summary="Request a password reset link")
+def request_password_reset(email_data: ForgotPasswordRequest, db: Session = Depends(get_db)):
     user = crud.get_profile_by_email(db, email=email_data.email)
-    if not user:
-        return {"message": "If an account with this email exists, a password reset link has been sent."}
+    if user:
+        reset_token = auth.create_password_reset_token(email=user.email)
+        reset_link = f"http://localhost:3000/reset-password?token={reset_token}"
+        email_service.send_password_reset_email(recipient_email=user.email, reset_link=reset_link)
     
-    reset_token = auth.create_password_reset_token(email=user.email)
-    # ملاحظة: يجب أن تقوم الواجهة الأمامية ببناء هذه الصفحة
-    reset_link = f"http://localhost:3000/reset-password?token={reset_token}"
-    
-    success = email_service.send_password_reset_email(recipient_email=user.email, reset_link=reset_link)
-    if not success:
-        raise HTTPException(status_code=500, detail="Failed to send password reset email.")
-    
+    # نعيد نفس الرسالة دائمًا لأسباب أمنية
     return {"message": "If an account with this email exists, a password reset link has been sent."}
 
 
@@ -86,14 +81,14 @@ class PasswordReset(BaseModel):
     token: str
     new_password: str
 
-@router.post("/reset-password")
-def reset_password(reset_data: PasswordReset, db: Session = Depends(get_db)):
+# تم تغيير اسم Endpoint ليطابق طلب الفرونت اند
+@router.post("/reset-password", summary="Reset user password with a token")
+def reset_password_with_token(reset_data: PasswordReset, db: Session = Depends(get_db)):
     try:
-        # نحن نستخدم SECRET_KEY و ALGORITHM من وحدة 'auth'
         payload = jwt.decode(reset_data.token, auth.SECRET_KEY, algorithms=[auth.ALGORITHM])
         email: str = payload.get("sub")
-        if email is None:
-            raise HTTPException(status_code=400, detail="Invalid token: no subject")
+        if not email:
+            raise HTTPException(status_code=400, detail="Invalid token")
     except JWTError:
         raise HTTPException(status_code=400, detail="Token has expired or is invalid")
 

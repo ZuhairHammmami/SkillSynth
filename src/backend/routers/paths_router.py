@@ -5,15 +5,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-# نستورد كل الوحدات التي نحتاجها، بما في ذلك 'auth' الذي يحتوي على الحارس
+# نستورد كل الوحدات التي نحتاجها
 from backend import crud, models, schemas, auth
 from backend.database import get_db
-from data.learning_paths.generator import generate_path
+
+# استيراد وحدات الذكاء الاصطناعي
 from data.learning_paths.assessor import run_assessment
+from data.learning_paths.generator import generate_path
 
 router = APIRouter()
 
-# (تم حذف السطر الخاطئ 'current_user: ... = Depends(get_current_user)' من هنا)
 
 @router.post("/generate-path/", response_model=schemas.Path)
 def generate_new_path(
@@ -22,24 +23,21 @@ def generate_new_path(
     current_user: models.Profile = Depends(auth.get_current_user)
 ):
     """
-    ينسق العملية الكاملة لتوليد مسار مخصص:
-    1. يستدعي 'run_assessment' لحساب بروفايل المهارات بناءً على إجابات المستخدم.
-    2. يقوم بتحديث سجل المستخدم في قاعدة البيانات بهذا البروفايل الجديد.
-    3. يستدعي 'generate_path' لإنشاء المسار التعليمي باستخدام البروفايل الدقيق.
-    4. يحفظ المسار والخطوات والموارد الناتجة في قاعدة البيانات.
-    5. يعيد المسار الكامل إلى الواجهة الأمامية.
+    ينسق العملية الكاملة لتوليد مسار مخصص.
+    هذه هي نقطة النهاية الأكثر أهمية في التطبيق.
     """
     try:
-        # 1. استدعاء وحدة التقييم للحصول على بروفايل المهارات الدقيق
+        # 1. استدعاء وحدة التقييم لحساب بروفايل المهارات الدقيق
         skill_profile = run_assessment(
             goal=path_input.goal,
             user_answers=path_input.answers
         )
+        # تحقق من وجود خطأ من وحدة التقييم
         if "error" in skill_profile:
             raise HTTPException(status_code=400, detail=f"Assessment error: {skill_profile['error']}")
 
         # 2. حفظ/تحديث بروفايل المهارات للمستخدم في قاعدة البيانات
-        crud.update_profile_skills(db, profile_id=current_user.id, skill_profile=skill_profile)
+        crud.update_profile(db, profile_id=current_user.id, profile_data=schemas.ProfileUpdate(skill_profile=skill_profile))
 
         # 3. استدعاء مولد المسارات بالبيانات المحدثة
         generated_data = generate_path(
@@ -48,6 +46,7 @@ def generate_new_path(
             weekly_hours=path_input.weekly_hours,
             preferences=path_input.preferences.dict() # تحويل نموذج Pydantic إلى قاموس
         )
+        # تحقق من وجود خطأ من وحدة المولد
         if "error" in generated_data:
             raise HTTPException(status_code=400, detail=f"Path generation error: {generated_data['error']}")
         
@@ -68,6 +67,7 @@ def generate_new_path(
             )
             db.add(db_step)
         
+        # تنفيذ كل التغييرات في قاعدة البيانات دفعة واحدة
         db.commit()
         db.refresh(db_path)
         
@@ -75,9 +75,17 @@ def generate_new_path(
         return db_path
 
     except Exception as e:
-        # معالجة أي خطأ غير متوقع
-        print(f"An unexpected error occurred in generate_new_path: {e}")
-        raise HTTPException(status_code=500, detail="An internal server error occurred.")
+        # --- هذا هو الإصلاح المهم ---
+        # نقوم بالتقاط أي خطأ غير متوقع من وحدات الذكاء الاصطناعي (مثل خطأ 'skill_name')
+        # أو أي خطأ آخر في العملية
+        print(f"!!! CRITICAL ERROR in generate_path endpoint: {e}")
+        
+        # تراجع عن أي تغييرات قد تكون حدثت في قاعدة البيانات قبل حدوث الخطأ
+        db.rollback() 
+        
+        # أعد رسالة خطأ واضحة للواجهة الأمامية
+        raise HTTPException(status_code=500, detail=f"An internal error occurred in the AI module or database operation: {str(e)}")
+
 
 @router.get("/paths/{path_id}", response_model=schemas.Path)
 def read_single_path(
@@ -89,6 +97,7 @@ def read_single_path(
     if db_path is None:
         raise HTTPException(status_code=404, detail="Path not found")
     return db_path
+
 
 @router.get("/paths/", response_model=List[schemas.Path])
 def read_paths_for_current_user(
