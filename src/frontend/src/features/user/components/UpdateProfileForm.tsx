@@ -1,66 +1,50 @@
-// المسار: src/app/components/profile/UpdateProfileForm.tsx
+// المسار: src/features/user/components/UpdateProfileForm.tsx
 'use client';
 
 import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from "sonner";
 import { Loader2 } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import type { User } from '@/store/authStore'; // <-- استيراد نوع User من المخزن المركزي
 
-// تعريف شكل بيانات المستخدم التي يستقبلها المكون
-interface User {
-  email: string;
-  full_name: string;
-  id: number;
-  is_admin: boolean;
-}
-
-// تعريف شكل الخصائص (Props) التي يستقبلها المكون
 interface Props {
   user: User;
 }
 
+// 1. تعريف دالة التحديث خارج المكون
+const updateUser = async (updatedData: { full_name: string }) => {
+  const { data } = await apiClient.put<User>('/api/auth/users/me', updatedData);
+  return data;
+};
+
 export const UpdateProfileForm = ({ user }: Props) => {
-  // استدعاء "الدماغ" للحصول على دالة تحديث بيانات المستخدم
-  const { refetchUser } = useAuth();
-  
-  // حالة محلية لتخزين قيمة حقل "الاسم الكامل"
+  const queryClient = useQueryClient();
   const [fullName, setFullName] = useState(user.full_name);
-  
-  // حالة محلية لتتبع حالة تحميل الطلب
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // منع السلوك الافتراضي للنموذج (إعادة تحميل الصفحة)
-
-    // التحقق مما إذا كان المستخدم قد أجرى أي تغيير
-    if (fullName === user.full_name) {
-        toast.info("لم تقم بإجراء أي تغييرات على اسمك.");
-        return; // أوقف التنفيذ إذا لم يتغير الاسم
-    }
-    
-    setIsLoading(true); // ابدأ حالة التحميل
-
-    try {
-      // إرسال طلب PUT إلى الباك اند لتحديث الاسم
-      await apiClient.put('/api/users/me', { full_name: fullName });
-      
-      // عند النجاح، أظهر إشعار نجاح
+  // 2. استخدام useMutation من React Query لإدارة الطلب
+  const { mutate: performUpdate, isPending } = useMutation({
+    mutationFn: updateUser,
+    onSuccess: (updatedUser) => {
+      // عند النجاح، قم بتحديث بيانات 'user' في ذاكرة React Query
+      queryClient.setQueryData(['user'], updatedUser);
       toast.success("تم تحديث اسمك بنجاح!");
-      
-      // قم بتحديث بيانات المستخدم في كامل التطبيق (سيؤدي هذا إلى تحديث الاسم في الهيدر فورًا)
-      await refetchUser();
-
-    } catch (error) {
-      // في حالة الفشل، أظهر إشعار خطأ
+    },
+    onError: () => {
       toast.error("فشل تحديث الملف الشخصي. يرجى المحاولة مرة أخرى.");
-    } finally {
-      // قم دائمًا بإيقاف حالة التحميل بعد انتهاء الطلب (سواء نجح أم فشل)
-      setIsLoading(false);
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (fullName === user.full_name) {
+      toast.info("لم تقم بإجراء أي تغييرات على اسمك.");
+      return;
     }
+    performUpdate({ full_name: fullName });
   };
 
   return (
@@ -71,7 +55,7 @@ export const UpdateProfileForm = ({ user }: Props) => {
           id="email" 
           type="email" 
           value={user.email} 
-          disabled // البريد الإلكتروني غير قابل للتعديل
+          disabled 
           className="opacity-75 cursor-not-allowed"
         />
       </div>
@@ -82,13 +66,12 @@ export const UpdateProfileForm = ({ user }: Props) => {
           value={fullName} 
           onChange={(e) => setFullName(e.target.value)} 
           required 
-          disabled={isLoading}
+          disabled={isPending}
         />
       </div>
-      <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
-        {/* عرض أيقونة التحميل بجانب النص عند التحميل */}
-        {isLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-        {isLoading ? 'جارٍ الحفظ...' : 'حفظ التغييرات'}
+      <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
+        {isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+        {isPending ? 'جارٍ الحفظ...' : 'حفظ التغييرات'}
       </Button>
     </form>
   );

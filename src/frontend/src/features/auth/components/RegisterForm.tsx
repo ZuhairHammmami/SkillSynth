@@ -1,69 +1,95 @@
-// المسار: src/frontend/src/app/(auth)/register/page.tsx
+// المسار: src/features/auth/components/RegisterForm.tsx
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useRegister } from '../hooks/useRegister';
 import Link from 'next/link';
-import apiClient from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Loader2 } from 'lucide-react';
 
-export default function RegisterPage() {
-  const router = useRouter();
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+// تعريف schema التحقق باستخدام Zod
+const formSchema = z.object({
+  full_name: z.string().min(2, { message: "الاسم يجب أن يكون حرفين على الأقل." }),
+  email: z.string().email({ message: "الرجاء إدخال بريد إلكتروني صالح." }),
+  password: z.string().min(8, { message: "كلمة المرور يجب أن تكون 8 أحرف على الأقل." }),
+});
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+export default function RegisterForm() {
+  const { mutate: performRegister, isPending } = useRegister();
 
-    try {
-      await apiClient.post('/api/auth/register', {
-        full_name: fullName,
-        email: email,
-        password: password,
-      });
-      // عند النجاح، نوجه المستخدم إلى صفحة تسجيل الدخول ليدخل بحسابه الجديد
-      router.push('/login');
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'فشل إنشاء الحساب. قد يكون البريد الإلكتروني مستخدمًا بالفعل.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      full_name: "",
+      email: "",
+      password: "",
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    performRegister(values);
+  }
 
   return (
-    <div className="container mx-auto flex items-center justify-center min-h-[calc(100vh-80px)] px-4">
+    <div className="container mx-auto flex items-center justify-center min-h-screen px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center space-y-1">
           <CardTitle className="text-2xl">إنشاء حساب جديد</CardTitle>
           <CardDescription>املأ البيانات التالية للانضمام إلينا</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">الاسم الكامل</Label>
-              <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required disabled={isLoading} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">البريد الإلكتروني</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={isLoading} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">كلمة المرور</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isLoading} />
-            </div>
-            {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'جارٍ الإنشاء...' : 'إنشاء حساب'}
-            </Button>
-          </form>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="full_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>الاسم الكامل</FormLabel>
+                    <FormControl>
+                      <Input placeholder="اسمك الكامل" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>البريد الإلكتروني</FormLabel>
+                    <FormControl>
+                      <Input placeholder="name@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>كلمة المرور</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isPending ? 'جارٍ الإنشاء...' : 'إنشاء حساب'}
+              </Button>
+            </form>
+          </Form>
         </CardContent>
         <CardFooter>
           <p className="text-center text-sm text-muted-foreground w-full">

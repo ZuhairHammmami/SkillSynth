@@ -1,97 +1,89 @@
-// المسار: src/app/(auth)/login/page.tsx
+// المسار: src/features/auth/components/LoginForm.tsx
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useLogin } from '../hooks/useLogin';
 import Link from 'next/link';
-import apiClient from '@/lib/api';
-import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from "sonner"; // <--- 1. هذا هو الاستيراد الصحيح
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Loader2 } from 'lucide-react';
 
-export default function LoginPage() {
-  const router = useRouter();
-  const { login } = useAuth();
-  // لم نعد بحاجة لـ useToast() من هنا
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+// 1. تعريف schema التحقق باستخدام Zod
+const formSchema = z.object({
+  email: z.string().email({ message: "الرجاء إدخال بريد إلكتروني صالح." }),
+  password: z.string().min(1, { message: "كلمة المرور مطلوبة." }),
+});
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-    const params = new URLSearchParams();
-    params.append('username', email);
-    params.append('password', password);
-    params.append('grant_type', 'password');
+export default function LoginForm() {
+  // 2. استدعاء الـ Hook الخاص بتسجيل الدخول
+  const { mutate: performLogin, isPending } = useLogin();
 
-    try {
-      const response = await apiClient.post('/api/auth/token', params, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      });
-      await login(response.data.access_token);
-      toast.success("مرحباً بعودتك!", { // <--- 2. هذه هي طريقة الاستخدام الصحيحة
-        description: "تم تسجيل دخولك بنجاح.",
-      });
-      router.push('/dashboard');
-    } catch (err: any) {
-      // عرض الخطأ كرسالة حمراء بدلاً من حالة منفصلة
-      toast.error(err.response?.data?.detail || 'فشل تسجيل الدخول. تأكد من صحة بياناتك.');
-      setError(err.response?.data?.detail || 'فشل تسجيل الدخول. تأكد من صحة بياناتك.'); // يمكن إبقاء هذا للرسالة داخل النموذج
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // 3. إعداد react-hook-form مع Zod
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  // 4. دالة الإرسال التي تستدعي الـ Hook
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    performLogin(values);
+  }
 
   return (
-    <div className="container mx-auto flex items-center justify-center min-h-[calc(100vh-80px)] px-4">
+    <div className="container mx-auto flex items-center justify-center min-h-screen px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center space-y-1">
           <CardTitle className="text-2xl">تسجيل الدخول</CardTitle>
           <CardDescription>أدخل بياناتك للوصول إلى حسابك</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">البريد الإلكتروني</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>البريد الإلكتروني</FormLabel>
+                    <FormControl>
+                      <Input placeholder="name@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">كلمة المرور</Label>
-                <Link href="/forgot-password" className="text-sm font-medium text-primary hover:underline">
-                  نسيت كلمة المرور؟
-                </Link>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>كلمة المرور</FormLabel>
+                      <Link href="/forgot-password" className="text-sm font-medium text-primary hover:underline">
+                        نسيت كلمة المرور؟
+                      </Link>
+                    </div>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isLoading ? 'جارٍ التحقق...' : 'دخول'}
-            </Button>
-          </form>
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isPending ? 'جارٍ التحقق...' : 'دخول'}
+              </Button>
+            </form>
+          </Form>
         </CardContent>
         <CardFooter>
           <p className="text-center text-sm text-muted-foreground w-full">
