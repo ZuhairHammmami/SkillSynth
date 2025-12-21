@@ -64,6 +64,21 @@ def read_all_paths_as_admin(skip: int = 0, limit: int = 100, db: Session = Depen
         } for p in paths
     ]
 
+
+@router.put("/users/{user_id}", response_model=schemas.Profile)
+def update_user_by_admin(
+    user_id: int, 
+    user_data: schemas.AdminUserUpdate, 
+    db: Session = Depends(get_db)
+):
+    """
+    [Admin Only] تعديل بيانات أي مستخدم (تغيير الاسم، الايميل، كلمة المرور، الصلاحية).
+    """
+    updated_user = crud.update_user_as_admin(db, user_id, user_data)
+    if not updated_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return updated_user
+
 # =========================
 #  3. إدارة المحتوى (CRUD)
 # =========================

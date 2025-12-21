@@ -199,3 +199,12 @@ class PathAdminView(BaseModel):
 
     class Config:
         from_attributes = True
+
+class AdminUserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None # اختياري، إذا أراد الأدمن تغيير كلمة المرور
+    is_admin: Optional[bool] = None # لتغيير الصلاحية
+
+    class Config:
+        from_attributes = True

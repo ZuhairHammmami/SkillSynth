@@ -1,31 +1,31 @@
-/* المسار: src/frontend/src/app/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* لوحة الألوان الجديدة - الوضع العادي */
-    --background: 0 0% 100%; /* أبيض نقي */
-    --foreground: 224 71.4% 4.1%; /* أسود مزرق داكن */
+    /* الخلفية: أوف وايت مائل للأزرق الفاتح جداً للفخامة */
+    --background: 210 40% 98%; 
+    /* النص: كحلي غامق جداً (ليس أسود) للقراءة المريحة */
+    --foreground: 222 47% 11%;
+
+    /* البطاقات: أبيض نقي مع شفافية */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* اللون الأساسي: نيلي قوي (Indigo) يعبر عن الثقة والتكنولوجيا */
+    --primary: 243 75% 59%; /* #6366f1 */
+    --primary-foreground: 210 40% 98%;
+
+    /* اللون الثانوي: بنفسجي فاتح للتباين */
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-
-    --primary: 221.2 83.2% 53.3%; /* أزرق مشرق */
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 166 84% 44%; /* أخضر زاهي (Teal) */
-    --secondary-foreground: 210 40% 98%;
 
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
@@ -33,12 +33,34 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 243 75% 59%;
+
+    --radius: 0.75rem; /* زوايا أكثر استدارة (12px) */
   }
 
   .dark {
-    /* يمكنك إضافة الوضع المظلم هنا لاحقًا */
+    /* الوضع المظلم (Dark Mode) - جاهز للمستقبل */
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 217 33% 17%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 243 75% 59%;
+    --primary-foreground: 222 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 243 75% 59%;
   }
 }
 
@@ -47,7 +69,20 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
-    @apply bg-gradient-to-b from-background to-muted/50 text-foreground;
+    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
+    /* خطوط دقيقة وناعمة */
+    font-feature-settings: "rlig" 1, "calt" 1; 
   }
+}
+
+/* تحسينات إضافية للتمرير (Scrollbar) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40 transition-colors;
 }

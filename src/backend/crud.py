@@ -184,3 +184,21 @@ def update_item(db: Session, model: Type[models.Base], item_id: int, data: schem
 
 def get_item_by_id(db: Session, model: Type[models.Base], item_id: int):
     return db.query(model).filter(model.id == item_id).first()
+
+def update_user_as_admin(db: Session, user_id: int, user_data: schemas.AdminUserUpdate):
+    db_user = get_item_by_id(db, models.Profile, user_id)
+    if db_user:
+        update_data = user_data.dict(exclude_unset=True)
+        
+        # إذا تم إرسال كلمة مرور جديدة، يجب تشفيرها قبل الحفظ
+        if 'password' in update_data and update_data['password']:
+            hashed_pw = auth.get_password_hash(update_data['password'])
+            update_data['hashed_password'] = hashed_pw
+            del update_data['password'] # نحذف حقل كلمة المرور الخام
+            
+        for key, value in update_data.items():
+            setattr(db_user, key, value)
+            
+        db.commit()
+        db.refresh(db_user)
+    return db_user
