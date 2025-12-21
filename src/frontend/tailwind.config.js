@@ -93,6 +93,16 @@ module.exports = {
       to: { height: "0" },
     },
   },
+  
+  animation: {
+    "dash": "dash 10s linear infinite",
+    // ...
+  },
+  keyframes: {
+    dash: {
+      "0%": { strokeDasharray: "10, 10", strokeDashoffset: "0" },
+      "100%": { strokeDasharray: "10, 10", strokeDashoffset: "100" },
+    },}
     },
   },
   plugins: [require("tailwindcss-animate")],

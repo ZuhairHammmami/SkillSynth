@@ -2,27 +2,35 @@
 
 export const AnimatedBackground = () => {
   return (
-    <div className="fixed inset-0 -z-50 overflow-hidden pointer-events-none">
-      {/* Blob 1: Purple/Indigo */}
-      <div 
-        className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"
-        style={{ backgroundColor: '#6366f1' }} // Indigo
-      ></div>
+    <div className="fixed inset-0 -z-50 overflow-hidden bg-slate-950">
+      {/* 1. شبكة خلفية ثابتة */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+
+      {/* 2. أضواء متحركة (Spotlights) */}
+      <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-cyan-500/10 via-blue-500/5 to-transparent blur-3xl" />
       
-      {/* Blob 2: Cyan/Blue */}
-      <div 
-        className="absolute top-[20%] left-[-10%] w-[400px] h-[400px] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"
-        style={{ backgroundColor: '#06b6d4' }} // Cyan
-      ></div>
-      
-      {/* Blob 3: Pink/Rose */}
-      <div 
-        className="absolute bottom-[-10%] left-[20%] w-[600px] h-[600px] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"
-        style={{ backgroundColor: '#f43f5e' }} // Rose
-      ></div>
-      
-      {/* Grid Pattern Overlay (اختياري ليعطي مظهر تقني) */}
-      <div className="absolute inset-0 bg-grid-slate-900/[0.02] [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:bg-grid-slate-400/[0.05]"></div>
+      {/* 3. عناصر عائمة (Orbiting Elements) - تعبر عن المهارات */}
+      <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl animate-pulse delay-75" />
+      <div className="absolute bottom-1/3 right-1/4 w-40 h-40 bg-purple-500/20 rounded-full blur-2xl animate-pulse delay-1000" />
+
+      {/* 4. خطوط المسار (SVG Lines) */}
+      <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 0 }} />
+            <stop offset="50%" style={{ stopColor: '#06b6d4', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: '#3b82f6', stopOpacity: 0 }} />
+          </linearGradient>
+        </defs>
+        {/* مسار منحني 1 */}
+        <path 
+            d="M0,100 Q400,300 800,100 T1600,300" 
+            fill="none" 
+            stroke="url(#grad1)" 
+            strokeWidth="2"
+            className="animate-dash"
+        />
+      </svg>
     </div>
   );
 };
