@@ -2,14 +2,11 @@
 
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
-from typing import List, Type # <-- الإصلاح الأول: استيراد Type
+from typing import List, Type, Optional
 from datetime import datetime, timedelta
 from backend import models, schemas, auth
 
-# ===============================================================
-#  دوال المستخدم (User-facing Functions)
-# ===============================================================
-
+# --- دوال المستخدم ---
 def get_profile_by_email(db: Session, email: str):
     return db.query(models.Profile).filter(models.Profile.email == email).first()
 
@@ -18,7 +15,8 @@ def create_profile(db: Session, profile: schemas.ProfileCreate):
     db_profile = models.Profile(
         email=profile.email, 
         full_name=profile.full_name, 
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
+        is_admin=False
     )
     db.add(db_profile)
     db.commit()
@@ -26,7 +24,7 @@ def create_profile(db: Session, profile: schemas.ProfileCreate):
     return db_profile
 
 def update_profile(db: Session, profile_id: int, profile_data: schemas.ProfileUpdate):
-    db_profile = get_item_by_id(db, models.Profile, profile_id)
+    db_profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
     if db_profile:
         update_data = profile_data.dict(exclude_unset=True)
         for key, value in update_data.items():
@@ -39,6 +37,7 @@ def update_password(db: Session, profile_id: int, new_password_hash: str):
     db.query(models.Profile).filter(models.Profile.id == profile_id).update({"hashed_password": new_password_hash})
     db.commit()
 
+# --- دوال المسارات ---
 def create_path_for_profile(db: Session, title: str, description: str, profile_id: int):
     db_path = models.Path(title=title, description=description, profile_id=profile_id)
     db.add(db_path)
@@ -52,33 +51,24 @@ def get_paths_by_profile(db: Session, profile_id: int):
 def get_path_by_id(db: Session, path_id: int, profile_id: int):
     return db.query(models.Path).filter(models.Path.id == path_id, models.Path.profile_id == profile_id).first()
 
-def mark_step_as_complete(db: Session, profile_id: int, step_id: int):
-    db_completion = db.query(models.StepCompletion).filter(
-        models.StepCompletion.profile_id == profile_id,
-        models.StepCompletion.step_id == step_id
-    ).first()
-    if not db_completion:
-        db_completion = models.StepCompletion(profile_id=profile_id, step_id=step_id)
-        db.add(db_completion)
-        db.commit()
-        db.refresh(db_completion)
-    return db_completion
+# --- دوال المسؤول (Admin) ---
+def get_profiles(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Profile).order_by(models.Profile.id).offset(skip).limit(limit).all()
 
-# ===============================================================
-#  دوال المسؤول (Admin Functions)
-# ===============================================================
+def get_all_paths_admin(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Path).order_by(models.Path.created_at.desc()).offset(skip).limit(limit).all()
 
-def get_item_by_id(db: Session, model: Type[models.Base], item_id: int): # <-- الإصلاح هنا
+def get_item_by_id(db: Session, model: Type[models.Base], item_id: int):
     return db.query(model).filter(model.id == item_id).first()
 
-def delete_item_by_id(db: Session, model: Type[models.Base], item_id: int): # <-- الإصلاح هنا
+def delete_item_by_id(db: Session, model: Type[models.Base], item_id: int):
     db_item = get_item_by_id(db, model, item_id)
     if db_item:
         db.delete(db_item)
         db.commit()
     return db_item
 
-def update_item(db: Session, item_id: int, data: schemas.BaseModel, model: Type[models.Base]): # <-- الإصلاح هنا
+def update_item(db: Session, model: Type[models.Base], item_id: int, data: schemas.BaseModel):
     db_item = get_item_by_id(db, model, item_id)
     if db_item:
         update_data = data.dict(exclude_unset=True)
@@ -88,93 +78,109 @@ def update_item(db: Session, item_id: int, data: schemas.BaseModel, model: Type[
         db.refresh(db_item)
     return db_item
 
-def get_profiles(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Profile).order_by(models.Profile.id).offset(skip).limit(limit).all()
+# -- إحصائيات التقارير --
+def get_user_activity_stats(db: Session):
+    total_users = db.query(models.Profile).count()
+    time_24h_ago = datetime.utcnow() - timedelta(days=1)
+    new_24h = db.query(models.Profile).filter(models.Profile.created_at >= time_24h_ago).count()
+    time_7d_ago = datetime.utcnow() - timedelta(days=7)
+    new_7d = db.query(models.Profile).filter(models.Profile.created_at >= time_7d_ago).count()
+    users_with_paths = db.query(models.Profile).filter(models.Profile.paths.any()).count()
+    return {"total_users": total_users, "new_users_last_24h": new_24h, "new_users_last_7d": new_7d, "users_with_paths": users_with_paths}
 
+def get_content_engagement_stats(db: Session):
+    total_paths = db.query(models.Path).count()
+    total_steps = db.query(models.PathStep).count()
+    total_completions = db.query(models.StepCompletion).count()
+    most_completed = db.query(models.PathStep.title, func.count(models.StepCompletion.step_id).label('completions')).join(models.StepCompletion).group_by(models.PathStep.title).order_by(desc('completions')).limit(5).all()
+    return {"total_paths": total_paths, "total_steps": total_steps, "total_completions": total_completions, "most_completed_steps": [{"title": r[0], "completions": r[1]} for r in most_completed]}
+
+def get_most_active_users(db: Session, limit: int = 10):
+    return db.query(models.Profile.email, func.count(models.StepCompletion.profile_id).label('count')).join(models.StepCompletion).group_by(models.Profile.email).order_by(desc('count')).limit(limit).all()
+
+def get_most_requested_skills(db: Session, limit: int = 10):
+    # استخدام جدول الربط path_skills للعد
+    return db.query(models.Skill.name, func.count(models.path_skills.c.skill_id).label('count')).join(models.path_skills).group_by(models.Skill.name).order_by(desc('count')).limit(limit).all()
+
+# -- مهارات وتصنيفات --
 def get_skill_by_name(db: Session, name: str):
     return db.query(models.Skill).filter(models.Skill.name.ilike(name)).first()
-
-def get_skills(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Skill).order_by(models.Skill.name).offset(skip).limit(limit).all()
-
 def create_skill(db: Session, skill: schemas.SkillCreate):
     db_skill = models.Skill(name=skill.name)
     db.add(db_skill)
     db.commit()
     db.refresh(db_skill)
     return db_skill
-
-def update_skill(db: Session, skill_id: int, skill_data: schemas.SkillUpdate):
-    return update_item(db, skill_id, skill_data, models.Skill)
+def get_skills(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Skill).offset(skip).limit(limit).all()
 
 def get_category_by_name(db: Session, name: str):
     return db.query(models.Category).filter(models.Category.name.ilike(name)).first()
-
-def get_categories(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Category).order_by(models.Category.name).offset(skip).limit(limit).all()
-
 def create_category(db: Session, category: schemas.CategoryCreate):
-    db_category = models.Category(name=category.name)
-    db.add(db_category)
+    db_cat = models.Category(name=category.name)
+    db.add(db_cat)
     db.commit()
-    db.refresh(db_category)
-    return db_category
+    db.refresh(db_cat)
+    return db_cat
+def get_categories(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Category).offset(skip).limit(limit).all()
 
-def update_category(db: Session, category_id: int, category_data: schemas.CategoryUpdate):
-    return update_item(db, category_id, category_data, models.Category)
-    
 def get_resources(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Resource).order_by(models.Resource.id).offset(skip).limit(limit).all()
-
+    return db.query(models.Resource).offset(skip).limit(limit).all()
 def create_resource(db: Session, resource: schemas.ResourceCreate):
-    db_resource = models.Resource(**resource.dict())
-    db.add(db_resource)
+    db_res = models.Resource(**resource.dict())
+    db.add(db_res)
     db.commit()
-    db.refresh(db_resource)
-    return db_resource
-
-def update_resource(db: Session, resource_id: int, resource_data: schemas.ResourceUpdate):
-    return update_item(db, resource_id, resource_data, models.Resource)
+    db.refresh(db_res)
+    return db_res
 
 def get_job_role_by_title(db: Session, title: str):
     return db.query(models.JobRole).filter(models.JobRole.title.ilike(title)).first()
-
-def get_job_roles(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.JobRole).order_by(models.JobRole.title).offset(skip).limit(limit).all()
-
 def create_job_role(db: Session, job_role: schemas.JobRoleCreate):
-    db_job_role = models.JobRole(title=job_role.title)
-    db.add(db_job_role)
+    db_jr = models.JobRole(title=job_role.title)
+    db.add(db_jr)
     db.commit()
-    db.refresh(db_job_role)
-    return db_job_role
+    db.refresh(db_jr)
+    return db_jr
+def get_job_roles(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.JobRole).offset(skip).limit(limit).all()
 
-def update_job_role(db: Session, job_role_id: int, job_role_data: schemas.JobRoleUpdate):
-    return update_item(db, job_role_id, job_role_data, models.JobRole)
+def create_resource(db: Session, resource: schemas.ResourceCreate):
+    db_res = models.Resource(**resource.dict())
+    db.add(db_res)
+    db.commit()
+    db.refresh(db_res)
+    return db_res
 
-# ===============================================================
-#  دوال التقارير (Reporting Functions)
-# ===============================================================
-
-def get_user_activity_stats(db: Session):
-    total_users = db.query(models.Profile).count()
-    time_24h_ago = datetime.utcnow() - timedelta(days=1)
-    new_users_last_24h = db.query(models.Profile).filter(models.Profile.created_at >= time_24h_ago).count()
-    time_7d_ago = datetime.utcnow() - timedelta(days=7)
-    new_users_last_7d = db.query(models.Profile).filter(models.Profile.created_at >= time_7d_ago).count()
-    users_with_paths = db.query(models.Profile).filter(models.Profile.paths.any()).count()
-    return {"total_users": total_users, "new_users_last_24h": new_users_last_24h, "new_users_last_7d": new_users_last_7d, "users_with_paths": users_with_paths}
-
-def get_content_engagement_stats(db: Session):
-    total_paths = db.query(models.Path).count()
-    total_steps = db.query(models.PathStep).count()
-    total_completions = db.query(models.StepCompletion).count()
-    most_completed = db.query(models.PathStep.title, func.count(models.StepCompletion.step_id).label('completions')).join(models.StepCompletion, models.PathStep.id == models.StepCompletion.step_id).group_by(models.PathStep.title).order_by(desc('completions')).limit(5).all()
-    most_completed_steps = [{"title": title, "completions": count} for title, count in most_completed]
-    return {"total_paths": total_paths, "total_steps": total_steps, "total_completions": total_completions, "most_completed_steps": most_completed_steps}
+# دالة الحذف الآمن (لمنع انهيار السيرفر عند وجود ارتباطات)
+def delete_item_safely(db: Session, model: Type[models.Base], item_id: int) -> bool:
+    db_item = get_item_by_id(db, model, item_id)
+    if not db_item:
+        return False
+    try:
+        db.delete(db_item)
+        db.commit()
+        return True
+    except Exception:
+        db.rollback()
+        return False # فشل الحذف بسبب ارتباطات خارجية
     
-def get_most_active_users(db: Session, limit: int = 10):
-    return db.query(models.Profile.email, func.count(models.StepCompletion.profile_id).label('completions_count')).join(models.StepCompletion, models.Profile.id == models.StepCompletion.profile_id).group_by(models.Profile.email).order_by(desc('completions_count')).limit(limit).all()
+# دالة التحديث العامة (مهمة جداً لزر التعديل)
+def update_item(db: Session, model: Type[models.Base], item_id: int, data: schemas.BaseModel):
+    db_item = get_item_by_id(db, model, item_id)
+    if db_item:
+        # تحويل البيانات القادمة إلى قاموس، مع تجاهل القيم الفارغة
+        update_data = data.dict(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(db_item, key, value)
+        try:
+            db.commit()
+            db.refresh(db_item)
+            return db_item
+        except Exception:
+            db.rollback()
+            return None
+    return None
 
-def get_most_requested_skills(db: Session, limit: int = 10):
-    return db.query(models.Skill.name, func.count(models.path_skills.c.skill_id).label('request_count')).join(models.path_skills, models.Skill.id == models.path_skills.c.skill_id).group_by(models.Skill.name).order_by(desc('request_count')).limit(limit).all()
+def get_item_by_id(db: Session, model: Type[models.Base], item_id: int):
+    return db.query(model).filter(model.id == item_id).first()

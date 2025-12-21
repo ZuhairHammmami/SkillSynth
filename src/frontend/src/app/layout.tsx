@@ -2,36 +2,32 @@
 import type { Metadata } from 'next';
 import { Tajawal } from 'next/font/google';
 import { Providers } from '@/lib/providers';
-import Header from '@/components/Header';
+import { ClientAppInitializer } from '@/components/ClientAppInitializer';
 import { Toaster } from "@/components/ui/sonner";
-import { AnimatedBackground } from '@/components/AnimatedBackground';
-import { ClientAppInitializer } from '@/components/ClientAppInitializer'; // <-- استيراد المكون الجديد
+import { AppLayout } from '@/components/AppLayout';
 import './globals.css';
 
 const tajawal = Tajawal({
   subsets: ['arabic'],
-  weight: ['400', '500', '700'], // <-- تمت إعادة السطر المفقود
+  weight: ['400', '500', '700'],
   display: 'swap',
-  variable: '--font-tajawal',
 });
-export const metadata: Metadata = { /* ... */ };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export const metadata: Metadata = {
+  title: 'SkillSynth',
+  description: 'مسار تعلمك، مُصمم خصيصًا لك.',
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar" dir="rtl">
       <body className={`${tajawal.className} bg-background text-foreground antialiased`}>
         <Providers>
-          <ClientAppInitializer /> {/* <-- إضافة المكون هنا */}
-          <div className="relative flex min-h-screen flex-col">
-            <AnimatedBackground />
-            <Header />
-            <main className="flex-grow z-10">{children}</main>
-            <Toaster richColors position="top-center" />
-          </div>
+          <ClientAppInitializer />
+          <AppLayout>
+            {children}
+          </AppLayout>
+          <Toaster richColors position="top-center" />
         </Providers>
       </body>
     </html>

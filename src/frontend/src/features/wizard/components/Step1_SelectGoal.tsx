@@ -1,12 +1,12 @@
-// المسار: src/app/components/wizard/Step1_SelectGoal.tsx
+// المسار: src/features/wizard/components/Step1_SelectGoal.tsx
 'use client';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { WizardOptions } from '@/app/wizard/page'; // استيراد النوع
+import type { WizardOptions } from '@/app/wizard/page'; // <-- المسار صحيح الآن
 
 interface Props {
-  options: WizardOptions | null; // استقبال الخيارات
+  options: WizardOptions | null;
   onGoalSelect: (goal: string) => void;
 }
 
@@ -14,7 +14,6 @@ export default function Step1_SelectGoal({ options, onGoalSelect }: Props) {
   const [selectedRole, setSelectedRole] = useState<string>('');
 
   if (!options) {
-      // عرض رسالة في حالة عدم توفر الخيارات بعد
       return <div className="text-center text-muted-foreground">جاري التحضير...</div>;
   }
 

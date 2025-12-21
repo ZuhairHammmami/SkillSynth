@@ -3,16 +3,18 @@
 
 import { useState, useEffect } from 'react';
 import apiClient from '@/lib/api';
+// =====> هذه هي المسارات المصححة <=====
 import Step1_SelectGoal from '@/features/wizard/components/Step1_SelectGoal';
 import Step2_Assessment from '@/features/wizard/components/Step2_Assessment';
 import Step3_Preferences from '@/features/wizard/components/Step3_Preferences';
+// ===================================
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { AuthGuard } from '@/features/auth/components/AuthGuard';
 
-// تعريف أنواع البيانات التي سنستخدمها
+// تعريف أنواع البيانات التي ستستخدمها المكونات الفرعية
 export interface AssessmentAnswer { [questionId: string]: number; }
 export interface WizardOptions {
   job_roles: string[];

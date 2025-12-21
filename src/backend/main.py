@@ -2,40 +2,45 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from backend import models
 from backend.database import engine
-from backend.routers import auth_router, paths_router, options_router, assessments_router, progress_router, admin_router
+from backend.routers import (
+    auth_router,
+    paths_router,
+    options_router,
+    assessments_router,
+    progress_router,
+    admin_router,
+)
 
-# 1. إنشاء التطبيق
 app = FastAPI(title="SkillSynth API")
 
-# 2. تطبيق CORSMiddleware (الحل الأكثر مرونة للتطوير)
-# نستخدم "*" للسماح بالطلبات من أي مصدر. هذا مثالي لمرحلة التطوير وسيحل المشكلة فورًا.
-origins = ["*"]
+origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"], # السماح بكل أنواع الطلبات (GET, POST, etc.)
-    allow_headers=["*"], # السماح بكل أنواع الهيدرات
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# 3. ربط الروترات
-app.include_router(admin_router.router)
-app.include_router(progress_router.router, prefix="/api", tags=["Progress Tracking"])
-app.include_router(options_router.router, prefix="/api", tags=["Wizard Options"])
-app.include_router(assessments_router.router, prefix="/api", tags=["Assessments"])
+# ربط الروترات ببادئة موحدة
 app.include_router(auth_router.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(paths_router.router, prefix="/api", tags=["Paths"])
+app.include_router(options_router.router, prefix="/api", tags=["Wizard Options"])
+app.include_router(assessments_router.router, prefix="/api", tags=["Assessments"])
+app.include_router(progress_router.router, prefix="/api", tags=["Progress Tracking"])
+
+# هنا نحدد البادئة للأدمن مرة واحدة فقط
+app.include_router(admin_router.router, prefix="/api/admin", tags=["Admin Dashboard"])
 
 @app.get("/")
 def read_root():
     return {"message": "Welcome to SkillSynth API"}
 
-# 4. إنشاء جداول قاعدة البيانات عند بدء التشغيل
 @app.on_event("startup")
 def on_startup():
-    # هذا يضمن أن الجداول يتم إنشاؤها مرة واحدة فقط عند بدء تشغيل التطبيق
     models.Base.metadata.create_all(bind=engine)
+
+    

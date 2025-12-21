@@ -1,4 +1,3 @@
-// المسار: src/features/auth/components/LoginForm.tsx
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -6,24 +5,26 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useLogin } from '../hooks/useLogin';
 import Link from 'next/link';
+// import { useRouter } from 'next/navigation'; // <-- لم نعد بحاجة لهذا هنا
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Loader2 } from 'lucide-react';
+import { Logo } from '@/components/Logo';
 
-// 1. تعريف schema التحقق باستخدام Zod
+// تعريف schema التحقق باستخدام Zod
 const formSchema = z.object({
   email: z.string().email({ message: "الرجاء إدخال بريد إلكتروني صالح." }),
   password: z.string().min(1, { message: "كلمة المرور مطلوبة." }),
 });
 
 export default function LoginForm() {
-  // 2. استدعاء الـ Hook الخاص بتسجيل الدخول
+  // const router = useRouter(); // <-- إزالة
+  
+  // استدعاء الـ Hook الخاص بتسجيل الدخول
   const { mutate: performLogin, isPending } = useLogin();
 
-  // 3. إعداد react-hook-form مع Zod
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -32,17 +33,21 @@ export default function LoginForm() {
     },
   });
 
-  // 4. دالة الإرسال التي تستدعي الـ Hook
   function onSubmit(values: z.infer<typeof formSchema>) {
+    // التغيير هنا: قمنا بإزالة onSuccess وتمرير القيم فقط
+    // سيقوم useLogin بالتعامل مع التوجيه بناءً على دور المستخدم
     performLogin(values);
   }
 
   return (
     <div className="container mx-auto flex items-center justify-center min-h-screen px-4">
       <Card className="w-full max-w-sm">
-        <CardHeader className="text-center space-y-1">
+        <CardHeader className="text-center space-y-4">
+          <Link href="/" className="inline-block mx-auto">
+            <Logo />
+          </Link>
           <CardTitle className="text-2xl">تسجيل الدخول</CardTitle>
-          <CardDescription>أدخل بياناتك للوصول إلى حسابك</CardDescription>
+          <CardDescription>مرحباً بعودتك! أدخل بياناتك للمتابعة.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -54,7 +59,7 @@ export default function LoginForm() {
                   <FormItem>
                     <FormLabel>البريد الإلكتروني</FormLabel>
                     <FormControl>
-                      <Input placeholder="name@example.com" {...field} />
+                      <Input placeholder="name@example.com" {...field} disabled={isPending} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -72,7 +77,7 @@ export default function LoginForm() {
                       </Link>
                     </div>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input type="password" {...field} disabled={isPending} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

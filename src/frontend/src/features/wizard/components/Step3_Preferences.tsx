@@ -1,19 +1,21 @@
-// المسار: src/app/components/wizard/Step3_Preferences.tsx
+// المسار: src/features/wizard/components/Step3_Preferences.tsx
 'use client';
 import { useState } from 'react';
-import apiClient from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import { useGeneratePath } from '@/features/wizard/hooks/useGeneratePath';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { AssessmentAnswer, WizardOptions } from '@/app/wizard/page';
 import type { FC } from 'react';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Props {
   jobRole: string;
   answers: AssessmentAnswer;
-  options: WizardOptions | null; // <-- استقبال الخيارات
+  options: WizardOptions | null;
 }
 
 const Step3_Preferences: FC<Props> = ({ jobRole, answers, options }) => {
@@ -21,46 +23,53 @@ const Step3_Preferences: FC<Props> = ({ jobRole, answers, options }) => {
   const [hours, setHours] = useState(10);
   const [format, setFormat] = useState('any');
   const [language, setLanguage] = useState('en');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  // استدعاء الـ Hook الخاص بتوليد المسار
+  const { mutate: performGenerate, isPending } = useGeneratePath();
   
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-    
     const payload = {
       goal: jobRole,
       weekly_hours: hours,
       preferences: { is_free: true, format, language },
       answers,
     };
-
-    try {
-      const response = await apiClient.post('/api/generate-path/', payload);
-      if (response.data && response.data.id) {
-          router.push(`/paths/${response.data.id}`);
-      } else {
-          console.warn("API did not return a path ID. Redirecting to dashboard.");
+    
+    // استدعاء دالة mutate مع تمرير البيانات ودوال onSuccess/onError
+    performGenerate(payload, {
+      onSuccess: (data) => {
+        if (data && data.id) {
+          router.push(`/paths/${data.id}`);
+        } else {
+          toast.warning("تم توليد المسار، لكن حدث خطأ أثناء التوجيه.");
           router.push('/dashboard');
+        }
+      },
+      onError: (error: any) => {
+        // الـ Hook سيعرض رسالة الخطأ العامة، لكن يمكننا إضافة منطق مخصص هنا إذا أردنا
+        console.error("Generate path failed in component:", error);
       }
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'An internal server error occurred');
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="hours">كم ساعة يمكنك تخصيصها أسبوعيًا؟</Label>
-        <Input id="hours" type="number" value={hours} onChange={(e) => setHours(parseInt(e.target.value) || 0)} required />
+        <Input 
+          id="hours" 
+          type="number" 
+          value={hours} 
+          onChange={(e) => setHours(parseInt(e.target.value) || 0)} 
+          required 
+          disabled={isPending}
+        />
       </div>
 
       <div className="space-y-2">
         <Label>تنسيق المحتوى المفضل؟</Label>
-        <Select onValueChange={setFormat} defaultValue={format}>
+        <Select onValueChange={setFormat} defaultValue={format} disabled={isPending}>
           <SelectTrigger>
             <SelectValue placeholder="اختر تنسيقًا..." />
           </SelectTrigger>
@@ -72,7 +81,7 @@ const Step3_Preferences: FC<Props> = ({ jobRole, answers, options }) => {
       
       <div className="space-y-2">
         <Label>لغة المحتوى المفضلة؟</Label>
-        <Select onValueChange={setLanguage} defaultValue={language}>
+        <Select onValueChange={setLanguage} defaultValue={language} disabled={isPending}>
           <SelectTrigger>
             <SelectValue placeholder="اختر لغة..." />
           </SelectTrigger>
@@ -82,9 +91,9 @@ const Step3_Preferences: FC<Props> = ({ jobRole, answers, options }) => {
         </Select>
       </div>
 
-      {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? '⏳ جارٍ تحليل إجاباتك...' : '🚀 ولّد المسار الذكي'}
+      <Button type="submit" className="w-full" disabled={isPending}>
+        {isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+        {isPending ? '⏳ جارٍ تحليل إجاباتك...' : '🚀 ولّد المسار الذكي'}
       </Button>
     </form>
   );

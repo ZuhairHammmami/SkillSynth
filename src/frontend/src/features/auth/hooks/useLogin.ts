@@ -4,65 +4,66 @@ import apiClient from '@/lib/api';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import type { User } from '@/store/authStore';
 
-// تعريف شكل البيانات التي نرسلها (Credentials)
 interface LoginCredentials {
   email: string;
   password: string;
 }
 
-// تعريف شكل الاستجابة التي نتوقعها
 interface LoginResponse {
   access_token: string;
-  token_type: string;
 }
 
-/**
- * دالة الجلب (Mutation Function): تقوم بالعمل الفعلي.
- * ترسل طلب POST إلى نقطة نهاية /api/auth/token.
- */
-const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
-  // الباك اند يتوقع بيانات form-urlencoded هنا
+// دالة منفصلة لجلب المستخدم، للتأكد من أنها تركز على مهمة واحدة
+const fetchUserAfterLogin = async (token: string): Promise<User> => {
+    const { data } = await apiClient.get<User>('/api/auth/users/me', {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    return data;
+}
+
+// الدالة الأساسية التي سيتم استدعاؤها من useMutation
+const loginAndFetchUser = async (credentials: LoginCredentials): Promise<{token: string, user: User}> => {
   const params = new URLSearchParams();
   params.append('username', credentials.email);
   params.append('password', credentials.password);
   params.append('grant_type', 'password');
 
-  const response = await apiClient.post<LoginResponse>('/api/auth/token', params, {
+  const { data: tokenData } = await apiClient.post<LoginResponse>('/api/auth/token', params, {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   });
-
-  return response.data;
+  
+  const user = await fetchUserAfterLogin(tokenData.access_token);
+  
+  return { token: tokenData.access_token, user };
 };
 
-/**
- * الـ Hook المخصص (Custom Hook): يغلف `useMutation` ويدير ما يحدث بعد الطلب.
- * `useMutation` مصمم للعمليات التي تغير البيانات في الخادم (POST, PUT, DELETE).
- */
 export const useLogin = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
 
   return useMutation({
-    mutationFn: login,
+    mutationFn: loginAndFetchUser,
     onSuccess: (data) => {
-      // --- عند النجاح ---
       // 1. ضع التوكن في الكوكيز
-      Cookies.set('authToken', data.access_token, { expires: 7 });
+      Cookies.set('authToken', data.token, { expires: 7 });
       
-      // 2. أخبر React Query بأن بيانات 'user' أصبحت قديمة وتحتاج لإعادة جلب
-      //    هذا سيقوم تلقائيًا بتشغيل `fetchUser` في `useUser` Hook.
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+      // 2. قم بتحديث بيانات 'user' في ذاكرة React Query فورًا وبشكل استباقي
+      queryClient.setQueryData(['user'], data.user);
       
-      // 3. أظهر إشعار نجاح
       toast.success("مرحباً بعودتك!", { description: "تم تسجيل دخولك بنجاح." });
       
-      // 4. وجه المستخدم إلى لوحة التحكم
-      router.push('/dashboard');
+      // --- هذا هو المنطق الحاسم والمصحح ---
+      // تحقق من دور المستخدم وقم بإعادة التوجيه إلى الوجهة الصحيحة
+      if (data.user.is_admin) {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/dashboard');
+      }
+      // ------------------------------------
     },
     onError: (error: any) => {
-      // --- عند الفشل ---
-      // أظهر إشعار خطأ بالرسالة القادمة من الباك اند
       toast.error(error.response?.data?.detail || 'فشل تسجيل الدخول. تأكد من بياناتك.');
     },
   });

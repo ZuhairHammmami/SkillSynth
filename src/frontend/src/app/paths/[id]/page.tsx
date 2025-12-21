@@ -2,78 +2,96 @@
 'use client';
 
 import { useParams, notFound } from 'next/navigation';
-import { usePathDetails, PathDetails } from '@/features/paths/hooks/usePathDetails';
+import { usePathDetails } from '@/features/paths/hooks/usePathDetails';
 import { AuthGuard } from '@/features/auth/components/AuthGuard';
-import StepItem from '@/components/StepItem'; // <-- تم نقله
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal } from 'lucide-react';
+import StepItem from '@/components/StepItem';
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Terminal, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-
-interface StepResource { url: string; title: string; }
+import { motion } from 'framer-motion';
 
 function PathDetailContent() {
   const params = useParams();
   const pathId = params.id as string;
   const { data: pathDetails, isLoading, isError } = usePathDetails(pathId);
 
+  // حالة التحميل الاحترافية
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-3/4" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
+      <div className="space-y-8">
+        <div className="text-center space-y-4">
+            <Skeleton className="h-6 w-48 mx-auto" />
+            <Skeleton className="h-12 w-3/4 mx-auto" />
+            <Skeleton className="h-6 w-full max-w-2xl mx-auto" />
+        </div>
+        <div className="space-y-6">
+            <Skeleton className="h-40 w-full rounded-lg" />
+            <Skeleton className="h-40 w-full rounded-lg" />
+            <Skeleton className="h-40 w-full rounded-lg" />
+        </div>
       </div>
     );
   }
 
-  // React Query سيتعامل مع خطأ 404 تلقائيًا إذا قمنا بإعداده، لكن notFound() هنا آمن أيضًا
-  if (isError || !pathDetails) {
+  // حالة الخطأ
+  if (isError) {
+    return (
+        <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>حدث خطأ</AlertTitle>
+            <AlertDescription>فشل في جلب تفاصيل المسار. يرجى المحاولة مرة أخرى.</AlertDescription>
+        </Alert>
+    );
+  }
+
+  // إذا لم يتم العثور على المسار بعد انتهاء التحميل
+  if (!pathDetails) {
     return notFound();
   }
 
   return (
-    <>
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-primary sm:text-4xl">{pathDetails.title}</h1>
-        {pathDetails.description && (
-          <p className="text-muted-foreground mt-2 text-lg">{pathDetails.description}</p>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="text-center mb-12">
+        {/* =====> هذا هو التصحيح <===== */}
+        {/* تحقق من وجود skills وأنها مصفوفة قبل استخدام map */}
+        {pathDetails.skills && Array.isArray(pathDetails.skills) && (
+            <div className="flex justify-center flex-wrap gap-2 mb-4">
+            {pathDetails.skills.map(skill => (
+                <Badge key={skill.id} variant="secondary" className="text-sm">
+                    {skill.name}
+                </Badge>
+            ))}
+            </div>
         )}
-      </div>
-
-      <div className="space-y-6">
-        {pathDetails.steps.map((step) => {
-          let resource: StepResource | null = null;
-          try {
-            if (step.content) resource = JSON.parse(step.content);
-          } catch (e) { console.error("Failed to parse content", e); }
-          
-          return (
-            <StepItem
-              key={step.id}
-              stepId={step.id} // <-- سنحتاج هذا للمرحلة التالية
-              stepNumber={step.step_number}
-              title={step.title}
-              resourceTitle={resource?.title || 'المورد غير متوفر'}
-              resourceUrl={resource?.url || '#'}
-              isCompleted={false} // <-- مؤقتًا، حتى نضيف منطق التتبع
-              onComplete={() => {}} // <-- مؤقتًا
-            />
-          );
-        })}
+        {/* ============================== */}
+        <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">{pathDetails.title}</h1>
+        <p className="mt-6 max-w-3xl mx-auto text-lg text-muted-foreground">{pathDetails.description}</p>
       </div>
       
-      {pathDetails.steps.length === 0 && (
+      {/* =====> وأيضًا هنا للخطوات <===== */}
+      {pathDetails.steps && Array.isArray(pathDetails.steps) && pathDetails.steps.length > 0 ? (
+        <div className="space-y-6">
+          {pathDetails.steps.map((step) => (
+            <StepItem key={step.id} step={step} />
+          ))}
+        </div>
+      ) : (
         <Alert>
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>مسار فارغ</AlertTitle>
-          <AlertDescription>هذا المسار التعليمي لا يحتوي على أي خطوات حاليًا.</AlertDescription>
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>مسار فارغ</AlertTitle>
+            <AlertDescription>
+                هذا المسار التعليمي لا يحتوي على أي خطوات حاليًا.
+            </AlertDescription>
         </Alert>
       )}
-    </>
+    </motion.div>
   );
 }
-
 
 export default function PathDetailPage() {
     return (

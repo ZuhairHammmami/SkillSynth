@@ -3,48 +3,68 @@
 
 import { usePaths } from '@/features/paths/hooks/usePaths';
 import { AuthGuard } from '@/features/auth/components/AuthGuard';
-import PathCard from '@/components/PathCard'; // <-- تم نقله
+import PathCard from '@/components/PathCard';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { EmptyStateIllustration } from '@/components/EmptyStateIllustration'; // <-- تم نقله
+import { EmptyStateIllustration } from '@/components/EmptyStateIllustration';
 import { Skeleton } from '@/components/ui/skeleton';
+import { motion } from 'framer-motion';
 
-// هذا المكون هو "القلب" الفعلي للصفحة، ويتم عرضه فقط بعد التحقق من المصادقة
+// المكون الداخلي الذي يعرض المحتوى
 function DashboardContent() {
   const { data: paths, isLoading, isError, error } = usePaths();
 
-  // حالة التحميل أثناء جلب المسارات
+  // حالة التحميل
   if (isLoading) {
     return (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* عرض 3 هياكل عظمية للبطاقات */}
-        <Skeleton className="h-32 w-full rounded-lg" />
-        <Skeleton className="h-32 w-full rounded-lg" />
-        <Skeleton className="h-32 w-full rounded-lg" />
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div key={index} className="p-6 rounded-lg border bg-card space-y-4">
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+        ))}
       </div>
     );
   }
 
-  // حالة حدوث خطأ أثناء الجلب
   if (isError) {
-    return <div className="text-center text-destructive">فشل في جلب المسارات: {error.message}</div>;
+    return <div className="text-center text-destructive py-10">{error.message}</div>;
   }
+
+  // تعريفات التحريك
+  const containerVariants = {
+    hidden: { opacity: 1 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
+  };
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 },
+  };
 
   return (
     <>
       {paths && paths.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <motion.div 
+          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {paths.map((path) => (
-            <PathCard
-              key={path.id}
-              id={path.id}
-              title={path.title}
-              totalHours={path.total_estimated_hours}
-            />
+            <motion.div key={path.id} variants={itemVariants}>
+              <PathCard
+                id={path.id}
+                title={path.title}
+                totalHours={path.total_estimated_hours}
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       ) : (
-        // حالة عدم وجود مسارات
         <div className="text-center py-16 mt-10 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-4">
           <EmptyStateIllustration />
           <h3 className="text-xl font-semibold mt-4">ابدأ رحلتك التعليمية</h3>
@@ -55,10 +75,9 @@ function DashboardContent() {
   );
 }
 
-// هذا هو المكون الرئيسي للصفحة
+// المكون الرئيسي للصفحة
 export default function DashboardPage() {
   return (
-    // 1. نلف كل شيء بـ AuthGuard لحماية الصفحة
     <AuthGuard>
       <div className="container mx-auto p-4 sm:p-8">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
@@ -70,7 +89,6 @@ export default function DashboardPage() {
             <Link href="/wizard">أنشئ مسارًا جديدًا</Link>
           </Button>
         </div>
-        {/* 2. نعرض المحتوى الفعلي للصفحة */}
         <DashboardContent />
       </div>
     </AuthGuard>
