@@ -1,11 +1,11 @@
 'use client';
 
 import { useAdminStats } from "@/features/admin/hooks/useAdminStats";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/ui/card";
 import { Users, FileText, Activity, Server, TrendingUp, Award } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { motion } from 'framer-motion';
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/shared/ui/badge";
 
 export default function AdminDashboardPage() {
     const { data, isLoading, isError } = useAdminStats();

@@ -1,25 +1,28 @@
-// المسار: src/features/auth/hooks/useLogout.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-
-const logout = async () => {
-  // لا يوجد طلب API هنا، فقط عمليات من جانب العميل
-  Cookies.remove('authToken');
-};
+import Cookies from 'js-cookie';
+import { useAuthStore } from '@/shared/store/authStore';
+import { queryKeys } from '@/shared/api/query-keys';
 
 export const useLogout = () => {
-  const queryClient = useQueryClient();
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { logout: clearSession } = useAuthStore();
 
   return useMutation({
-    mutationFn: logout,
+    mutationFn: async () => {
+      Cookies.remove('authToken', { path: '/' });
+    },
     onSuccess: () => {
-      // تنظيف كل بيانات المستخدم المخزنة مؤقتًا في React Query
+      clearSession();
+      queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
       queryClient.clear();
       toast.success("تم تسجيل خروجك بنجاح.");
       router.push('/login');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'فشل تسجيل الخروج.');
     },
   });
 };

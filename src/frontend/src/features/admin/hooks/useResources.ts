@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/lib/api';
+import apiClient from '@/shared/lib/api';
 import { toast } from 'sonner';
 
 export interface Resource {
@@ -24,7 +24,7 @@ export const useResources = () => {
   return useQuery({
     queryKey: ['admin-resources'],
     queryFn: async () => {
-      const { data } = await apiClient.get<Resource[]>('/api/admin/resources/');
+      const { data } = await apiClient.get<Resource[]>('/api/admin/resources');
       return data;
     },
   });
@@ -35,7 +35,7 @@ export const useCreateResource = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: ResourceData) => {
-      const response = await apiClient.post('/api/admin/resources/', data);
+      const response = await apiClient.post('/api/admin/resources', data);
       return response.data;
     },
     onSuccess: () => {

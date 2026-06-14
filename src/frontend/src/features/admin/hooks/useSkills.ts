@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/lib/api';
+import apiClient from '@/shared/lib/api';
 import { toast } from 'sonner';
 
 export interface Skill {
-  id: number;
+  id: string;
   name: string;
 }
 
@@ -12,7 +12,7 @@ export const useSkills = () => {
   return useQuery({
     queryKey: ['admin-skills'],
     queryFn: async () => {
-      const { data } = await apiClient.get<Skill[]>('/api/admin/skills/');
+      const { data } = await apiClient.get<Skill[]>('/api/admin/skills');
       return data;
     },
   });
@@ -23,7 +23,7 @@ export const useCreateSkill = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (name: string) => {
-      const { data } = await apiClient.post('/api/admin/skills/', { name });
+      const { data } = await apiClient.post('/api/admin/skills', { name });
       return data;
     },
     onSuccess: () => {
@@ -40,7 +40,7 @@ export const useCreateSkill = () => {
 export const useUpdateSkill = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, name }: { id: number; name: string }) => {
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
       const { data } = await apiClient.put(`/api/admin/skills/${id}`, { name });
       return data;
     },
@@ -58,7 +58,7 @@ export const useUpdateSkill = () => {
 export const useDeleteSkill = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (id: string) => {
       await apiClient.delete(`/api/admin/skills/${id}`);
     },
     onSuccess: () => {

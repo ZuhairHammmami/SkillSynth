@@ -34,5 +34,5 @@ export function middleware(request: NextRequest) {
 
 // تحديد المسارات التي سيتم تطبيق هذا المنطق عليها
 export const config = {
-  matcher: ['/dashboard/:path*', '/wizard/:path*', '/paths/:path*', '/login', '/register'],
+  matcher: ['/dashboard/:path*', '/wizard/:path*', '/paths/:path*', '/paths', '/login', '/register'],
 };

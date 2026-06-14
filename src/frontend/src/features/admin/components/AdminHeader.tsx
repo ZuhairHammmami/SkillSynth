@@ -1,10 +1,10 @@
-// المسار: src/features/admin/components/AdminHeader.tsx
+// src/features/admin/components/AdminHeader.tsx
 'use client';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/store/authStore';
+import { Button } from '@/shared/ui/button';
+import { useUser } from '@/features/user/hooks/useUser';
 import { useLogout } from '@/features/auth/hooks/useLogout';
 import {
   DropdownMenu,
@@ -13,16 +13,17 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+} from "@/shared/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { LogOut, User as UserIcon, Eye } from 'lucide-react';
 
 export function AdminHeader() {
-  const { user } = useAuthStore();
+  // User data from React Query
+  const { user, isLoading } = useUser();
   const { mutate: performLogout } = useLogout();
   const router = useRouter();
 
-  // دالة آمنة للحصول على الأحرف الأولى من الاسم
+  // Safe utility to get initials from name
   const getInitials = (name: string = ""): string => {
     if (!name) return "AD"; // Admin
     const names = name.trim().split(' ');
@@ -37,9 +38,8 @@ export function AdminHeader() {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-6">
-        {/* هذا العنصر سيأخذ كل المساحة المتبقية لدفع العناصر الأخرى إلى اليمين */}
         <div className="flex-1">
-            {/* يمكنك وضع Breadcrumbs أو عنوان الصفحة هنا لاحقًا */}
+            {/* Breadcrumbs or page title can go here */}
         </div>
         <div className="ml-auto flex items-center gap-4">
             <Button variant="outline" size="sm" onClick={() => router.push('/dashboard')}>

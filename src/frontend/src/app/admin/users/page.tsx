@@ -1,6 +1,6 @@
 // المسار: src/app/admin/users/page.tsx
 import { UsersTable } from "@/features/admin/components/UsersTable";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 
 export default function AdminUsersPage() {
     return (

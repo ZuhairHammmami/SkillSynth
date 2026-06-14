@@ -1,35 +1,33 @@
-// المسار: src/features/auth/hooks/useResetPassword.ts
 import { useMutation } from '@tanstack/react-query';
-import apiClient from '@/lib/api';
 import { toast } from 'sonner';
+import apiClient from '@/shared/lib/api';
 
-// تعريف شكل البيانات التي سترسلها الدالة إلى الـ API
 export interface ResetPasswordData {
-  token: string;
   new_password: string;
 }
 
-/**
- * دالة الجلب: تقوم بإرسال التوكن وكلمة المرور الجديدة.
- */
-const resetPassword = async (data: ResetPasswordData) => {
-   const response = await apiClient.post('/api/auth/reset-password', data);
-   return response.data;
-};
-
-/**
- * الـ Hook المخصص (Custom Hook) لعملية إعادة التعيين.
- */
 export const useResetPassword = () => {
   return useMutation({
-    mutationFn: resetPassword,
+    mutationFn: async ({ new_password }: ResetPasswordData) => {
+      const token = new URLSearchParams(window.location.search).get('token');
+      if (!token) {
+        throw new Error('رابط إعادة التعيين غير صالح. لا يوجد رمز تحقق.');
+      }
+      const { data } = await apiClient.post('/api/auth/reset-password', {
+        token,
+        new_password,
+      });
+      return data;
+    },
     onSuccess: () => {
       toast.success("تم إعادة تعيين كلمة المرور بنجاح!", {
         description: "يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.",
       });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "فشل إعادة التعيين. قد يكون الرابط منتهي الصلاحية.");
+      const message =
+        error.response?.data?.detail || error.message || "فشل إعادة التعيين. قد يكون الرابط منتهي الصلاحية.";
+      toast.error(message);
     },
   });
 };

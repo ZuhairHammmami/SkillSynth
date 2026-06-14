@@ -1,6 +1,5 @@
-from pydantic import BaseModel, EmailStr
-from typing import List, Optional
 from pydantic import BaseModel, EmailStr, Field
+from typing import List, Optional
 from datetime import datetime
 
 class PathStepBase(BaseModel):
@@ -20,6 +19,8 @@ class PathBase(BaseModel):
 class Path(PathBase):
     id: int
     steps: List[PathStep] = []
+    created_at: Optional[datetime] = None
+    profile_id: Optional[int] = None
     class Config:
         from_attributes = True
 
@@ -72,15 +73,8 @@ class StepCompletionResponse(BaseModel):
     step_id: int
     completed_at: datetime
 
-class Config:
-    from_attributes = True
-
-class ProfileUpdate(BaseModel):
-    full_name: Optional[str] = None
-
-class PasswordChange(BaseModel):
-    current_password: str
-    new_password: str
+    class Config:
+        from_attributes = True
 
 class SkillBase(BaseModel):
     name: str
@@ -90,6 +84,7 @@ class SkillCreate(SkillBase):
 
 class Skill(SkillBase):
     id: int
+    category: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -169,6 +164,8 @@ class Profile(ProfileBase):
     id: int
     is_admin: bool
     skill_profile: Optional[dict] = None
+    subscription_tier: str = "free"
+    created_at: Optional[datetime] = None
     class Config:
         from_attributes = True
 
@@ -192,9 +189,8 @@ class PathAdminView(BaseModel):
     id: int
     title: str
     user_email: str
-    # سنقوم بإضافة هذه الحقول لاحقًا عندما تكون موجودة في الموديل
-    # total_estimated_hours: Optional[int] = None
-    # is_completed: bool = False
+    total_estimated_hours: Optional[int] = None
+    is_completed: bool = False
     created_at: datetime
 
     class Config:

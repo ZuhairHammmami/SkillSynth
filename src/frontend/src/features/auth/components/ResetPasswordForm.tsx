@@ -1,4 +1,4 @@
-// المسار: src/features/auth/components/ResetPasswordForm.tsx
+// src/features/auth/components/ResetPasswordForm.tsx
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -6,14 +6,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import { useResetPassword } from '@/features/auth/hooks/useResetPassword';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/ui/form';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Loader2 } from 'lucide-react';
 import type { FC } from 'react';
 
-// تعريف schema التحقق
 const formSchema = z.object({
   new_password: z.string().min(8, { message: "كلمة المرور يجب أن تكون 8 أحرف على الأقل." }),
   confirm_password: z.string(),
@@ -24,14 +23,9 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-interface Props {
-  token: string;
-}
-
-const ResetPasswordForm: FC<Props> = ({ token }) => {
+const ResetPasswordForm: FC = () => {
   const router = useRouter();
   
-  // 1. استدعاء الـ Hook بدون أي وسائط
   const { mutate: performReset, isPending } = useResetPassword();
 
   const form = useForm<FormData>({
@@ -40,17 +34,14 @@ const ResetPasswordForm: FC<Props> = ({ token }) => {
   });
 
   function onSubmit(values: FormData) {
-    // 2. تمرير البيانات ودالة onSuccess كخيار ثانٍ لدالة mutate
     performReset({
-      token: token,
       new_password: values.new_password,
     }, {
-        onSuccess: () => {
-            // بعد 3 ثوانٍ، أعد توجيه المستخدم لصفحة تسجيل الدخول
-            setTimeout(() => {
-                router.push('/login');
-            }, 3000);
-        }
+      onSuccess: () => {
+        setTimeout(() => {
+          router.push('/login');
+        }, 3000);
+      }
     });
   }
 

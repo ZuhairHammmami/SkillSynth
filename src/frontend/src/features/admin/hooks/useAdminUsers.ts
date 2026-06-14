@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/lib/api';
-import type { User } from '@/store/authStore';
+import apiClient from '@/shared/lib/api';
+import type { User } from '@/shared/store/authStore';
 import { toast } from 'sonner';
 
 const fetchUsers = async (): Promise<User[]> => {
@@ -19,7 +19,7 @@ const fetchUsers = async (): Promise<User[]> => {
  export const useUpdateAdminUser = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ id, data }: { id: number, data: any }) => {
+        mutationFn: async ({ id, data }: { id: string, data: any }) => {
             const response = await apiClient.put(`/api/admin/users/${id}`, data);
             return response.data;
         },

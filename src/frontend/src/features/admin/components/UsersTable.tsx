@@ -10,14 +10,14 @@ import {
     getFilteredRowModel,
 } from "@tanstack/react-table";
 import { useAdminUsers, useUpdateAdminUser } from "../hooks/useAdminUsers";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table';
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { Badge } from "@/shared/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/shared/ui/dialog';
 import { Pencil, Search, Shield, ShieldAlert, User as UserIcon, Loader2 } from "lucide-react";
-import type { User } from '@/store/authStore';
+import type { User } from '@/shared/store/authStore';
 
 export function UsersTable() {
     const { data: users, isLoading } = useAdminUsers();
@@ -149,7 +149,7 @@ function EditUserDialog({ user, open, onOpenChange }: { user: User, open: boolea
             payload.password = newPassword;
         }
 
-        updateUser({ id: user.id, data: payload }, {
+        updateUser({ id: String(user.id), data: payload }, {
             onSuccess: () => onOpenChange(false)
         });
     };

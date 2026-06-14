@@ -105,6 +105,20 @@ def get_most_requested_skills(db: Session, limit: int = 10):
 # -- مهارات وتصنيفات --
 def get_skill_by_name(db: Session, name: str):
     return db.query(models.Skill).filter(models.Skill.name.ilike(name)).first()
+def create_resource(db: Session, resource: schemas.ResourceCreate):
+    db_resource = models.Resource(
+        title=resource.title,
+        url=resource.url,
+        type=resource.type,
+        is_free=resource.is_free,
+        is_official=resource.is_official,
+        author_or_platform=resource.author_or_platform
+    )
+    db.add(db_resource)
+    db.commit()
+    db.refresh(db_resource)
+    return db_resource
+
 def create_skill(db: Session, skill: schemas.SkillCreate):
     db_skill = models.Skill(name=skill.name)
     db.add(db_skill)
@@ -127,13 +141,6 @@ def get_categories(db: Session, skip: int = 0, limit: int = 100):
 
 def get_resources(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Resource).offset(skip).limit(limit).all()
-def create_resource(db: Session, resource: schemas.ResourceCreate):
-    db_res = models.Resource(**resource.dict())
-    db.add(db_res)
-    db.commit()
-    db.refresh(db_res)
-    return db_res
-
 def get_job_role_by_title(db: Session, title: str):
     return db.query(models.JobRole).filter(models.JobRole.title.ilike(title)).first()
 def create_job_role(db: Session, job_role: schemas.JobRoleCreate):
@@ -144,13 +151,6 @@ def create_job_role(db: Session, job_role: schemas.JobRoleCreate):
     return db_jr
 def get_job_roles(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.JobRole).offset(skip).limit(limit).all()
-
-def create_resource(db: Session, resource: schemas.ResourceCreate):
-    db_res = models.Resource(**resource.dict())
-    db.add(db_res)
-    db.commit()
-    db.refresh(db_res)
-    return db_res
 
 # دالة الحذف الآمن (لمنع انهيار السيرفر عند وجود ارتباطات)
 def delete_item_safely(db: Session, model: Type[models.Base], item_id: int) -> bool:
@@ -165,25 +165,18 @@ def delete_item_safely(db: Session, model: Type[models.Base], item_id: int) -> b
         db.rollback()
         return False # فشل الحذف بسبب ارتباطات خارجية
     
-# دالة التحديث العامة (مهمة جداً لزر التعديل)
-def update_item(db: Session, model: Type[models.Base], item_id: int, data: schemas.BaseModel):
-    db_item = get_item_by_id(db, model, item_id)
-    if db_item:
-        # تحويل البيانات القادمة إلى قاموس، مع تجاهل القيم الفارغة
-        update_data = data.dict(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(db_item, key, value)
-        try:
-            db.commit()
-            db.refresh(db_item)
-            return db_item
-        except Exception:
-            db.rollback()
-            return None
-    return None
-
-def get_item_by_id(db: Session, model: Type[models.Base], item_id: int):
-    return db.query(model).filter(model.id == item_id).first()
+def mark_step_as_complete(db: Session, profile_id: int, step_id: int):
+    existing = db.query(models.StepCompletion).filter(
+        models.StepCompletion.profile_id == profile_id,
+        models.StepCompletion.step_id == step_id
+    ).first()
+    if existing:
+        return existing
+    completion = models.StepCompletion(profile_id=profile_id, step_id=step_id)
+    db.add(completion)
+    db.commit()
+    db.refresh(completion)
+    return completion
 
 def update_user_as_admin(db: Session, user_id: int, user_data: schemas.AdminUserUpdate):
     db_user = get_item_by_id(db, models.Profile, user_id)

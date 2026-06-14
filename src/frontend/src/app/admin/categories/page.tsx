@@ -8,16 +8,16 @@ import {
   useDeleteCategory, 
   Category 
 } from '@/features/admin/hooks/useCategories';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table';
 import { 
   Dialog, DialogContent, DialogHeader, DialogTitle, 
   DialogDescription, DialogTrigger, DialogFooter 
-} from '@/components/ui/dialog';
+} from '@/shared/ui/dialog';
 import { Plus, Trash2, Layers, Loader2, Search, Pencil } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/shared/ui/skeleton';
 
 export default function AdminCategoriesPage() {
   const { data: categories, isLoading } = useCategories();

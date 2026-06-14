@@ -1,10 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
-import apiClient from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import apiClient from '@/shared/lib/api';
+import { Button } from '@/shared/ui/button';
+import { Label } from '@/shared/ui/label';
 import { AssessmentAnswer } from '@/app/wizard/page';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/shared/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronRight, ChevronLeft } from 'lucide-react';
 
@@ -27,12 +27,18 @@ export default function Step2_Assessment({ jobRole, onComplete }: Props) {
   // حالة للتحكم في السؤال الحالي المعروض
   const [currentQIndex, setCurrentQIndex] = useState(0);
 
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!jobRole) return;
     setIsLoading(true);
+    setError(null);
     apiClient.get<Question[]>(`/api/assessments/${encodeURIComponent(jobRole)}`)
       .then(res => setQuestions(res.data))
-      .catch(err => console.error(err))
+      .catch(err => {
+        console.error(err);
+        setError("تعذر تحميل الأسئلة. يرجى التحقق من اتصالك والمحاولة مرة أخرى.");
+      })
       .finally(() => setIsLoading(false));
   }, [jobRole]);
   
@@ -60,6 +66,27 @@ export default function Step2_Assessment({ jobRole, onComplete }: Props) {
               <Skeleton className="h-12 w-full" />
           </div>
       </div>
+  );
+
+  if (error) return (
+    <div className="text-center space-y-4 py-8">
+      <div className="text-4xl">🔌</div>
+      <h3 className="text-xl font-bold text-destructive">تعذر الاتصال</h3>
+      <p className="text-muted-foreground">{error}</p>
+      <Button onClick={() => window.location.reload()} variant="outline">
+        إعادة المحاولة
+      </Button>
+    </div>
+  );
+
+  if (questions.length === 0) return (
+    <div className="text-center space-y-4 py-8">
+      <h3 className="text-xl font-bold">لا توجد أسئلة متاحة</h3>
+      <p className="text-muted-foreground">لم نجد أسئلة تقييم لهذا الدور الوظيفي. يمكنك المتابعة إلى الخطوة التالية.</p>
+      <Button onClick={() => onComplete({})} variant="default">
+        متابعة بدون تقييم
+      </Button>
+    </div>
   );
 
   const currentQ = questions[currentQIndex];

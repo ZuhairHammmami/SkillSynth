@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGeneratePath } from '@/features/wizard/hooks/useGeneratePath';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider'; 
+import { Button } from '@/shared/ui/button';
+import { Label } from '@/shared/ui/label';
+import { Slider } from '@/shared/ui/slider'; 
 import { Loader2, Clock, BookOpen, Video, FileText, Globe, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AssessmentAnswer, WizardOptions } from '@/app/wizard/page';

@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/shared/ui/button';
 import { motion } from 'framer-motion';
 import { Briefcase, ChevronLeft } from 'lucide-react';
 import type { WizardOptions } from '@/app/wizard/page';

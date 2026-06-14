@@ -1,32 +1,40 @@
-// المسار: src/features/auth/components/AdminGuard.tsx
+// src/features/auth/components/AdminGuard.tsx
 'use client';
 
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/shared/store/authStore';
+import { useUser } from '@/features/user/hooks/useUser';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert';
 import { AlertCircle } from 'lucide-react';
 
 export const AdminGuard = ({ children }: { children: React.ReactNode }) => {
-  const { user, isAuthenticated, isLoading } = useAuthStore();
+  // Session state from Zustand
+  const { isAuthenticated, isLoading: isSessionLoading } = useAuthStore();
+  
+  // User data from React Query
+  const { user, isLoading: isUserLoading } = useUser();
+  
   const router = useRouter();
 
+  const isLoading = isSessionLoading || isUserLoading;
+
   useEffect(() => {
-    // انتظر حتى تنتهي عملية التحقق الأولية من المستخدم
+    // Wait for initial user verification to complete
     if (!isLoading) {
-      // إذا لم يكن مسجلاً دخوله، أعد توجيهه لصفحة الدخول
+      // If not authenticated, redirect to login
       if (!isAuthenticated) {
         router.push('/login');
       } 
-      // إذا كان مسجلاً دخوله لكنه ليس أدمن، أعد توجيهه للوحة تحكم المستخدم
+      // If authenticated but not admin, redirect to user dashboard
       else if (user && !user.is_admin) {
         router.push('/dashboard');
       }
     }
   }, [isAuthenticated, isLoading, user, router]);
 
-  // أثناء التحقق من المستخدم، اعرض شاشة تحميل احترافية
+  // Show loading skeleton during verification
   if (isLoading) {
     return (
         <div className="container mx-auto p-8 space-y-4">
@@ -36,12 +44,12 @@ export const AdminGuard = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  // إذا كان المستخدم مسجلاً دخوله وهو أدمن، اعرض المحتوى المحمي
+  // Show content if authenticated and is admin
   if (isAuthenticated && user?.is_admin) {
       return <>{children}</>;
   }
 
-  // في حالة عدم تحقق الشروط، اعرض رسالة خطأ مؤقتة قبل إعادة التوجيه
+  // Show error message temporarily before redirect
   return (
     <div className="container mx-auto p-8">
         <Alert variant="destructive">

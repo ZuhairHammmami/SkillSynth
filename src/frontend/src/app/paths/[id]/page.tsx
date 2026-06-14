@@ -3,14 +3,14 @@
 import { useParams, notFound } from 'next/navigation';
 import { usePathDetails } from '@/features/paths/hooks/usePathDetails';
 import { AuthGuard } from '@/features/auth/components/AuthGuard';
-import StepItem from '@/components/StepItem';
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import StepItem from '@/shared/components/StepItem';
+import { Badge } from "@/shared/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Terminal, AlertCircle, Clock, CheckCircle2, Share2 } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/shared/ui/skeleton';
 import { motion } from 'framer-motion';
-import { Progress } from "@/components/ui/progress";
-import { Button } from '@/components/ui/button';
+import { Progress } from "@/shared/ui/progress";
+import { Button } from '@/shared/ui/button';
 
 function PathDetailContent() {
   const params = useParams();

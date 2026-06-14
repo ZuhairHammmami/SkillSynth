@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/lib/api';
+import apiClient from '@/shared/lib/api';
 import { toast } from 'sonner';
 
 export interface Category {
@@ -12,7 +12,7 @@ export const useCategories = () => {
   return useQuery({
     queryKey: ['admin-categories'],
     queryFn: async () => {
-      const { data } = await apiClient.get<Category[]>('/api/admin/categories/');
+      const { data } = await apiClient.get<Category[]>('/api/admin/categories');
       return data;
     },
   });
@@ -23,7 +23,7 @@ export const useCreateCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (name: string) => {
-      const { data } = await apiClient.post('/api/admin/categories/', { name });
+      const { data } = await apiClient.post('/api/admin/categories', { name });
       return data;
     },
     onSuccess: () => {

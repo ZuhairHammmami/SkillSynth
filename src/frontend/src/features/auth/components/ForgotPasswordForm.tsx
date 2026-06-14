@@ -3,10 +3,10 @@
 
 import { useState } from 'react';
 import { useForgotPassword } from '@/features/auth/hooks/useForgotPassword';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/shared/ui/card';
 import { Loader2, MailCheck } from 'lucide-react';
 import Link from 'next/link';
 

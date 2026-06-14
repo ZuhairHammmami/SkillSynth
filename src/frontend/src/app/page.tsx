@@ -1,121 +1,73 @@
-// المسار: src/app/page.tsx
 'use client';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Zap, Target, Bot } from 'lucide-react';
-import { useAuthStore } from '@/store/authStore';
-import { Logo } from '@/components/Logo';
-import { motion, Variants } from 'framer-motion'; // <-- 1. استيراد Variants
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-
-// 2. التعريف الصريح للأنواع
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-    },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      duration: 0.6,
-      ease: "easeOut",
-    },
-  },
-};
+import { Button } from '@/shared/ui/button';
+import { ArrowLeft, Sparkles, Zap, BrainCircuit } from 'lucide-react';
+import { useAuthStore } from '@/shared/store/authStore';
+import { Logo } from '@/shared/components/Logo';
+import { motion } from 'framer-motion';
 
 export default function LandingPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return (
-    <>
-      {/* --- Hero Section --- */}
-      <motion.section
-        className="container mx-auto flex flex-col items-center justify-center text-center px-4 pt-32 pb-20 sm:pt-40 sm:pb-28"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <motion.div variants={itemVariants}><Logo /></motion.div>
-        
-        <motion.h1 
-            variants={itemVariants}
-            className="mt-6 text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-600 to-secondary sm:text-6xl md:text-7xl"
-        >
-          مسار تعلمك، مُعاد تصوره.
-        </motion.h1>
-        
-        <motion.p 
-            variants={itemVariants}
-            className="mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl"
-        >
-          توقف عن التخمين، وابدأ في الإنجاز. SkillSynth هو شريكك الذكي الذي يحول
-          طموحاتك الكبيرة إلى خطوات يومية قابلة للتنفيذ.
-        </motion.p>
-
-        <motion.div 
-          variants={itemVariants} 
-          className="mt-10"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Button asChild size="lg" className="px-8 py-6 text-lg">
-            <Link href={isAuthenticated ? "/dashboard" : "/register"}>
-              {isAuthenticated ? "اذهب إلى لوحة التحكم" : "ابدأ رحلتك مجانًا"}
-              <ArrowLeft className="mr-2 h-5 w-5" />
-            </Link>
-          </Button>
-        </motion.div>
-      </motion.section>
-
-      {/* --- Features Section --- */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <motion.h2 
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.5 }}
-            className="text-3xl font-bold text-center mb-12"
+    <div className="relative isolate pt-14">
+      {/* Hero Section */}
+      <div className="py-24 sm:py-32 lg:pb-40">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="mx-auto max-w-4xl text-center"
           >
-              القوة بين يديك
-          </motion.h2>
-          <div className="grid gap-8 md:grid-cols-3">
+            <div className="mb-8 flex justify-center">
+                <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-gray-400 ring-1 ring-white/10 hover:ring-white/20 bg-white/5 backdrop-blur-lg">
+                    الجيل الجديد من التعلم الذكي <span className="text-purple-400 font-semibold mx-1">AI Powered</span>
+                </div>
+            </div>
+            
+            <h1 className="text-5xl font-bold tracking-tight text-white sm:text-7xl bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/50 pb-4">
+              لا تدرس بجهد، <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">ادرس بذكاء.</span>
+            </h1>
+            
+            <p className="mt-6 text-lg leading-8 text-gray-300 max-w-2xl mx-auto">
+              SkillSynth ليس مجرد منصة كورسات. إنه عقلك الثاني الذي يحلل، يخطط، ويرسم لك أقصر طريق لاحتراف مهنة أحلامك.
+            </p>
+            
+            <div className="mt-10 flex items-center justify-center gap-x-6">
+              <Button asChild size="lg" className="rounded-full h-14 px-8 text-lg bg-white text-black hover:bg-gray-200 shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all hover:scale-105">
+                <Link href={isAuthenticated ? "/dashboard" : "/register"}>
+                  {isAuthenticated ? "لوحة التحكم" : "ابدأ رحلتك مجانًا"}
+                </Link>
+              </Button>
+              <Link href="/about" className="text-sm font-semibold leading-6 text-white flex items-center hover:text-purple-400 transition-colors">
+                كيف نعمل؟ <span aria-hidden="true" className="mr-1">←</span>
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* Cards Section */}
+          <motion.div 
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="mx-auto mt-20 grid max-w-lg grid-cols-1 gap-6 sm:mt-24 lg:max-w-none lg:grid-cols-3"
+          >
             {[
-              { icon: Target, title: "تخصيص فائق", desc: "نحلل مستواك وأهدافك لنصمم لك خطة فريدة لا تشبه أي خطة أخرى." },
-              { icon: Bot, title: "ذكاء اصطناعي متقدم", desc: "نظامنا الذكي يختار لك أفضل الموارد ويبقي مسارك محدثًا دائمًا." },
-              { icon: Zap, title: "تقدم متسارع", desc: "لا مزيد من التشتت. اتبع خطوات واضحة وقس تقدمك نحو هدفك بثقة." },
+                { icon: BrainCircuit, title: "تحليل ذكي", desc: "خوارزميات تفهم مستواك الحالي بدقة وتتجاوز ما تعرفه مسبقاً." },
+                { icon: Sparkles, title: "مسار ديناميكي", desc: "لا توجد خطة ثابتة. المسار يتغير ويتطور معك بناءً على سرعة تعلمك." },
+                { icon: Zap, title: "تركيز فائق", desc: "نعطيك فقط ما تحتاجه للوظيفة، بدون حشو أو معلومات زائدة." },
             ].map((feature, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.5 }}
-                transition={{ duration: 0.5, delay: i * 0.2 }}
-              >
-                <Card className="text-center h-full transition-all duration-300 hover:border-primary hover:shadow-2xl hover:-translate-y-2">
-                  <CardHeader>
-                    <div className="flex items-center justify-center h-14 w-14 rounded-full bg-primary/10 text-primary mx-auto mb-4">
-                      <feature.icon className="h-7 w-7" />
-                    </div>
-                    <h3 className="text-xl font-semibold">{feature.title}</h3>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{feature.desc}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
+                <div key={i} className="relative overflow-hidden rounded-2xl bg-white/5 p-8 ring-1 ring-white/10 hover:bg-white/10 transition-colors backdrop-blur-sm">
+                    <feature.icon className="h-8 w-8 text-purple-400 mb-4" />
+                    <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
+                    <p className="text-gray-400 leading-relaxed">{feature.desc}</p>
+                </div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
-    </>
+      </div>
+    </div>
   );
 }

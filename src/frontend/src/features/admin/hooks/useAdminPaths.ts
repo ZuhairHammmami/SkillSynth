@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import apiClient from '@/lib/api';
+import apiClient from '@/shared/lib/api';
 
 // تعريف نوع البيانات للمسار كما يأتي من الباك اند
 export interface AdminPath {

@@ -1,18 +1,10 @@
 import type { Metadata } from 'next';
-import { Tajawal } from 'next/font/google';
-import { Providers } from '@/lib/providers';
-import { ClientAppInitializer } from '@/components/ClientAppInitializer';
-import { Toaster } from "@/components/ui/sonner";
-import { AppLayout } from '@/components/AppLayout';
-import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { Providers } from '@/shared/lib/providers';
+import { ClientAppInitializer } from '@/shared/components/ClientAppInitializer';
+import { Toaster } from "@/shared/ui/sonner";
+import { AppLayout } from '@/shared/components/AppLayout';
+import { AnimatedBackground } from '@/shared/components/AnimatedBackground';
 import './globals.css';
-
-// إعداد خط تجوال العربي
-const tajawal = Tajawal({
-  subsets: ['arabic'],
-  weight: ['400', '500', '700'],
-  display: 'swap',
-});
 
 // إعدادات الميتاداتا (العنوان والوصف)
 export const metadata: Metadata = {
@@ -27,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl">
-      <body className={`${tajawal.className} min-h-screen bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary`}>
+      <body className="min-h-screen bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary">
         <Providers>
           {/* مهيئ التطبيق (للتحقق من التوكن عند البدء) */}
           <ClientAppInitializer />

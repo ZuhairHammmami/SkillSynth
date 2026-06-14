@@ -34,3 +34,22 @@ src/frontend/.env*.local
 src/frontend/npm-debug.log*
 src/frontend/yarn-debug.log*
 src/frontend/yarn-error.log*
+node_modules
+
+# Python egg-info (auto-generated)
+*.egg-info/
+
+# Supabase CLI temp cache
+supabase/.temp/
+
+# Session files / agent logs
+session-ses_*.md
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

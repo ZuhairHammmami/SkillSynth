@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useSkills, useCreateSkill, useUpdateSkill, useDeleteSkill, Skill } from '@/features/admin/hooks/useSkills';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from '@/shared/ui/dialog';
 import { Plus, Trash2, Database, Loader2, Search, Pencil } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/shared/ui/skeleton';
 
 export default function AdminSkillsPage() {
   const { data: skills, isLoading } = useSkills();

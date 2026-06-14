@@ -1,6 +1,6 @@
 // المسار: src/features/wizard/hooks/useGeneratePath.ts
 import { useMutation } from '@tanstack/react-query';
-import apiClient from '@/lib/api';
+import apiClient from '@/shared/lib/api';
 import { toast } from 'sonner';
 
 // تعريف شكل البيانات التي نرسلها ونتلقاها

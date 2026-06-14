@@ -1,30 +1,34 @@
-// المسار: src/features/paths/hooks/usePaths.ts
-import { useQuery } from '@tanstack/react-query';
-import apiClient from '@/lib/api';
+// src/features/paths/hooks/usePaths.ts
+'use client';
 
-// تعريف شكل البيانات المتوقعة من GET /api/paths/
-interface LearningPath {
-  id: number;
-  title: string;
-  total_estimated_hours: number;
-}
+import { useQuery } from '@tanstack/react-query';
+import apiClient from '@/shared/lib/api';
+import { Path } from '@/entities/path';
+import { queryKeys } from '@/shared/api/query-keys';
+import { useAuthStore } from '@/shared/store/authStore';
 
 /**
- * دالة الجلب: تقوم بالاتصال بالـ API لجلب قائمة المسارات.
+ * Fetches all learning paths for the current user
  */
-const fetchPaths = async (): Promise<LearningPath[]> => {
-  const { data } = await apiClient.get<LearningPath[]>('/api/paths/');
+const fetchPaths = async (): Promise<Path[]> => {
+  const { data } = await apiClient.get<Path[]>('/api/paths/');
   return data;
 };
 
 /**
- * الـ Hook المخصص: يغلف `useQuery` ويوفر طريقة سهلة لجلب المسارات.
+ * Custom hook to fetch learning paths
+ * 
+ * Returns a list of all learning paths available to the current user
+ * Automatically disabled if user is not authenticated
  */
 export const usePaths = () => {
+  // Check authentication status from session store
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
   return useQuery({
-    queryKey: ['paths'], // مفتاح فريد لهذه البيانات في ذاكرة التخزين المؤقت
+    queryKey: queryKeys.paths.list(),
     queryFn: fetchPaths,
-    // يمكننا إضافة إعدادات أخرى هنا، مثل:
-    // enabled: !!useAuthStore.getState().user, // لا تقم بالجلب إلا إذا كان المستخدم مسجلاً دخوله
+    enabled: isAuthenticated, // Only fetch if user is authenticated
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };

@@ -6,12 +6,12 @@ import * as z from 'zod';
 import { useLogin } from '../hooks/useLogin';
 import Link from 'next/link';
 // import { useRouter } from 'next/navigation'; // <-- لم نعد بحاجة لهذا هنا
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
 import { Loader2 } from 'lucide-react';
-import { Logo } from '@/components/Logo';
+import { Logo } from '@/shared/components/Logo';
 
 // تعريف schema التحقق باستخدام Zod
 const formSchema = z.object({

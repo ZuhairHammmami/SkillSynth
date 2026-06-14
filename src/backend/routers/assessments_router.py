@@ -60,6 +60,8 @@ def get_assessment_questions_for_role(job_role_title: str, db: Session = Depends
         
         return questions_to_return
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error fetching assessment questions: {e}")
         raise HTTPException(

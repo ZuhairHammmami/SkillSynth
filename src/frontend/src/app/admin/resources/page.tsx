@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useResources, useCreateResource, useUpdateResource, useDeleteResource, Resource, ResourceData } from '@/features/admin/hooks/useResources';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from '@/shared/ui/dialog';
 import { Plus, Trash2, Pencil, BookOpen, Loader2, Search, ExternalLink, Video, FileText } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { Badge } from '@/shared/ui/badge';
 
 export default function AdminResourcesPage() {
   const { data: resources, isLoading } = useResources();

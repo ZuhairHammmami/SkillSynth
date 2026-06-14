@@ -1,18 +1,33 @@
-// المسار: src/app/profile/page.tsx
+// src/app/profile/page.tsx
 'use client';
-import { useAuthStore } from '@/store/authStore';
+import { useUser } from '@/features/user/hooks/useUser';
 import { AuthGuard } from '@/features/auth/components/AuthGuard';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { UpdateProfileForm } from '@/features/user/components/UpdateProfileForm';
 import { ChangePasswordForm } from '@/features/user/components/ChangePasswordForm';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/shared/ui/skeleton';
 
 function ProfileContent() {
-  const { user } = useAuthStore();
+  // User data from React Query
+  const { user, isLoading, isError } = useUser();
 
-  // هذا الشرط ضروري لأن AuthGuard يضمن وجود المستخدم
-  if (!user) return null; 
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
+
+  if (isError || !user) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-muted-foreground">خطأ في تحميل بيانات الملف الشخصي</p>
+      </div>
+    );
+  }
 
   return (
     <Tabs defaultValue="profile">

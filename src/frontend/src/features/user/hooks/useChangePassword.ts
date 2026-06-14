@@ -1,6 +1,6 @@
 // المسار: src/features/user/hooks/useChangePassword.ts
 import { useMutation } from '@tanstack/react-query';
-import apiClient from '@/lib/api';
+import apiClient from '@/shared/lib/api';
 import { toast } from 'sonner';
 
 // 1. تعريف شكل البيانات التي سترسلها الدالة إلى الـ API

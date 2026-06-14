@@ -1,16 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import apiClient from '@/lib/api';
+import apiClient from '@/shared/lib/api';
 import Step1_SelectGoal from '@/features/wizard/components/Step1_SelectGoal';
 import Step2_Assessment from '@/features/wizard/components/Step2_Assessment';
 import Step3_Preferences from '@/features/wizard/components/Step3_Preferences';
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Card } from '@/shared/ui/card';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { AuthGuard } from '@/features/auth/components/AuthGuard';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ErrorBoundary } from '@/app/components/ErrorBoundary';
 
 // تعريفات الأنواع
 export interface AssessmentAnswer { [questionId: string]: number; }
@@ -129,13 +130,15 @@ function WizardContent() {
                 <div className="absolute -top-20 -left-20 w-40 h-40 bg-primary/5 rounded-full blur-3xl" />
                 <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl" />
                 
-                {options && (
-                    <>
-                        {step === 1 && <Step1_SelectGoal options={options} onGoalSelect={handleGoalSelect} />}
-                        {step === 2 && <Step2_Assessment jobRole={jobRole} onComplete={handleAssessmentComplete} />}
-                        {step === 3 && <Step3_Preferences jobRole={jobRole} answers={answers} options={options} />}
-                    </>
-                )}
+                <ErrorBoundary componentName="WizardStep">
+                    {options && (
+                        <>
+                            {step === 1 && <Step1_SelectGoal options={options} onGoalSelect={handleGoalSelect} />}
+                            {step === 2 && <Step2_Assessment jobRole={jobRole} onComplete={handleAssessmentComplete} />}
+                            {step === 3 && <Step3_Preferences jobRole={jobRole} answers={answers} options={options} />}
+                        </>
+                    )}
+                </ErrorBoundary>
             </Card>
         </motion.div>
       </AnimatePresence>

@@ -1,9 +1,9 @@
 // المسار: src/features/auth/components/AuthGuard.tsx
 'use client';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/shared/store/authStore';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/shared/ui/skeleton';
 
 export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuthStore();

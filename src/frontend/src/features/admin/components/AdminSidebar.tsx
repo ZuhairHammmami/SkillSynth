@@ -1,11 +1,12 @@
+// src/features/admin/components/AdminSidebar.tsx
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Logo } from '@/components/Logo';
-import { useAuthStore } from '@/store/authStore';
+import { cn } from '@/shared/lib/utils';
+import { Button } from '@/shared/ui/button';
+import { Logo } from '@/shared/components/Logo';
+import { useUser } from '@/features/user/hooks/useUser';
 import { useLogout } from '@/features/auth/hooks/useLogout';
 import { 
   LayoutDashboard, 
@@ -20,7 +21,8 @@ import {
 
 export function AdminSidebar() {
   const pathname = usePathname();
-  const { user } = useAuthStore();
+  // User data from React Query
+  const { user } = useUser();
   const { mutate: performLogout } = useLogout();
 
   const sections = [

@@ -1,70 +1,72 @@
-// المسار: src/features/auth/hooks/useLogin.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/lib/api';
-import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import type { User } from '@/store/authStore';
+import Cookies from 'js-cookie';
+import apiClient from '@/shared/lib/api';
+import { queryKeys } from '@/shared/api/query-keys';
+import { useAuthStore } from '@/shared/store/authStore';
+import type { User } from '@/entities/user';
 
 interface LoginCredentials {
   email: string;
   password: string;
 }
 
-interface LoginResponse {
+interface TokenResponse {
   access_token: string;
+  token_type: string;
 }
-
-// دالة منفصلة لجلب المستخدم، للتأكد من أنها تركز على مهمة واحدة
-const fetchUserAfterLogin = async (token: string): Promise<User> => {
-    const { data } = await apiClient.get<User>('/api/auth/users/me', {
-        headers: { Authorization: `Bearer ${token}` }
-    });
-    return data;
-}
-
-// الدالة الأساسية التي سيتم استدعاؤها من useMutation
-const loginAndFetchUser = async (credentials: LoginCredentials): Promise<{token: string, user: User}> => {
-  const params = new URLSearchParams();
-  params.append('username', credentials.email);
-  params.append('password', credentials.password);
-  params.append('grant_type', 'password');
-
-  const { data: tokenData } = await apiClient.post<LoginResponse>('/api/auth/token', params, {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  });
-  
-  const user = await fetchUserAfterLogin(tokenData.access_token);
-  
-  return { token: tokenData.access_token, user };
-};
 
 export const useLogin = () => {
-  const queryClient = useQueryClient();
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { setIsAuthenticated } = useAuthStore();
 
   return useMutation({
-    mutationFn: loginAndFetchUser,
-    onSuccess: (data) => {
-      // 1. ضع التوكن في الكوكيز
-      Cookies.set('authToken', data.token, { expires: 7 });
-      
-      // 2. قم بتحديث بيانات 'user' في ذاكرة React Query فورًا وبشكل استباقي
-      queryClient.setQueryData(['user'], data.user);
-      
+    mutationFn: async (credentials: LoginCredentials): Promise<User> => {
+      const formData = new URLSearchParams();
+      formData.append('username', credentials.email);
+      formData.append('password', credentials.password);
+
+      const tokenResponse = await apiClient.post<TokenResponse>(
+        '/api/auth/token',
+        formData.toString(),
+        {
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        }
+      );
+
+      const { access_token } = tokenResponse.data;
+
+      Cookies.set('authToken', access_token, {
+        expires: 7,
+        path: '/',
+        sameSite: 'lax',
+      });
+
+      const userResponse = await apiClient.get<User>('/api/auth/users/me', {
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
+
+      return userResponse.data;
+    },
+    onSuccess: (user) => {
       toast.success("مرحباً بعودتك!", { description: "تم تسجيل دخولك بنجاح." });
-      
-      // --- هذا هو المنطق الحاسم والمصحح ---
-      // تحقق من دور المستخدم وقم بإعادة التوجيه إلى الوجهة الصحيحة
-      if (data.user.is_admin) {
+
+      queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
+      setIsAuthenticated(true);
+
+      if (user.is_admin) {
         router.push('/admin/dashboard');
       } else {
         router.push('/dashboard');
       }
-      // ------------------------------------
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'فشل تسجيل الدخول. تأكد من بياناتك.');
+      const message =
+        error.response?.data?.detail || error.message || 'فشل تسجيل الدخول. تأكد من بياناتك.';
+      toast.error(message);
+      Cookies.remove('authToken', { path: '/' });
     },
   });
 };

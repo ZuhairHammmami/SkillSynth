@@ -3,13 +3,13 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import apiClient from '@/shared/lib/api';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
 import { toast } from "sonner";
 import { Loader2 } from 'lucide-react';
-import type { User } from '@/store/authStore'; // <-- استيراد نوع User من المخزن المركزي
+import type { User } from '@/shared/store/authStore'; // <-- استيراد نوع User من المخزن المركزي
 
 interface Props {
   user: User;

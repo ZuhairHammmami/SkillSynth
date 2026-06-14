@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/lib/api';
+import apiClient from '@/shared/lib/api';
 import { toast } from 'sonner';
 
 export interface JobRole {
@@ -12,7 +12,7 @@ export const useJobRoles = () => {
   return useQuery({
     queryKey: ['admin-job-roles'],
     queryFn: async () => {
-      const { data } = await apiClient.get<JobRole[]>('/api/admin/job-roles/');
+      const { data } = await apiClient.get<JobRole[]>('/api/admin/job-roles');
       return data;
     },
   });
@@ -23,7 +23,7 @@ export const useCreateJobRole = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (title: string) => {
-      const { data } = await apiClient.post('/api/admin/job-roles/', { title });
+      const { data } = await apiClient.post('/api/admin/job-roles', { title });
       return data;
     },
     onSuccess: () => {
