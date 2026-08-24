@@ -1,29 +1,38 @@
 # FastAPI and ASGI Server
 fastapi
-uvicorn
+uvicorn[standard]
 python-multipart
 
 # Database
-SQLAlchemy
+SQLAlchemy>=1.4
 psycopg2-binary
 
 # Pydantic and Settings
-pydantic
+pydantic>=2.0
 python-dotenv
 email-validator
 
 # Authentication & Security
 passlib==1.7.4
 bcrypt==3.2.0
-python-jose
+python-jose[cryptography]
+slowapi
 
-# LLM Integration (Phase 3.4 & 4.0)
+# Email
+sendgrid
+
+# Caching
+redis>=4.0
+
+# LLM Integration
 openai>=1.0.0
 langchain>=0.1.0
 langchain-openai>=0.0.1
 
-# Local LLM Support (Phase 4.0 - Hybrid Provider)
-# Note: Ollama is run as a standalone service (http://localhost:11434)
-# These packages provide Python interfaces to local and remote LLMs
-langchain-community>=0.0.1  # For Ollama integration
-ollama>=0.1.0  # Python SDK for Ollama (optional, for direct API calls)
+# Local LLM Support
+langchain-community>=0.0.1
+ollama>=0.1.0
+
+# Test dependencies
+pytest>=8.0.0
+httpx>=0.27.0
