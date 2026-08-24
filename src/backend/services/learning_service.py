@@ -3,9 +3,8 @@
 Called by the learning/progress/path routers (Task 3). Generation is
 deterministic: goals are gap-filled against user_skills, ordered by a
 Kahn topo-sort over skill_prerequisites, then persisted as
-path + path_steps + user_skills rows. Wire keys stay frozen (string
-path ids, step.content mirroring description, steps[].is_completed).
-Gap analysis lives in analytics_service (300-line cap).
+path + path_steps + user_skills rows. Wire keys stay frozen (int
+path ids, steps[].is_completed); gap analysis lives in analytics_service.
 """
 
 from collections import defaultdict, deque
@@ -14,7 +13,8 @@ from datetime import datetime, timedelta, UTC
 from backend.dto.learning import StepCompletionResponse
 from backend.entities.learning import Path
 from backend.repositories import assess_repository, catalog_repository
-from backend.repositories import engagement_repository, learning_repository as lrepo
+from backend.repositories import learning_repository as lrepo
+from backend.services.assess_service import normalize_key
 
 MASTERY_LEVEL = 3
 
@@ -70,11 +70,10 @@ def _order_by_prereqs(db, skill_rows: list) -> list:
 
 def _score_answers(db, skill_rows: list, answers: dict[str, int],
                    user_id: int) -> dict[int, int]:
-    """Deterministic proficiency per skill from wizard answers.
+    """Proficiency per skill from wizard answers (upserts user_skills).
 
-    Questions are graded against assessment_questions.correct_index
-    using the historical "<skill>_q<i>" answer keys; skills without a
-    quiz keep their current profile level. Upserts user_skills rows.
+    Graded against assessment_questions.correct_index using ids built
+    by assess_service.normalize_key; quiz-less skills keep old level.
     """
     ids = [s.id for s in skill_rows]
     assessments = assess_repository.get_assessments_for_skills(db, ids)
@@ -87,7 +86,8 @@ def _score_answers(db, skill_rows: list, answers: dict[str, int],
         if questions:
             correct = sum(
                 1 for i, q in enumerate(questions)
-                if answers.get(f"{skill.name.lower()}_q{i}") == q.correct_index)
+                if answers.get(
+                    f"{normalize_key(skill.name).lower()}_q{i}") == q.correct_index)
             level = max(0, min(5, round(correct / len(questions) * 5)))
         else:
             level = current.get(skill.name, 0)
@@ -124,7 +124,7 @@ def _persist_plan(db, user_id: int, title: str, description: str,
         total_weeks=max(1, round(total_hours / max(preferences.get("weekly_hours", 10), 1))))
     for position, skill in enumerate(plan, start=1):
         resource_ids = _pick_resource_ids(db, skill, preferences.get("prefs") or {})
-        lrepo.create_step(
+        step = lrepo.create_step(
             db, path_id=path.id, position=position,
             title=f"Master {skill.name}",
             description=(f"Achieve proficiency in {skill.name}. "
@@ -132,6 +132,8 @@ def _persist_plan(db, user_id: int, title: str, description: str,
                          f"Target: {MASTERY_LEVEL}."),
             estimated_hours=skill.estimated_hours or 8,
             resource_ids=resource_ids)
+        step.skill_id = skill.id
+    db.commit()
     return path
 
 
@@ -217,12 +219,10 @@ def _path_skills(db, path: Path) -> list[dict]:
 
 
 def format_path_detail(db, path: Path, user_id: int) -> dict:
-    """Full path payload for detail/generation responses — key set is
-    frozen: string id, duplicated total_hours, goal_job_role, steps[].
-    Called by paths_router detail + generate_path above."""
+    """Full path payload (int ids, goal_job_role, skills[], steps[])."""
     completed = lrepo.completed_step_ids(db, user_id)
     return {
-        "id": str(path.id), "profile_id": path.user_id,
+        "id": path.id, "profile_id": path.user_id,
         "title": path.title or "", "description": path.description,
         "status": path.status or "active",
         "total_estimated_hours": path.total_estimated_hours,
@@ -237,27 +237,36 @@ def format_path_detail(db, path: Path, user_id: int) -> dict:
 
 
 def progress_dashboard(db, user_id: int) -> dict:
-    """GET /progress/dashboard payload — exact legacy keys, weekly =
-    trailing 7-day completions from step_progress.completed_at."""
+    """GET /progress/dashboard payload — frontend-owned key contract:
+    total_paths/total_steps/completed_steps/completion_percentage/
+    remaining_hours/total_hours (+ additive weekly + paths blocks).
+    Completions come from step_progress.completed_at."""
     seven_ago = datetime.now(UTC) - timedelta(days=7)
     paths = lrepo.get_paths_by_user(db, user_id)
     completed = lrepo.completed_step_ids(db, user_id)
-    paths_data = [{
-        "id": str(p.id), "title": p.title or "", "description": p.description,
-        "total_estimated_hours": p.total_estimated_hours,
-        "total_hours": p.total_estimated_hours,
-        "total_estimated_weeks": p.total_estimated_weeks,
-        "goal_job_role": p.target_role,
-        "created_at": p.created_at.isoformat() if p.created_at else None,
-        "steps": [_serialize_step(db, s, completed)
-                  for s in lrepo.get_steps(db, p.id)],
-    } for p in paths]
+    total_steps = lrepo.count_steps(db, user_id)
+    completed_steps = lrepo.count_completions(db, user_id)
+    pct = round(completed_steps / total_steps * 100, 1) if total_steps else 0
+    total_hours = lrepo.sum_total_hours(db, user_id)
+    completed_hours = round(total_hours * (pct / 100), 1) if pct > 0 else 0
     return {
-        "total_completed": lrepo.count_completions(db, user_id),
-        "total_steps": lrepo.count_steps(db, user_id),
+        "total_paths": len(paths),
+        "total_steps": total_steps,
+        "completed_steps": completed_steps,
+        "completion_percentage": pct,
+        "remaining_hours": round(max(0.0, total_hours - completed_hours), 1),
+        "total_hours": total_hours,
         "weekly": lrepo.count_completions(db, user_id, since=seven_ago),
-        "total_hours": lrepo.sum_total_hours(db, user_id),
-        "paths": paths_data,
+        "paths": [{
+            "id": p.id, "title": p.title or "", "description": p.description,
+            "total_estimated_hours": p.total_estimated_hours,
+            "total_hours": p.total_estimated_hours,
+            "total_estimated_weeks": p.total_estimated_weeks,
+            "goal_job_role": p.target_role,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+            "steps": [_serialize_step(db, s, completed)
+                      for s in lrepo.get_steps(db, p.id)],
+        } for p in paths],
     }
 
 

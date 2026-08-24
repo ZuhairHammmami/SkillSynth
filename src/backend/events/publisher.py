@@ -1,3 +1,9 @@
+"""In-memory SSE pub/sub bus (no persistence — events are fire-and-forget).
+
+Two channels: per-user queues keyed by profile_id and a shared admin
+queue. Routers stream from the generators; services publish via send_*.
+"""
+
 import json
 import asyncio
 from collections import defaultdict
@@ -8,6 +14,11 @@ admin_event_clients: list = []
 
 
 async def admin_event_generator(category: str | None = None) -> AsyncGenerator[str, None]:
+    """Stream admin-channel SSE frames, optionally filtered by category.
+
+    Consumed by GET /admin/events/stream; publishes arrive through
+    send_admin_event. Emits `connected` then pings every 30s.
+    """
     queue: asyncio.Queue = asyncio.Queue()
     admin_event_clients.append(queue)
     try:
@@ -28,6 +39,12 @@ async def admin_event_generator(category: str | None = None) -> AsyncGenerator[s
 
 
 def send_admin_event(event_data: dict):
+    """Fan one payload out to every connected admin stream.
+
+    Called by admin activity logging to mirror persisted rows into
+    open /admin/events/stream connections; silently drops on full
+    queues so slow clients never block writers.
+    """
     for queue in admin_event_clients:
         try:
             queue.put_nowait(event_data)
@@ -36,6 +53,11 @@ def send_admin_event(event_data: dict):
 
 
 async def event_generator(profile_id: int) -> AsyncGenerator[str, None]:
+    """Stream one user's SSE frames from their personal queue.
+
+    Consumed by GET /api/events after token auth resolves profile_id;
+    publishes arrive through send_event. Pings keep proxies alive.
+    """
     queue: asyncio.Queue = asyncio.Queue()
     event_clients[profile_id].append(queue)
     try:
@@ -56,6 +78,11 @@ async def event_generator(profile_id: int) -> AsyncGenerator[str, None]:
 
 
 def send_event(profile_id: int, event_type: str, data: dict | None = None):
+    """Push {type, **data} to all live streams of one user.
+
+    Called by assessment/learning flows (e.g. assessment_completed,
+    path_generated); no-op when the user has no open stream.
+    """
     if profile_id in event_clients:
         message = {"type": event_type, **(data or {})}
         for queue in event_clients[profile_id]:

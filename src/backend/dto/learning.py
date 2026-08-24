@@ -77,9 +77,9 @@ class StepOut(BaseModel):
 
 
 class PathOut(BaseModel):
-    """Serialized paths row (id kept as string for wire compatibility)."""
+    """Serialized paths row; id is an int (frontend TS contract)."""
 
-    id: str
+    id: int
     profile_id: int
     title: str
     description: Optional[str] = None
@@ -101,7 +101,7 @@ class PathDetailOut(PathOut):
 class ProgressPathOut(BaseModel):
     """Per-path block inside ProgressDashboardOut.paths."""
 
-    id: str
+    id: int
     title: str
     description: Optional[str] = None
     total_estimated_hours: Optional[int] = None
@@ -113,13 +113,19 @@ class ProgressPathOut(BaseModel):
 
 
 class ProgressDashboardOut(BaseModel):
-    """GET /progress/dashboard response (keys frozen; consumed widely)."""
+    """GET /progress/dashboard response — key contract owned by the
+    live frontend (progress page): total_paths, total_steps,
+    completed_steps, completion_percentage, remaining_hours,
+    total_hours. `weekly` and `paths` are additive extras."""
 
-    total_completed: int
+    total_paths: int
     total_steps: int
-    weekly: int
+    completed_steps: int
+    completion_percentage: float
+    remaining_hours: float
     total_hours: float
-    paths: list[ProgressPathOut]
+    weekly: int = 0
+    paths: list[ProgressPathOut] = []
 
 
 class StepCompletionResponse(BaseModel):

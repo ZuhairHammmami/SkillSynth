@@ -11,8 +11,13 @@ from backend.repositories import catalog_repository
 MASTERY_SCALE = 5
 
 
-def _normalize_key(name: str) -> str:
-    """Historical skill-name → assessment key normalization."""
+def normalize_key(name: str) -> str:
+    """Skill-name → question-id key ("Machine Learning"→"machine_learning").
+
+    Single source of truth: assess_service builds ids with it and
+    learning_service._score_answers looks answers up with it, so both
+    sides of the wizard round-trip stay in lockstep.
+    """
     return (name.replace(" ", "_").replace("/", "_").replace("-", "_")
             .replace("(", "").replace(")", ""))
 
@@ -37,7 +42,7 @@ def questions_for_skill(db, job_role_title: str) -> list[dict]:
             continue
         for i, q in enumerate(arepo.get_questions(db, assessment.id)):
             questions.append({
-                "id": f"{_normalize_key(skill.name).lower()}_q{i}",
+                "id": f"{normalize_key(skill.name).lower()}_q{i}",
                 "skill": skill.name,
                 "text": q.prompt,
                 "options": q.options or [],

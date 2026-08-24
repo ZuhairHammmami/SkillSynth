@@ -78,10 +78,15 @@ def decode_token(token: str) -> dict:
 
 
 def create_password_reset_token(email: str) -> str:
-    """15-minute single-purpose reset token carrying sub=email."""
-    expire = datetime.now(UTC) + timedelta(minutes=15)
-    return jwt.encode({"exp": expire, "sub": email, "type": "reset",
-                       "jti": secrets.token_hex(16)}, SECRET_KEY, algorithm=ALGORITHM)
+    """30-minute signed reset token (type=password_reset, sub=email).
+
+    Statelessly consumed by reset_password; no server-side storage.
+    """
+    expire = datetime.now(UTC) + timedelta(minutes=30)
+    return jwt.encode({"exp": expire, "sub": email,
+                       "type": "password_reset",
+                       "jti": secrets.token_hex(16)},
+                      SECRET_KEY, algorithm=ALGORITHM)
 
 
 def create_sse_token(user_id: int) -> str:
@@ -180,27 +185,36 @@ class AuthService:
         return True, "Password updated successfully"
 
     @staticmethod
-    def request_reset(db, email: str) -> str:
-        """Issue a reset token when the account exists; never enumerates.
+    def request_reset(db, email: str) -> dict:
+        """Stateless password-reset issuance; always-200 payload shape.
 
-        The old email delivery hook died with the email layer; token
-        issuance stays observable through the auth activity row.
+        Returns {"message": ...} unchanged for unknown emails (no
+        enumeration); when the account exists the signed 30-minute
+        reset JWT is included as "reset_token" so the flow works
+        without the removed email layer. An auth activity row is
+        written via engagement_repository.write(db, ...).
         """
+        payload = {"message": ("If an account with this email exists, a "
+                               "password reset link has been sent.")}
         user = identity_repository.get_by_email(db, email)
         if user:
-            create_password_reset_token(user.email)
+            payload["reset_token"] = create_password_reset_token(user.email)
             engagement_repository.write(
-                category="auth", action="password_reset_requested",
+                db, category="auth", action="password_reset_requested",
                 user_id=user.id, entity_type="user", entity_id=user.id,
                 data={"email": email}, ip_address=None)
-        return ("If an account with this email exists, a password reset link "
-                "has been sent.")
+        return payload
 
     @staticmethod
     def reset_password(db, token_str: str, new_password: str) -> tuple[bool, str]:
-        """Consume a reset token and set the new password."""
+        """Validate signature+purpose+expiry of a reset JWT, then rotate.
+
+        Returns (ok, message); routers map failures to 400 matching the
+        old contract. Expiry surfaces as an invalid token via decode.
+        """
         payload = decode_token(token_str)
-        if not payload or payload.get("type") != "reset" or not payload.get("sub"):
+        if not payload or payload.get("type") != "password_reset" \
+                or not payload.get("sub"):
             return False, "Invalid token"
         user = identity_repository.get_by_email(db, payload["sub"])
         if not user:
@@ -255,8 +269,8 @@ def change_password(db, user: User, current: str, new: str):
     return AuthService.change_password(db, user, current, new)
 
 
-def request_reset(db, email: str) -> str:
-    """See AuthService.request_reset."""
+def request_reset(db, email: str) -> dict:
+    """See AuthService.request_reset; returns the always-200 payload."""
     return AuthService.request_reset(db, email)
 
 

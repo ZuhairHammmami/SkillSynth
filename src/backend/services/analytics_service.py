@@ -54,16 +54,36 @@ def learner_dashboard(db, user_id: int) -> dict:
     learning = sum(1 for v in profile.values() if 0 < v < MASTERY_LEVEL)
     completed_hours = round(total_hours * (completion_rate / 100), 1) if completion_rate > 0 else 0
     paths = lrepo.get_paths_by_user(db, user_id)
+    monthly = lrepo.count_completions(
+        db, user_id, since=datetime.now(UTC) - timedelta(days=30))
     return {
-        "total_paths": total_paths, "total_completed_steps": total_completed,
+        "total_paths": total_paths,
+        "total_completed_steps": total_completed,
+        "completed_steps": total_completed,
         "total_steps": total_steps, "completion_rate": completion_rate,
         "mastered_skills": mastered, "learning_skills": learning,
         "total_skill_areas": len(profile),
         "weekly_completions": weekly, "total_hours": total_hours,
         "completed_hours": completed_hours,
         "remaining_hours": round(total_hours - completed_hours, 1),
+        "learning_velocity": round(monthly / (30 / 7), 1) if monthly > 0 else 0,
+        "recent_activity": _recent_activity(db, user_id),
         "path_progress": _path_progress_list(db, user_id, paths),
     }
+
+
+def _recent_activity(db, user_id: int, limit: int = 5) -> list[dict]:
+    """recent_activity items rendered by analytics + dashboard pages:
+    {type, description, date} built from the latest step completions."""
+    return [
+        {
+            "type": "step_completed",
+            "description": f'Completed "{step_title}" in {path_title}',
+            "date": row.completed_at.isoformat() if row.completed_at else None,
+        }
+        for row, step_title, path_title, _path_id
+        in lrepo.learning_history(db, user_id, limit=limit)
+    ]
 
 
 def skill_growth(db, user_id: int) -> dict:
