@@ -6,8 +6,9 @@ Builds two temp SQLite databases:
   (b) from backend.entities via Base.metadata.create_all
 
 Compares table sets, columns (name/type-affinity/notnull/default), PK columns,
-FK tuples, and index names per table. Prints "SCHEMA MATCH" and exits 0 on
-success; prints aligned diffs and exits 1 otherwise.
+FK tuples including ON DELETE action, explicit index names + column lists, and
+UNIQUE-constraint column tuples per table. Prints "SCHEMA MATCH" and exits 0
+on success; prints aligned diffs and exits 1 otherwise.
 """
 
 import os
@@ -22,10 +23,11 @@ from backend.database import Base  # noqa: E402
 import backend.entities  # noqa: E402,F401
 
 DDL_PATH = os.path.join(ROOT, "src", "migrations", "003_reduced_schema.sql")
-EXCLUDED_TABLES = {"alembic_version"}
 
 
-def type_affinity(decl: str) -> str:
+def type_affinity(decl):
+    """Map a declared SQL type to its SQLite affinity class (per the SQLite
+    affinity rules); shared by both comparison sides so it never biases."""
     t = (decl or "").upper()
     if "INT" in t:
         return "INTEGER"
@@ -38,7 +40,8 @@ def type_affinity(decl: str) -> str:
     return "NUMERIC"
 
 
-def load_ddl_tables() -> sqlite3.Connection:
+def load_ddl_tables():
+    """Build side A: an in-memory SQLite DB from the canonical DDL file."""
     with open(DDL_PATH, "r", encoding="utf-8") as f:
         script = f.read()
     conn = sqlite3.connect(":memory:")
@@ -46,20 +49,24 @@ def load_ddl_tables() -> sqlite3.Connection:
     return conn
 
 
-def load_orm_tables() -> sqlite3.Connection:
+def load_orm_tables():
+    """Build side B: an in-memory SQLite DB from ORM create_all, so the gate
+    fails whenever entities drift from the reviewed DDL."""
     engine = create_engine("sqlite://")
     Base.metadata.create_all(bind=engine)
     return engine.raw_connection()
 
 
-def get_tables(conn) -> set:
+def get_tables(conn):
+    """Set of user-table names in a connection (sqlite_% internals excluded)."""
     rows = conn.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
     ).fetchall()
-    return {r[0] for r in rows} - EXCLUDED_TABLES
+    return {r[0] for r in rows}
 
 
 def get_columns(conn, table):
+    """{column: (affinity, notnull, default_str)} per PRAGMA table_info."""
     out = {}
     for _cid, name, ctype, notnull, dflt, _pk in conn.execute(f'PRAGMA table_info("{table}")'):
         out[name] = (type_affinity(ctype), bool(notnull), None if dflt is None else str(dflt))
@@ -67,28 +74,53 @@ def get_columns(conn, table):
 
 
 def get_pk(conn, table):
+    """Ordered PRIMARY KEY column names — order matters for composite keys."""
     cols = [(pk, name) for _c, name, _t, _nn, _d, pk in conn.execute(f'PRAGMA table_info("{table}")') if pk]
     return [name for _pk, name in sorted(cols)]
 
 
 def get_fks(conn, table):
+    """{(table, column, ref_table, ref_col, on_delete)} per FK.
+
+    The ON DELETE action is part of the tuple so an ORM ondelete edit that is
+    not mirrored in the canonical DDL (or vice versa) fails the gate.
+    """
     fks = set()
     for row in conn.execute(f'PRAGMA foreign_key_list("{table}")'):
-        ref_table, from_col, to_col = row[2], row[3], row[4]
-        fks.add((table, from_col, ref_table, to_col))
+        ref_table, from_col, to_col, on_delete = row[2], row[3], row[4], row[6]
+        fks.add((table, from_col, ref_table, to_col, on_delete))
     return fks
 
 
 def get_indexes(conn, table):
-    names = set()
+    """{explicit_index_name: ordered_column_tuple} for developer-created
+    indexes (origin 'c'); autoindexes carry no reviewable name and are
+    covered semantically by get_uniques/get_pk instead."""
+    out = {}
     for row in conn.execute(f'PRAGMA index_list("{table}")'):
-        name = row[1]
-        if not name.startswith("sqlite_autoindex_"):
-            names.add(name)
-    return names
+        name, origin = row[1], row[3]
+        if origin == 'c':
+            cols = tuple(r[2] for r in conn.execute(f'PRAGMA index_info("{name}")'))
+            out[name] = cols
+    return out
 
 
-def main() -> int:
+def get_uniques(conn, table):
+    """Set of column tuples enforced UNIQUE by constraint (autoindex origin
+    'u') — closes the old gap where sqlite_autoindex_* names were skipped,
+    letting UNIQUE constraints go uncompared."""
+
+    out = set()
+    for row in conn.execute(f'PRAGMA index_list("{table}")'):
+        name, origin = row[1], row[3]
+        if origin == 'u':
+            cols = tuple(r[2] for r in conn.execute(f'PRAGMA index_info("{name}")'))
+            out.add(cols)
+    return out
+
+
+def main():
+    """Build both sides, diff every facet, print verdict; exit 0 on match."""
     ddl = load_ddl_tables()
     orm = load_orm_tables()
 
@@ -125,6 +157,11 @@ def main() -> int:
             failures.append((f"{table}.indexes",
                              f"ddl-only={sorted(ix_ddl - ix_orm)}",
                              f"orm-only={sorted(ix_orm - ix_ddl)}"))
+        uq_ddl, uq_orm = get_uniques(ddl, table), get_uniques(orm, table)
+        if uq_ddl != uq_orm:
+            failures.append((f"{table}.unique_constraints",
+                             f"ddl-only={sorted(uq_ddl - uq_orm)}",
+                             f"orm-only={sorted(uq_orm - uq_ddl)}"))
 
     ddl.close()
     orm.close()
