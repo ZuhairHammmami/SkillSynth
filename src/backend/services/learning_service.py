@@ -1,0 +1,290 @@
+"""Learning service — graph, path generation and step progress.
+
+Called by the learning/progress/path routers (Task 3). Generation is
+deterministic: goals are gap-filled against user_skills, ordered by a
+Kahn topo-sort over skill_prerequisites, then persisted as
+path + path_steps + user_skills rows. Wire keys stay frozen (string
+path ids, step.content mirroring description, steps[].is_completed).
+Gap analysis lives in analytics_service (300-line cap).
+"""
+
+from collections import defaultdict, deque
+from datetime import datetime, timedelta, UTC
+
+from backend.dto.learning import StepCompletionResponse
+from backend.entities.learning import Path
+from backend.repositories import assess_repository, catalog_repository
+from backend.repositories import engagement_repository, learning_repository as lrepo
+
+MASTERY_LEVEL = 3
+
+
+def build_graph(db) -> dict:
+    """Knowledge-graph payload (nodes/edges/categories) for
+    GET /learning/graph; node decoration comes from catalog counts."""
+    counts = catalog_repository.count_skill_resources(db)
+    categories = catalog_repository.get_all_categories(db)
+    nodes = [{
+        "id": s.id, "name": s.name, "difficulty": s.difficulty_level or 1,
+        "icon": s.icon, "color": s.color,
+        "category_ids": [s.category_id] if s.category_id else [],
+        "resource_count": counts.get(s.id, 0),
+    } for s in catalog_repository.get_all_skills(db)]
+    edges = [{"source": p, "target": sid, "type": "prerequisite"}
+             for sid, prereqs in
+             catalog_repository.get_prerequisite_graph(db).items()
+             for p in prereqs]
+    return {"nodes": nodes, "edges": edges,
+            "categories": [{"id": c.id, "name": c.name} for c in categories]}
+
+
+def topological_sort(db) -> list[int]:
+    """Kahn topo-sort over all skills; deterministic id tie-break."""
+    return [s.id for s in _order_by_prereqs(
+        db, catalog_repository.get_all_skills(db))]
+
+
+def _order_by_prereqs(db, skill_rows: list) -> list:
+    """Topo-order a skill subset so prerequisites come first."""
+    graph = catalog_repository.get_prerequisite_graph(db)
+    ids = {s.id for s in skill_rows}
+    by_id = {s.id: s for s in skill_rows}
+    indeg = {sid: len([p for p in graph.get(sid, []) if p in ids]) for sid in ids}
+    dependents: dict[int, list[int]] = defaultdict(list)
+    for sid in ids:
+        for prereq in graph.get(sid, []):
+            if prereq in ids:
+                dependents[prereq].append(sid)
+    queue = deque(sorted(sid for sid, deg in indeg.items() if deg == 0))
+    ordered = []
+    while queue:
+        sid = queue.popleft()
+        ordered.append(by_id[sid])
+        for dep in sorted(dependents[sid]):
+            indeg[dep] -= 1
+            if indeg[dep] == 0:
+                queue.append(dep)
+    ordered.extend(by_id[sid] for sid in sorted(ids - {s.id for s in ordered}))
+    return ordered
+
+
+def _score_answers(db, skill_rows: list, answers: dict[str, int],
+                   user_id: int) -> dict[int, int]:
+    """Deterministic proficiency per skill from wizard answers.
+
+    Questions are graded against assessment_questions.correct_index
+    using the historical "<skill>_q<i>" answer keys; skills without a
+    quiz keep their current profile level. Upserts user_skills rows.
+    """
+    ids = [s.id for s in skill_rows]
+    assessments = assess_repository.get_assessments_for_skills(db, ids)
+    current = assess_repository.get_skill_profile(db, user_id)
+    levels: dict[int, int] = {}
+    for skill in skill_rows:
+        assessment = assessments.get(skill.id)
+        questions = (assess_repository.get_questions(db, assessment.id)
+                     if assessment else [])
+        if questions:
+            correct = sum(
+                1 for i, q in enumerate(questions)
+                if answers.get(f"{skill.name.lower()}_q{i}") == q.correct_index)
+            level = max(0, min(5, round(correct / len(questions) * 5)))
+        else:
+            level = current.get(skill.name, 0)
+        levels[skill.id] = level
+        assess_repository.upsert_user_skill(db, user_id, skill.id, level)
+    return levels
+
+
+def _pick_resource_ids(db, skill, preferences: dict) -> list[int]:
+    """Up to two resource ids for a step: skill-owned first, then any
+    pool entries matching is_free/format/language preferences."""
+    preferences = preferences or {}
+    pool = catalog_repository.get_all_resources(db)
+    owned = [r for r in pool if r.skill_id == skill.id]
+    free = preferences.get("is_free", True)
+    candidates = [r for r in pool if not free or r.is_free]
+    fmt = preferences.get("format") or "any"
+    if fmt != "any":
+        candidates = [r for r in candidates if r.type == fmt]
+    lang = preferences.get("language") or "en"
+    matched = [r for r in candidates if r.language == lang] or candidates
+    ordered = owned + [r for r in matched if r not in owned]
+    return [r.id for r in ordered[:2]]
+
+
+def _persist_plan(db, user_id: int, title: str, description: str,
+                  target_role: str | None, plan: list,
+                  levels: dict[int, int], preferences: dict) -> Path:
+    """Create path + ordered steps (+ resource bridges); commits."""
+    total_hours = sum((s.estimated_hours or 10) for s in plan)
+    path = lrepo.create_path(
+        db, user_id=user_id, title=title, description=description,
+        target_role=target_role, total_hours=total_hours,
+        total_weeks=max(1, round(total_hours / max(preferences.get("weekly_hours", 10), 1))))
+    for position, skill in enumerate(plan, start=1):
+        resource_ids = _pick_resource_ids(db, skill, preferences.get("prefs") or {})
+        lrepo.create_step(
+            db, path_id=path.id, position=position,
+            title=f"Master {skill.name}",
+            description=(f"Achieve proficiency in {skill.name}. "
+                         f"Current level: {levels.get(skill.id, 0)}. "
+                         f"Target: {MASTERY_LEVEL}."),
+            estimated_hours=skill.estimated_hours or 8,
+            resource_ids=resource_ids)
+    return path
+
+
+def generate_path(db, user, data) -> tuple[dict | None, str | None]:
+    """Wizard generation for POST /generate-path (full detail payload).
+
+    Resolves the goal job role, scores data.answers into user_skills
+    and returns a wire-compatible path-detail dict.
+    """
+    role = catalog_repository.get_job_role_by_title(db, data.goal)
+    if not role:
+        return None, f"Could not find skills for job role '{data.goal}'."
+    skill_rows = catalog_repository.get_skills_by_ids(
+        db, catalog_repository.get_job_role_skill_ids(db, role.id))
+    if not skill_rows:
+        return None, f"Could not find skills for job role '{data.goal}'."
+    preferences = {"weekly_hours": data.weekly_hours,
+                   "prefs": data.preferences.model_dump(exclude_unset=True)}
+    levels = _score_answers(db, skill_rows, data.answers or {}, user.id)
+    plan = _order_by_prereqs(db, [s for s in skill_rows
+                                  if levels[s.id] < MASTERY_LEVEL])
+    hours = sum((s.estimated_hours or 10) for s in plan)
+    weeks = max(1, round(hours / max(data.weekly_hours, 1)))
+    path = _persist_plan(
+        db, user.id, f"{role.title} Learning Path",
+        f"Personalized path toward {role.title}. Estimated {hours}h over {weeks} weeks.",
+        role.title, plan, levels, preferences)
+    return format_path_detail(db, path, user.id), None
+
+
+def generate_personalized_path(db, user_id: int, goal_skills: list[str],
+                               weekly_hours: int = 10,
+                               preferences: dict | None = None) -> dict:
+    """Skill-name generation for GET /learning/path/generate returning
+    the historical summary {path_id,title,steps_count,total_hours,...}."""
+    all_by_name = {s.name.lower(): s for s in catalog_repository.get_all_skills(db)}
+    skill_rows = [all_by_name[g.lower()] for g in goal_skills if g.lower() in all_by_name]
+    profile = assess_repository.get_skill_profile(db, user_id)
+    for skill in skill_rows:
+        assess_repository.upsert_user_skill(
+            db, user_id, skill.id, profile.get(skill.name, 0))
+    levels = {s.id: profile.get(s.name, 0) for s in skill_rows}
+    plan = _order_by_prereqs(db, [s for s in skill_rows
+                                  if levels[s.id] < MASTERY_LEVEL])
+    prefs = dict(preferences or {})
+    prefs["weekly_hours"] = weekly_hours
+    path = _persist_plan(
+        db, user_id, f"Personalized Path: {', '.join(goal_skills[:3])}",
+        f"Personalized path to master {', '.join(goal_skills)}.", None,
+        plan, levels, prefs)
+    return {"path_id": path.id, "title": path.title, "steps_count": len(plan),
+            "total_hours": path.total_estimated_hours,
+            "total_weeks": path.total_estimated_weeks}
+
+
+def _serialize_step(db, step, completed_ids: set[int]) -> dict:
+    """One steps[] entry; content mirrors description and is_completed
+    comes from the completed-step id set."""
+    resources = []
+    for resource in catalog_repository.get_resources_by_ids(
+            db, step.resource_ids or []):
+        resources.append({"id": resource.id, "title": resource.title,
+                          "url": resource.url, "type": resource.type})
+    return {
+        "id": step.id, "step_number": step.position, "title": step.title,
+        "content": step.description, "is_completed": step.id in completed_ids,
+        "resources": resources, "resource_ids": step.resource_ids or [],
+        "assessment_ids": step.assessment_ids or [],
+    }
+
+
+def _path_skills(db, path: Path) -> list[dict]:
+    """Distinct [{id,name}] skill list derived from step skill links
+    (the reduced schema has no separate path-skill mapping)."""
+    seen, out = set(), []
+    for step in lrepo.get_steps(db, path.id):
+        if step.skill_id and step.skill_id not in seen:
+            seen.add(step.skill_id)
+            skill = catalog_repository.get_skill(db, step.skill_id)
+            if skill:
+                out.append({"id": skill.id, "name": skill.name})
+    return out
+
+
+def format_path_detail(db, path: Path, user_id: int) -> dict:
+    """Full path payload for detail/generation responses — key set is
+    frozen: string id, duplicated total_hours, goal_job_role, steps[].
+    Called by paths_router detail + generate_path above."""
+    completed = lrepo.completed_step_ids(db, user_id)
+    return {
+        "id": str(path.id), "profile_id": path.user_id,
+        "title": path.title or "", "description": path.description,
+        "status": path.status or "active",
+        "total_estimated_hours": path.total_estimated_hours,
+        "total_hours": path.total_estimated_hours,
+        "total_estimated_weeks": path.total_estimated_weeks,
+        "goal_job_role": path.target_role,
+        "created_at": path.created_at.isoformat() if path.created_at else None,
+        "skills": _path_skills(db, path),
+        "steps": [_serialize_step(db, s, completed)
+                  for s in lrepo.get_steps(db, path.id)],
+    }
+
+
+def progress_dashboard(db, user_id: int) -> dict:
+    """GET /progress/dashboard payload — exact legacy keys, weekly =
+    trailing 7-day completions from step_progress.completed_at."""
+    seven_ago = datetime.now(UTC) - timedelta(days=7)
+    paths = lrepo.get_paths_by_user(db, user_id)
+    completed = lrepo.completed_step_ids(db, user_id)
+    paths_data = [{
+        "id": str(p.id), "title": p.title or "", "description": p.description,
+        "total_estimated_hours": p.total_estimated_hours,
+        "total_hours": p.total_estimated_hours,
+        "total_estimated_weeks": p.total_estimated_weeks,
+        "goal_job_role": p.target_role,
+        "created_at": p.created_at.isoformat() if p.created_at else None,
+        "steps": [_serialize_step(db, s, completed)
+                  for s in lrepo.get_steps(db, p.id)],
+    } for p in paths]
+    return {
+        "total_completed": lrepo.count_completions(db, user_id),
+        "total_steps": lrepo.count_steps(db, user_id),
+        "weekly": lrepo.count_completions(db, user_id, since=seven_ago),
+        "total_hours": lrepo.sum_total_hours(db, user_id),
+        "paths": paths_data,
+    }
+
+
+def complete_step(db, user_id: int, step_id: int):
+    """Mark an owned step complete; returns (response, error, status)."""
+    step = lrepo.get_step(db, step_id)
+    if not step:
+        return None, "Step not found", 404
+    path = lrepo.get_path(db, step.path_id, user_id)
+    if not path:
+        return None, "Path not found", 404
+    row = lrepo.upsert_completion(db, user_id, step_id)
+    completed_at = row.completed_at or datetime.now(UTC)
+    response = StepCompletionResponse(
+        profile_id=user_id, step_id=step_id, completed_at=completed_at)
+    return response, None, 200
+
+
+def undo_complete_step(db, user_id: int, step_id: int):
+    """Revert a completion by deleting the progress row; returns the
+    historical {"status":"reverted","step_id":...} payload."""
+    if not lrepo.delete_completion(db, user_id, step_id):
+        return None, "Completion not found", 404
+    return {"status": "reverted", "step_id": step_id}, None, 200
+
+
+def list_user_paths(db, user_id: int) -> list[dict]:
+    """All of a user's paths as full detail payloads (GET /paths/)."""
+    return [format_path_detail(db, p, user_id)
+            for p in lrepo.get_paths_by_user(db, user_id)]
