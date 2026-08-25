@@ -25,6 +25,8 @@ class CategoryCreate(BaseModel):
     """POST /admin/categories body."""
 
     name: str = Field(..., min_length=1, max_length=100)
+    description: Optional[str] = None
+    parent_id: Optional[int] = None
 
     @field_validator("name")
     @classmethod
@@ -40,9 +42,12 @@ class CategoryOut(CategoryCreate):
 
 
 class CategoryUpdate(BaseModel):
-    """PUT /admin/categories/{id} body."""
+    """PUT /admin/categories/{id} body; None fields left untouched
+    except an explicitly supplied null parent_id (detaches the node)."""
 
     name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = None
+    parent_id: Optional[int] = None
 
     @field_validator("name")
     @classmethod

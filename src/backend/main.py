@@ -21,6 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.config.app_settings import APP_MODE, CORS_ORIGINS, CSRF_ENABLED
@@ -35,7 +36,8 @@ from backend.middlewares.compression import CompressionMiddleware
 from backend.middlewares.csrf import CSRFMiddleware
 from backend.middlewares.security import SecurityHeadersMiddleware
 from backend.repositories import identity_repository
-from backend.routers import admin, analytics, assessments, auth, learning, paths, realtime
+from backend.routers import admin, analytics, assessments, auth, catalog_admin
+from backend.routers import learning, paths, realtime
 from backend.services.auth_service import decode_token, hash_password
 
 logging.basicConfig(level=logging.INFO,
@@ -99,6 +101,7 @@ app.include_router(paths.router, prefix="/api", tags=["Paths & Progress"])
 app.include_router(assessments.router, prefix="/api", tags=["Assessments"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(catalog_admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(realtime.router, prefix="/api/realtime", tags=["Real-time"])
 
 
@@ -107,6 +110,22 @@ def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
     """Custom 429 JSON for slowapi limit breaches."""
     return JSONResponse(status_code=429,
                         content={"detail": "Rate limit exceeded. Please try again later."})
+
+
+@app.exception_handler(IntegrityError)
+def integrity_conflict_handler(request: Request, exc: IntegrityError):
+    """Central safety net: uncaught DB constraint breaches become 409.
+
+    Fires when malformed input slips past service validation (e.g.
+    duplicate job_role_skills junction rows); the request-scoped session
+    rolls back when the get_db dependency closes it."""
+    logger.warning("Integrity conflict on %s %s: %s",
+                   request.method, request.url.path,
+                   getattr(exc, "orig", exc))
+    return JSONResponse(
+        status_code=409,
+        content={"detail": "Database conflict: the operation violates a "
+                           "data constraint."})
 
 
 @app.exception_handler(RequestValidationError)

@@ -41,13 +41,26 @@ def create_user(db, data, hasher) -> tuple[User | None, str | None]:
     return user, None
 
 
-def update_user(db, user_id: int, data, hasher) -> tuple[User | None, str | None]:
-    """Apply AdminUserUpdate; password swaps in pre-hashed."""
+def update_user(db, user_id: int, data, hasher,
+                acting_admin_id: int | None = None) -> tuple[User | None, str | None]:
+    """Apply AdminUserUpdate with demote-self + email-uniqueness guards.
+
+    Called by routers/admin.update_user ('User not found' → 404,
+    'Email already registered'/'Cannot demote' → 409 via the shared
+    error mapper); hashing stays injected to avoid the circular
+    auth_service import.
+    """
     user = irepo.get_by_id(db, user_id)
     if not user:
         return None, "User not found"
     fields = {k: v for k, v in data.model_dump(exclude_unset=True).items()
               if v is not None}
+    if acting_admin_id is not None and acting_admin_id == user_id \
+            and fields.get("is_admin") is False:
+        return None, "Cannot demote your own account"
+    if "email" in fields and irepo.get_by_email_excluding(
+            db, fields["email"], user_id):
+        return None, "Email already registered"
     if "password" in fields:
         fields["hashed_password"] = hasher(fields.pop("password"))
     if "full_name" in fields and not fields["full_name"]:

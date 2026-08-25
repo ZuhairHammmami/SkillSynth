@@ -20,6 +20,17 @@ def get_by_email(db: Session, email: str) -> User | None:
     return db.query(User).filter(User.email == email).first()
 
 
+def get_by_email_excluding(db: Session, email: str,
+                           exclude_user_id: int) -> User | None:
+    """Case-insensitive email lookup skipping one user row.
+
+    Called by admin_service.update_user so renames cannot collide with
+    another account's email while keeping the user's own address legal.
+    """
+    return db.query(User).filter(
+        User.email.ilike(email), User.id != exclude_user_id).first()
+
+
 def get_by_id(db: Session, user_id: int) -> User | None:
     """Fetch one user by PK; called by admin_service.update/delete."""
     return db.query(User).filter(User.id == user_id).first()

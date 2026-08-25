@@ -1,7 +1,7 @@
 """Catalog repository — skills, categories, resources and job roles.
 
-Called by services/catalog_service.py and services/learning_service.py.
-Pure data access: no business rules, no serialization.
+Called by the catalog/learning/wizard services; pure data access, no
+business rules and no serialization.
 """
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -37,11 +37,9 @@ def get_all_skills(db: Session) -> list[Skill]:
 
 
 def create_skill(db: Session, data: SkillCreate) -> Skill:
-    """Insert a skill plus its prerequisite edges; commits.
-
-    category_ids (legacy list) collapses to the first entry because the
-    reduced schema gives skills a single category_id FK.
-    """
+    """Insert a skill plus its prerequisite edges; commits. Called by
+    catalog_service.create_skill; legacy category_ids collapses to the
+    first entry (single category_id FK in the reduced schema)."""
     category_id = data.category_id
     if category_id is None and data.category_ids:
         category_id = data.category_ids[0]
@@ -96,10 +94,8 @@ def get_prerequisite_graph(db: Session) -> dict[int, list[int]]:
 
 
 def get_prerequisite_chain(db: Session, skill_id: int) -> list[int]:
-    """Depth-first closure of transitive prerequisites, deps first.
-
-    Called by learning_service.analyze_gaps to attach unmet prereqs.
-    """
+    """Depth-first prerequisite closure, deps first; called by
+    learning_service.analyze_gaps to attach unmet prereqs."""
     graph = get_prerequisite_graph(db)
     visited: set[int] = set()
     chain: list[int] = []
@@ -134,8 +130,8 @@ def get_all_categories(db: Session) -> list[Category]:
 
 
 def get_category_by_name(db: Session, name: str) -> Category | None:
-    """Exact-name lookup guarding duplicate categories."""
-    return db.query(Category).filter(Category.name == name).first()
+    """Case-insensitive name lookup guarding duplicate categories."""
+    return db.query(Category).filter(Category.name.ilike(name)).first()
 
 
 def create_category(db: Session, name: str, description: str | None = None) -> Category:
@@ -261,11 +257,14 @@ def get_path_skill_ids(db: Session) -> list[int]:
 
 def create_job_role(db: Session, title: str, description: str | None,
                     career_field: str | None) -> JobRole:
-    """Insert a job role without skill links; commits."""
+    """Insert a job role without skill links; flushes WITHOUT committing.
+
+    Caller catalog_service.create_job_role commits role+links together,
+    so failed inserts roll back orphan-free (409 safety net)."""
     role = JobRole(title=title, description=description,
                    career_field=career_field)
     db.add(role)
-    db.commit()
+    db.flush()
     db.refresh(role)
     return role
 
@@ -281,11 +280,12 @@ def set_job_role_skills(db: Session, job_role_id: int,
 
 
 def update_job_role(db: Session, role: JobRole, fields: dict) -> JobRole:
-    """Apply non-None scalar fields onto a job_roles row; commits."""
+    """Apply non-None fields onto a job_roles row; flushes only; caller
+    catalog_service.update_job_role commits links+scalars atomically."""
     for key, value in fields.items():
         if value is not None:
             setattr(role, key, value)
-    db.commit()
+    db.flush()
     db.refresh(role)
     return role
 

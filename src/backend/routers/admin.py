@@ -1,8 +1,10 @@
-"""Admin router — user/catalog management, reports, activity, system ops.
+"""Admin router — user management, assessments, reports, system ops.
 
-Wires /api/admin to services/admin_service.py + catalog_service.py and the
-assess/catalog repositories (Task 2). Every route is admin-only via the
-router-level require_admin dependency; consumed by the admin-app pages.
+Wires /api/admin to services/admin_service.py and the assess repository;
+catalog CRUD (skills/categories/resources/job-roles) lives in
+routers/catalog_admin.py, mounted under the same /api/admin prefix by
+backend/main.py. Every route is admin-only via the router-level
+require_admin dependency; consumed by the admin-app pages.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -13,11 +15,11 @@ from backend.config.app_settings import (
     LOGIN_LOCKOUT_MINUTES, MAX_LOGIN_ATTEMPTS, PASSWORD_MIN_LENGTH,
 )
 from backend.database import get_db
-from backend.dto.admin import AdminCreateUser, PathAdminView
-from backend.dto.catalog import ResourceCreate, SkillCreate
+from backend.dto.admin import AdminCreateUser, AdminUserUpdate, PathAdminView
 from backend.policies.auth_policy import get_current_user, require_admin
-from backend.repositories import assess_repository, catalog_repository
-from backend.services import admin_service, auth_service, catalog_service
+from backend.routers.error_mapping import status_for_error
+from backend.repositories import assess_repository
+from backend.services import admin_service, auth_service
 
 router = APIRouter(dependencies=[Depends(require_admin)])
 
@@ -29,17 +31,6 @@ def _user_out(user) -> dict:
         "is_admin": user.is_admin,
         "created_at": user.created_at.isoformat() if user.created_at else None,
         "updated_at": user.updated_at.isoformat() if user.updated_at else None,
-    }
-
-
-def _resource_out(resource) -> dict:
-    """Serialize a resources row for the admin listing."""
-    return {
-        "id": resource.id, "title": resource.title, "url": resource.url,
-        "type": resource.type, "language": resource.language,
-        "is_free": resource.is_free, "is_official": resource.is_official,
-        "author_or_platform": resource.author_or_platform,
-        "skill_id": resource.skill_id,
     }
 
 
@@ -59,6 +50,22 @@ def create_user(data: AdminCreateUser, db: Session = Depends(get_db)):
     return _user_out(user)
 
 
+@router.put("/users/{user_id}")
+def update_user(user_id: int, data: AdminUserUpdate, db: Session = Depends(get_db),
+                current_user=Depends(get_current_user)):
+    """Update a user (profile, admin flag, optional password reset).
+
+    Calls admin_service.update_user with the acting admin id so the
+    demote-self guard can fire; 'not found' maps to 404, uniqueness/
+    demotion conflicts to 409 via the shared error mapper."""
+    user, error = admin_service.update_user(db, user_id, data,
+                                            auth_service.hash_password,
+                                            acting_admin_id=current_user.id)
+    if error:
+        raise HTTPException(status_code=status_for_error(error), detail=error)
+    return _user_out(user)
+
+
 @router.delete("/users/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db),
                 current_user=Depends(get_current_user)):
@@ -69,58 +76,6 @@ def delete_user(user_id: int, db: Session = Depends(get_db),
         raise HTTPException(status_code=400 if "yourself" in (error or "") else 404,
                             detail=error)
     return {"detail": "User deleted"}
-
-
-@router.get("/skills")
-def list_skills(db: Session = Depends(get_db)):
-    """List all skills. Calls catalog_service.list_skills; admin skills page."""
-    return catalog_service.list_skills(db)
-
-
-@router.post("/skills")
-def create_skill(data: SkillCreate, db: Session = Depends(get_db)):
-    """Create a skill. Calls catalog_service.create_skill; admin skills dialog."""
-    result, error = catalog_service.create_skill(db, data)
-    if error:
-        raise HTTPException(status_code=400, detail=error)
-    return result
-
-
-@router.delete("/skills/{skill_id}")
-def delete_skill(skill_id: int, db: Session = Depends(get_db)):
-    """Delete a skill. Calls catalog_service.delete_skill."""
-    ok, error = catalog_service.delete_skill(db, skill_id)
-    if not ok:
-        raise HTTPException(status_code=400, detail=error)
-    return {"detail": "Deleted successfully"}
-
-
-@router.get("/categories")
-def list_categories(db: Session = Depends(get_db)):
-    """List all categories. Reads the catalog repository; admin skills dialog."""
-    return [{"id": c.id, "name": c.name}
-            for c in catalog_repository.get_all_categories(db)]
-
-
-@router.get("/resources")
-def list_resources(db: Session = Depends(get_db)):
-    """List all resources. Reads the catalog repository; admin resources page."""
-    return [_resource_out(r) for r in catalog_repository.get_all_resources(db)]
-
-
-@router.post("/resources")
-def create_resource(data: ResourceCreate, db: Session = Depends(get_db)):
-    """Create a resource. Calls catalog_service.create_resource; admin dialog."""
-    return _resource_out(catalog_service.create_resource(db, data))
-
-
-@router.delete("/resources/{resource_id}")
-def delete_resource(resource_id: int, db: Session = Depends(get_db)):
-    """Delete a resource. Calls catalog_service.delete_resource."""
-    ok, error = catalog_service.delete_resource(db, resource_id)
-    if not ok:
-        raise HTTPException(status_code=404, detail=error)
-    return {"detail": "Deleted successfully"}
 
 
 @router.get("/assessments")

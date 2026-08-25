@@ -1,7 +1,7 @@
 """Paths router — wizard generation, path CRUD, step progress, dashboard.
 
 Wires /api/generate-path, /api/paths, /api/steps, /api/progress/dashboard
-and /api/wizard-options to services/learning_service.py + catalog_service.py
+and /api/wizard-options to services/learning_service.py + wizard_service.py
 (Task 2). Consumed by usePathApi.ts and useSystemApi.ts.
 """
 
@@ -16,7 +16,7 @@ from backend.dto.learning import (
 from backend.events.publisher import send_event
 from backend.policies.auth_policy import get_current_user
 from backend.repositories import learning_repository as lrepo
-from backend.services import catalog_service, learning_service
+from backend.services import learning_service, wizard_service
 
 router = APIRouter()
 
@@ -109,5 +109,5 @@ def progress_dashboard(db: Session = Depends(get_db),
 @router.get("/wizard-options", response_model=WizardOptionsOut)
 def wizard_options(db: Session = Depends(get_db)):
     """Return wizard source data (job roles, career fields, preferences).
-    Calls catalog_service.wizard_options; consumed by useSystemApi.useWizardOptions()."""
-    return catalog_service.wizard_options(db)
+    Calls services/wizard_service.wizard_options; consumed by useSystemApi.useWizardOptions()."""
+    return wizard_service.wizard_options(db)
