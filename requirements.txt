@@ -24,14 +24,9 @@ sendgrid
 # Caching
 redis>=4.0
 
-# LLM Integration
-openai>=1.0.0
-langchain>=0.1.0
-langchain-openai>=0.0.1
-
-# Local LLM Support
-langchain-community>=0.0.1
-ollama>=0.1.0
+# SS-AI local inference (install CUDA build with:
+#   CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python --force-reinstall --no-cache-dir
+llama-cpp-python>=0.3
 
 # Test dependencies
 pytest>=8.0.0

@@ -38,3 +38,12 @@ CSRF_ENABLED = APP_MODE == "prod"
 PASSWORD_MIN_LENGTH = 8
 MAX_LOGIN_ATTEMPTS = 5
 LOGIN_LOCKOUT_MINUTES = 15
+
+# ── SS-AI local LLM (ADR-015) ────────────────────────────────────────
+AI_ENABLED = os.getenv("AI_ENABLED", "false").lower() == "true"
+AI_MODEL_PATH = os.getenv(
+    "AI_MODEL_PATH", "src/data/Llama-3.2-3B-Instruct.Q6_K.gguf")
+AI_N_GPU_LAYERS = int(os.getenv("AI_N_GPU_LAYERS", "-1"))
+AI_N_CTX = int(os.getenv("AI_N_CTX", "4096"))
+AI_TEMPERATURE = float(os.getenv("AI_TEMPERATURE", "0.2"))
+AI_MAX_NEW_TOKENS = int(os.getenv("AI_MAX_NEW_TOKENS", "700"))
