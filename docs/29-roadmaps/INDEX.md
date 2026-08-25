@@ -1,88 +1,73 @@
 # SS-EDS: Roadmaps
 
 ## Purpose
-Document the product and feature roadmaps for SkillSynth, tracking completed phases, current work, and planned future enhancements.
+Track the current state of SkillSynth and the near-term work queue. Historical phase narratives (Phases 0–11) are closed; this document records what exists today and what is planned next.
 
 ## Responsibilities
-- Maintain phase completion tracker (11 phases complete)
-- Define future roadmap items
-- Track feature maturity and integration status
-- Document architectural evolution plans
+- Maintain the current-state capability snapshot
+- Define the active work queue (integrity layer, docs truth, hardening)
+- Route completed history to 45-release-notes and decisions to 41-decision-records
 
 ## Inputs
-- Product requirements (01-product)
-- Phase completion status
-- Stakeholder feedback
-- Technical debt assessment
+- Commit history (git log)
+- ADRs (docs/41-decision-records/)
+- Test suite status (tests/, 142 passing)
 
 ## Outputs
-- Phase roadmap (past + future)
-- Feature maturity matrix
-- Architecture evolution plan
+- Current-state table (below)
+- Prioritized backlog
 
 ## Dependencies
-- 01-product (product direction)
-- 06-architecture (architecture evolution)
-- 38-refactoring (technical debt reduction)
 - 39-future (long-term vision)
+- 45-release-notes (shipped history)
+- 38-refactoring (debt process)
 
-## Sequence: Phase Planning Flow
+## Current State (August 2026)
+| Area | State | Evidence |
+|------|-------|----------|
+| Backend | FastAPI Clean Architecture, 7 routers / 49 paths / 63 operations | src/backend/routers/, OpenAPI at :8000/docs |
+| Database | Strict-3NF 15-table core + seed_v3 (~1100 rows) | src/migrations/003_reduced_schema.sql, tools/verify_schema.py → SCHEMA MATCH |
+| Admin CRUD | Full users/skills/categories/resources/job-roles CRUD incl. restricted deletes | routers/admin.py, routers/catalog_admin.py |
+| Integrity layer | FK validation 400, cycle guards 400, restricted deletes 409, IntegrityError→409 net | services/catalog_integrity.py, main.py:115 |
+| Realtime | SSE only (connected/ping/path_generated/assessment_completed) | events/publisher.py, routers/realtime.py |
+| Frontend | Next.js 14 student app :3000, bilingual ar/en, RTL-first | src/frontend/ |
+| Admin app | Separate Next.js app :3001 with categories/job-roles pages | src/admin-app/ |
+| Tests | 142 passing across 11 files, isolated temp DB | PYTHONPATH=src python -m pytest tests/ -q |
+
+## Active Queue
+| Item | Focus | Status |
+|------|-------|--------|
+| ADR-014 | Referential-integrity policy write-up (restricted deletes, force flag) | In progress |
+| Docs truth pass | SS-EDS sections aligned to code reality; stale sections deleted | In progress |
+| Credential rotation | .env and src/frontend/.env.local hold live credentials | Planned |
+
+## Sequence: How Work Enters the Queue
 ```
-Stakeholder Input → Backlog Grooming → Phase Scope Definition → Kickoff → Implementation → Review → Release
+Gap found (test failure, doc drift, review) → scoped as task in the SDD plan
+  → implemented behind tests → verified (pytest + verify_schema + builds)
+  → recorded here or in 45-release-notes if user-visible
 ```
-
-## Completed Phases (11)
-| Phase | Focus | Status |
-|-------|-------|--------|
-| 0 | Foundation fixes (tsc/lint zero errors, hook deps, aliases) | ✅ |
-| 1 | DB consolidation 26→12 tables, JSON bridge columns | ✅ |
-| 2 | Seed data (authoritative seed_all.py), DB integrity | ✅ |
-| 3 | Security & auth hardening, permission gates, headers | ✅ |
-| 4 | Zero gradients — flat solid colors only | ✅ |
-| 5 | i18n full coverage — no hardcoded Arabic in 33 files | ✅ |
-| 6 | RTL visual polish — 200+ violations fixed, logical CSS | ✅ |
-| 7 | Path engine — skill_ids fix, PUT/POST skills endpoints | ✅ |
-| 8 | Assessment engine + analytics dashboard | ✅ |
-| 9 | Performance — 11 indexes, 10 N+1 fixes, dynamic imports | ✅ |
-| 10 | Project cleanup, docs, Lighthouse 100/100/100/100 | ✅ |
-| 11 | DB normalization (junction tables), RBAC seed, admin fixes | ✅ |
-
-## Phase 3 Architecture Future
-| Phase | Focus | Status |
-|-------|-------|--------|
-| 3 | Adaptive learning, mastery tracking | Partially implemented (AEIS schema) |
-| 4.0 | Ecosystem synchrony, project submissions | Services exist, not wired |
-| 4.5 | Vector search, embeddings | VectorSearchService exists, not integrated |
-
-## ERD References
-- Roadmap tracks schema evolution (26→12 tables, junction tables, etc.)
 
 ## Rules
-1. Each phase must have a clear scope definition
-2. Phases must not introduce regressions in previous phases
-3. Breaking changes require deprecation warning one phase prior
-4. All phases must maintain Lighthouse 100/100/100/100
+1. No resurrected features without an ADR (e.g., gamification stays deleted — see ADR-013)
+2. Every roadmap item names its verification command before implementation starts
+3. Completed items move to 45-release-notes within the same cycle
+4. Schema changes always update the canonical DDL and pass tools/verify_schema.py
 
 ## Examples
-- Phase 11 delivered: skill_categories, skill_prerequisites, job_role_skills, path_skills junction tables
-- Phase 10 delivered: 100/100/100/100 Lighthouse, 0 CLS, updated docs
+- Restricted deletes shipped with a 409 dependent-counts payload plus ?force=true escape hatch — verified by tests/test_catalog_integrity.py
+- 15-table reduction shipped with DDL + verifier as proof (ADR-013)
 
 ## Edge Cases
-- Phase scope creep → extra features deferred to next phase
-- Dependency between phases → sequential execution required
-- Phase rollback on regression → revert and fix before proceeding
+- Item spans backend+frontend → split into per-repo tasks with one integration test
+- Verification impossible (pure docs) → grep gates replace pytest
 
 ## Failure Cases
-- Phase delivers incomplete features → blocked by test gates
-- Phase causes performance regression → revert and re-optimize
-- Phase documentation missing → blocked until written
+- Roadmap drift (claims ahead of code) → corrected during docs truth passes like this one
 
 ## Recovery Procedures
-1. Revert phase changes if regression detected
-2. Re-scope remaining work to next phase
-3. Update roadmap document with lessons learned
+1. Re-run the verification commands in the Current State table
+2. Correct any row whose evidence fails
 
 ## Refactoring Strategy
-- Roadmap reviewed quarterly with stakeholders
-- Technical debt items prioritized alongside features
-- Phases should be 2-4 weeks of work for predictability
+- Keep this file short: history ages out to 45-release-notes, vision lives in 39-future

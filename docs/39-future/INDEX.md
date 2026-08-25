@@ -1,90 +1,64 @@
 # SS-EDS: Future
 
 ## Purpose
-Document the long-term vision and planned future enhancements for SkillSynth beyond the current 11 completed phases. Covers adaptive learning, ecosystem synchrony, vector search, and architectural evolution.
+Record candidate future work for SkillSynth. Deliberately conservative: items are hypotheses until they have an ADR and a verification command. The system is feature-complete for its 15-table scope; growth should extend, not restore, removed features.
 
 ## Responsibilities
-- Maintain future vision document
-- Track planned but unimplemented features
-- Document architectural evolution targets
-- Identify integration opportunities (Supabase, LLM, vector search)
+- Hold evaluated-but-unstarted ideas with entry criteria
+- Prevent accidental reintroduction of removed capabilities (ADR-013)
+- Link each item to the decision record that would authorize it
 
 ## Inputs
-- Product roadmap
-- Technical feasibility assessments
-- Market trends in adaptive learning
+- Product feedback from demo users
+- Operational friction observed in runbooks (42-runbooks)
+- Dependency updates with breaking potential
 
 ## Outputs
-- Future feature specifications
-- Phase 3+ architecture plans
-- Integration roadmap
+- Prioritized candidate list
+- Entry criteria per item
 
 ## Dependencies
-- 29-roadmaps (completed phases)
-- 06-architecture (current architecture)
-- 01-product (future product direction)
+- 29-roadmaps (active queue — only items promoted from here)
+- 41-decision-records (ADR gate)
 
-## Sequence: Future Feature Adoption
+## Candidate List
+| Candidate | Value | Entry criteria |
+|-----------|-------|----------------|
+| PostgreSQL cutover | Prod-grade persistence | MODE=prod deployment target exists; DDL port verified by tools/verify_schema.py against Postgres |
+| CI pipeline | Automated pytest + builds on push | Runner available; suite stays green (<2 min) |
+| Email service | Real password-reset delivery | SMTP provider chosen; reset flow keeps signed-token design |
+| Export (CSV) of analytics | Admin reporting value | Key set frozen today; exporter pinned to documented keys |
+| Path regeneration diffing | UX polish for regenerate flows | New endpoint + tests; no change to generation determinism |
+| Docker Compose profile | One-command local stack | Existing Dockerfiles compose'd; health checks pass |
+
+## Explicitly Not Planned (removed features stay removed — ADR-013)
+Gamification (XP/levels/streaks/achievements), notifications center, sessions table, granular roles, vector search/embeddings, knowledge ingestion, any second push transport beside SSE. Reintroducing any requires a superseding ADR with evidence of demand.
+
+## Sequence: Promotion Path
 ```
-Research → Prototype → Alpha → Beta → GA → Post-GA Improvements
+Candidate → spike/ADR draft → review vs 00-principles → accepted → scheduled in 29-roadmaps
+                                  ↓ rejected → recorded as rejected option in the ADR
 ```
-
-## Future Initiatives
-| Initiative | Priority | Status | Dependencies |
-|------------|----------|--------|--------------|
-| AEIS Schema Integration | High | Partially implemented | database migration 001-005 |
-| Supabase Auth Integration | Medium | Not started | @supabase/ssr installed |
-| Vector Search | Medium | Service exists, not wired | pgvector, embedding pipeline |
-| Project Submissions | Low | Stubbed | Storage, validation |
-| Adaptive Learning (mastery) | High | Partially implemented | AEIS, assessment engine |
-| Ecosystem Synchrony | Low | Services exist, not wired | Notification, conflict checker |
-| Docker Compose Setup | Medium | Not started | Deployment infrastructure |
-| Test Framework Integration | High | Not started | Vitest, pytest, Playwright |
-| CI/CD Pipeline Fix | High | Broken | Workflow files |
-| Mobile App (React Native) | Low | Not started | Full API layer |
-
-## Technical Debt for Future
-| Item | Impact | Effort |
-|------|--------|--------|
-| No test framework | High | Large |
-| Broken CI/CD | High | Medium |
-| No HttpOnly cookie | Medium | Small |
-| No token blacklist | Medium | Medium |
-| Next.js API routes stubbed | Medium | Large |
-| Static JSON vs DB overlap | Low | Medium |
-
-## ERD References
-- AEIS schema: src/migrations/001-005.sql
-- Future schema changes will maintain backward compat
 
 ## Rules
-1. Future features must not break existing functionality
-2. All new features must include i18n from day one
-3. Performance budget must be maintained for new features
-4. Security review required for all new integrations
-5. Deprecation period of at least one phase for removed features
+1. No candidate starts coding before its ADR exists
+2. Candidates must not widen the API surface beyond the router conventions in 07-backend
+3. Any schema addition keeps strict 3NF and updates src/migrations/003_reduced_schema.sql + verifier
+4. i18n parity is a release gate for any user-visible candidate
 
 ## Examples
-- Vector Search: implemented in VectorSearchService.ts (463 lines), generates embeddings via local/Ollama or OpenAI, searches pgvector cosine distance
-- Project Submission: ProjectSubmissionService.ts (327 lines), stubbed
+- PostgreSQL cutover is config-driven today (MODE/DATABASE_URL in config/app_settings.py) — the work is verification, not code
+- CSV export would read admin_service aggregates; no new tables needed
 
 ## Edge Cases
-- Future feature conflicts with current architecture → ADR required
-- Third-party API (Supabase) becomes incompatible → abstraction layer
-- LLM provider pricing changes → hybrid strategy mitigates
+- Candidate conflicts with an existing ADR → it must supersede, not sidestep
+- Candidate needs a third-party dependency → license + maintenance check first
 
 ## Failure Cases
-- Feature never completed due to scope → document for next phase
-- Integration breaks existing features → regression tests catch
-- Technology becomes obsolete → plan migration early
+- Scope creep via "small" candidates → enforce the ADR gate regardless of size
 
 ## Recovery Procedures
-1. Review feature against current architecture compatibility
-2. Check dependencies for breaking changes
-3. Update roadmap with revised timeline
+1. If a candidate stalls twice, close it with a short rationale note here
 
 ## Refactoring Strategy
-- Future features are independently flag-gated
-- Each feature has a dedicated RFC/ADR
-- Quarterly review of future roadmap against market changes
-- Regular dependency updates to prevent technical lock-in
+- Review quarterly; delete stale candidates rather than maintaining dead intentions

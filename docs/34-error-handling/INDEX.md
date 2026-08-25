@@ -1,115 +1,82 @@
 # SS-EDS: Error Handling
 
 ## Purpose
-Document the error handling strategy across all layers: FastAPI exception handlers with safe-serialized responses, service-level fallback pattern (no throws), frontend ErrorBoundary components, and React Query error handling.
+Document the real error-handling surface: four exception handlers in src/backend/main.py, the integrity semantics in services/catalog_integrity.py, and the two Next.js error boundaries in the student app. Services return error tuples; routers map them to HTTP codes.
 
 ## Responsibilities
-- Handle and log all API errors with appropriate HTTP status codes
-- Provide safe-serialized error responses (no Pydantic/SQLAlchemy internals)
-- Implement graceful degradation for service failures
-- Maintain ErrorBoundary components for UI resilience (3 variants)
-- Ensure services never throw — return fallback/empty results
-- Log all errors with traceback for debugging
+- Map service failures to 400/404/409 consistently (catalog_integrity.py)
+- Provide a central IntegrityError → 409 safety net (main.py:115)
+- Flatten Pydantic validation errors into one detail string (main.py:131)
+- Render retryable full-page fallbacks via app/error.tsx + global-error.tsx
 
 ## Inputs
-- Exception types (HTTPException, RequestValidationError, ValidationError)
-- Service failure scenarios (DB down, missing data, timeout)
-- Network error patterns (offline, timeout, 5xx)
-- Form validation error details
+- Service result tuples (None/False + message) from services/
+- SQLAlchemy IntegrityError from any commit
+- RequestValidationError from DTO parsing
+- slowapi RateLimitExceeded
 
 ## Outputs
-- Error response schemas with detail and field-level errors
-- ErrorBoundary fallback UI components
-- Error logs and audit trail entries
-- User-friendly error notifications
+- JSON {detail: string-or-object} responses (429/409/422/500)
+- Localized boundary UI with a Retry button (i18n keys title/description/retry)
 
 ## Dependencies
-- 07-backend (exception handlers in main.py, service fallbacks)
-- 08-frontend (ErrorBoundary, error pages, React Query error states)
-- 18-monitoring (error tracking and logging)
+- 07-backend (handlers live in main.py; semantics in catalog_integrity.py)
+- 08-frontend (src/frontend/src/app/error.tsx, global-error.tsx)
+- 22-api (status-code contract per endpoint)
 
-## Sequence: Error Handling Flow
+## Handler Inventory (main.py)
+| Handler | Trigger | Response |
+|---------|---------|----------|
+| rate_limit_exceeded_handler (:108) | slowapi limit breach | 429 {"detail": "Rate limit exceeded. Please try again later."} |
+| integrity_conflict_handler (:115) | uncaught DB constraint breach | 409 {"detail": "Database conflict: the operation violates a data constraint."}; session rolled back by get_db teardown |
+| validation_exception_handler (:131) | RequestValidationError | 422 {"detail": "msg1; msg2"} flattened |
+| global_exception_handler (:140) | any Exception | 500 {"detail": "Internal server error"} — traceback logged, nothing leaked |
+
+## Status Semantics (service layer → router mapping)
+| Status | Condition | Source |
+|--------|-----------|--------|
+| 404 | Target entity missing (skill/path/step/resource/user not found or not owned) | routers check None returns |
+| 400 | Unknown FK reference in payload; prerequisite cycle violation; malformed filter | ensure_* guards in services/catalog_integrity.py |
+| 409 | Already-exists renames; restricted delete with dependents; uncaught IntegrityError net | catalog_integrity.py + main.py |
+| Restricted deletes | DELETE skills/categories/job-roles with dependents returns **409** whose detail carries `dependents` (per-table counts) + an actionable `message` unless `?force=true` (ADR-014) |
+
+## Sequence: Error Flow
 ```
-Request → FastAPI Route → Service → Exception → Exception Handler
-                                                     ↓
-                                              Log Error + Traceback
-                                                     ↓
-                                            Safe-serialize response
-                                                     ↓
-                                          Return JSON error to client
-                                                     ↓
-                                          Frontend → ErrorBoundary or Toast
-                                                     ↓
-                                          User-friendly notification
+Service raises/guards fail
+  → expected case: service returns (None, msg) → router raises HTTPException(400|404|409)
+  → unexpected DB constraint: IntegrityError propagates → main.py handler → 409
+  → frontend fetch layer receives non-2xx → toast/error state
+  → render crash (not fetch error) → app/error.tsx boundary → localized message + Retry
 ```
 
-## HTTP Status Code Mapping
-| Status | Condition | Response |
-|--------|-----------|----------|
-| 400 | Bad request / validation | detail message + field errors array |
-| 401 | Missing/invalid token | "Not authenticated" |
-| 403 | Insufficient permissions | "Permission denied" |
-| 404 | Resource not found | "Not found" |
-| 409 | Conflict (duplicate, FK violation) | detail message |
-| 422 | Request validation error | Safe-serialized field errors |
-| 429 | Rate limit exceeded | Retry-After header + message |
-| 500 | Internal server error | Generic message (full error logged) |
-
-## Frontend Error States
-| Component | Error State | Behavior |
-|-----------|-------------|----------|
-| AuthGuard | isAuthenticated false | Skeleton → Redirect to /login |
-| ErrorBoundary (generic) | Unhandled React error | "System Noise — Unexpected Interference" |
-| ErrorBoundary (analytics) | Chart render failure | "Signal Lost" |
-| ErrorBoundary (DAG) | Graph visualization crash | "Circuit Error" |
-| React Query queries | API fetch failure | Retry 2× → Show toast error |
-| React Query mutations | API write failure | Show toast with server detail message |
-
-## Service Fallback Pattern
-All Python services follow: never throw exceptions — return fallback/empty result + log warning.
-```python
-def some_service(db, param):
-    try:
-        result = do_work(db, param)
-        return result
-    except Exception:
-        logger.warning(f"Service failed for {param}", exc_info=True)
-        return []
-```
+## Frontend Boundaries
+| File | Scope | Behavior |
+|------|-------|----------|
+| src/frontend/src/app/error.tsx | Route segment errors | Localized heading/description + Retry (reset()) |
+| src/frontend/src/app/global-error.tsx | Root layout crashes | Minimal html/body shell with retry |
+Fetch failures do NOT hit boundaries — they surface as component-level error states.
 
 ## Rules
-1. Never expose internal error details to client (Pydantic, SQLAlchemy internals)
-2. All server errors must be logged with full traceback
-3. Frontend must always show user-friendly message on any error
-4. Form validation errors must be field-specific with field names
-5. Services must have fallback (never throw — return empty/None)
-6. 500 errors must mask internal details with generic message
+1. Routers never contain business conditionals beyond tuple unpacking → status mapping
+2. Internal details (SQL, stack traces, driver text) never reach the client
+3. Every 500 is logged server-side at error level with exc_info
+4. Conflict payloads name the blocking dependents so the caller can decide on ?force=true
+5. Boundary copy comes from i18n message files — no hardcoded strings
 
 ## Examples
-- Validation error: make_json_safe() strips Pydantic internals before serialization
-- Rate limiting: 429 with Retry-After header, frontend shows countdown toast
-- Service fallback: LearningEngine.get_prerequisite_chain returns [] on DB failure
+- DELETE /api/admin/skills/12 with dependent path_steps → 409 with detail.dependents counts; ?force=true → 200 cascade
+- POST /api/admin/job-roles/skill link creating a duplicate junction row slipping past guards → IntegrityError → 409 net
 
 ## Edge Cases
-- Concurrent validation errors → array of per-field error details
-- Network timeout during upload → retry with progress indicator
-- Database deadlock → SQLAlchemy automatic retry (configurable)
-- Error in error handler → logged as double-fault, generic 500 returned
+- Validation error inside an SSE stream handshake → normal 422 (stream not yet open)
+- Error thrown inside error.tsx itself → global-error.tsx catches
 
 ## Failure Cases
-- ErrorBoundary catches but cannot recover → shows fallback UI, no crash
-- Log service fails → errors still returned to client but not persisted
-- Validation error exposes Pydantic internals → must use safe serializer
-- Service throws instead of returning fallback → 500 error to client
+- Missing guard added to a new endpoint → first line of defense is the 409 IntegrityError net, never silent corruption
 
 ## Recovery Procedures
-1. Check server logs for exception traceback and correlation
-2. Reproduce error in development environment
-3. Fix root cause and verify with manual test
-4. Add regression coverage if missing
+1. Reproduce: PYTHONPATH=src python -m pytest tests/test_integrity.py tests/test_catalog_integrity.py -q
+2. Inspect uvicorn logs for the warning line emitted by integrity_conflict_handler
 
 ## Refactoring Strategy
-- Add structured error codes for machine-readable error handling
-- Implement retry middleware for transient failures
-- Add error correlation IDs for request tracing across services
-- Centralize error response format in shared schema
+- Keep handlers thin; new failure classes belong in services with explicit mappings, not new global handlers

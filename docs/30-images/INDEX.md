@@ -1,84 +1,65 @@
 # SS-EDS: Images
 
 ## Purpose
-Document the image handling strategy for SkillSynth, including icon SVGs, avatar management, image optimization with Next.js, and WebP conversion.
+Document the image and icon strategy for SkillSynth. The surface is intentionally minimal: one SVG favicon per app, initials-based avatar fallbacks, and no raster asset pipeline.
 
 ## Responsibilities
-- Maintain custom icon SVG set (25 synth-themed icons)
-- Manage user avatar display and defaults
-- Configure Next.js image optimization
-- Ensure all images meet performance and accessibility standards
+- Serve src/frontend/public/favicon.svg (referenced in src/frontend/src/app/layout.tsx via `icons: { icon: '/favicon.svg' }`)
+- Serve src/admin-app/public/favicon.ico for the admin origin
+- Render avatar fallbacks as initials when no image URL exists
+- Keep zero external image CDN dependencies
 
 ## Inputs
-- UI design specifications
-- Icon requirements (25 custom icons from DESIGN_SYSTEM.md)
-- Avatar requirements
+- favicon.svg (student app, inline SVG file)
+- favicon.ico (admin app)
+- User full_name (initials source for fallback rendering)
 
 ## Outputs
-- SVG icon components
-- Avatar components
-- Image optimization configuration
+- Static files under each app's public/ directory
+- Initials avatar markup rendered by shared UI components
 
 ## Dependencies
-- 20-ui-system (icon catalog, design specs)
-- 08-frontend (next.config.js, Image component)
-- 21-accessibility (alt text, aria labels)
+- 20-ui-system (component styling around images/avatars)
+- 21-accessibility (alt text rules)
+- 32-user-profile (full_name feeding the initials fallback)
 
-## Icon Catalog (25 Custom Icons)
-All icons: 24×24px viewBox, 2px stroke width, round linecap/join, fill="none", color inherits from currentColor.
-| Icon | Name | Purpose |
-|------|------|---------|
-| 1 | jack-in | Audio plug entering port |
-| 2 | jack-out | Audio plug exiting port |
-| 3 | knob | Rotary knob top-view |
-| 4-6 | wave-* | Sine/square/saw waves |
-| 7 | patch-cable | Patching cable |
-| 8 | module | Eurorack faceplate |
-| 9 | rack | 3U equipment rack |
-| 10-11 | led-* | LED states |
-| 12-24 | Various | Spectrum, oscilloscope, filter, etc. |
-| 25 | attenuator | Level adjust |
+## Asset Inventory
+| App | File | Referenced by |
+|-----|------|---------------|
+| Student :3000 | src/frontend/public/favicon.svg | app/layout.tsx metadata.icons |
+| Admin :3001 | src/admin-app/public/favicon.ico | Next.js default icon convention |
 
-## Logo SVG (36×36)
+There is no custom icon component set; UI icons come from the installed component library (lucide-style strokes) used directly in components.
+
+## Sequence: Favicon Resolution
 ```
-<svg viewBox="0 0 36 36">
-  <path d="M2 26 C 2 10, 9 10, 9 10 C 9 10, 14 10, 18 18 C 22 26, 27 26, 27 26"
-        fill="none" stroke="#D4A843" stroke-width="2" stroke-linecap="round"/>
-  <circle cx="27" cy="26" r="4" fill="#0B0B0D" stroke="#D4A843" stroke-width="1.5"/>
-</svg>
+Browser GET /favicon.svg → Next.js static handler → public/favicon.svg (cached)
+Admin browser GET /favicon.ico → src/admin-app/public/favicon.ico
 ```
-
-## ERD References
-- profiles: avatar URL (stored as string, not BLOB)
 
 ## Rules
-1. All icons are inline SVGs (no external sprite sheets)
-2. Images use next/Image for optimization
-3. WebP format preferred, AVIF as future option
-4. All images must have alt text
-5. Avatar defaults to initials on missing image
-6. No external image CDN dependency
+1. Favicons are the only shipped image assets — no hero images, illustrations, or sprite sheets
+2. Any future raster image must use next/image with explicit width/height
+3. Alt text is mandatory for every informative image; decorative marks use aria-hidden
+4. Avatars never store uploads — there is no avatar_url column on users
+5. No external image domains are allowlisted in next.config
 
 ## Examples
-- Avatar component: shows image or initials in 32px circle
-- Icon component: `<JackInIcon className="w-6 h-6" />`
+- Avatar block: colored circle + first letters of full_name, deterministic color from user id
+- Favicon swap: replace public/favicon.svg, no build change needed
 
 ## Edge Cases
-- Avatar URL broken → show initials fallback
-- SVG doesn't render in old browser → static PNG fallback
-- Image optimization fails during build → skip optimization
+- User with empty full_name → fallback shows a single neutral glyph, not an empty circle
+- Browser requests /favicon.ico on :3000 → 404 is harmless (svg declared in metadata)
 
 ## Failure Cases
-- Large unoptimized images slow down page load
-- Missing alt text → accessibility violation
-- SVG stroke-width doesn't scale → use vector-effect="non-scaling-stroke"
+- favicon.svg deleted → browsers show default icon; layout.tsx still points to the path
+- Broken remote image URL (none today — no remote images are rendered)
 
 ## Recovery Procedures
-1. Verify next.config.js image domains configuration
-2. Check image optimization settings for production build
-3. Replace raster images with SVG where possible
+1. Restore favicon from git history: `git checkout HEAD -- src/frontend/public/favicon.svg`
+2. Verify: `curl -I localhost:3000/favicon.svg` returns 200
 
 ## Refactoring Strategy
-- Create a single `icons/` directory with all 25 SVGs as React components
-- Add image compression pipeline for user uploads
-- Implement lazy loading for off-screen images
+- If brand assets grow, introduce a single icons/ module with typed exports before adding files
+- Revisit only when a real requirement appears; keep the asset surface flat

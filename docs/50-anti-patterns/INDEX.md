@@ -1,106 +1,88 @@
 # SS-EDS: Anti-Patterns
 
 ## Purpose
-Document known anti-patterns, code smells, and practices to avoid in SkillSynth development. Provides concrete examples of what NOT to do and why.
+Catalog practices that are banned or were repeatedly harmful in SkillSynth, each with a concrete BAD/GOOD pair and the enforcement mechanism that catches it.
 
 ## Responsibilities
-- Identify and document anti-patterns discovered during development
-- Provide alternatives and correct approaches
-- Educate developers on common pitfalls
-- Track anti-pattern frequency for refactoring prioritization
+- Keep the catalog short, current, and checkable
+- Name the guard (lint rule, test, review gate) per anti-pattern
 
 ## Inputs
 - Code review findings
-- Bug root cause analysis
-- Performance investigation results
-- Developer experience reports
+- Test failures with architectural root causes
 
 ## Outputs
-- Anti-pattern catalog
-- Alternative solutions
-- Prevention strategies
+- This catalog; additions require evidence from this codebase
 
 ## Dependencies
-- 37-clean-code (correct practices)
-- 38-refactoring (fix anti-patterns)
-- 48-style-guide (style violations)
+- 37-clean-code (positive counterpart)
+- 48-style-guide (formatting-level violations)
 
-## Anti-Pattern Catalog
+## Catalog
 
 ### AP-001: N+1 Queries
-**Problem**: Fetching related data in a loop (e.g., for each profile, fetch categories).
-**Example**: 
+**Problem**: Fetching related rows inside a loop.
 ```python
-# BAD
-for profile in profiles:
-    categories = db.query(Category).join(skill_categories).filter(...).all()
+# BAD — one query per path
+for p in paths:
+    steps = db.query(PathStep).filter(PathStep.path_id == p.id).all()
 ```
-**Impact**: 10 instances fixed in Phase 9, massive performance improvement.
-**Fix**: Batch-fetch all related data in one query → convert to dict → O(1) lookup.
+**Fix**: Batch-fetch by id list once, build a dict, look up in O(1) — as `_path_progress_list` does via `completions_by_step_ids` (analytics_service.py).
 
-### AP-002: Hardcoded Arabic Strings
-**Problem**: Arabic text hardcoded in components instead of using i18n.
-**Impact**: Phase 5 fixed 33 files, zero tolerance going forward.
-**Fix**: Always use `t('key')` from next-intl.
+### AP-002: Hardcoded UI Strings
+**Problem**: Literal Arabic/English text inside components.
+**Fix**: All copy through i18n message keys (`t('key')`); parity between ar/en files is a release gate. Enforced in frontend review.
 
-### AP-003: Gradients and Soft Shadows
-**Problem**: Using CSS gradients, box-shadow with blur, or glassmorphism.
-**Impact**: Banned by design principles (Phase 4).
-**Fix**: Flat solid colors only. Hard drop shadow: `0 2px 0 0 rgba(0,0,0,0.5)`.
+### AP-003: Gradients, Glassmorphism, Soft Shadows
+**Problem**: Decorative CSS effects violating the flat visual system.
+**Fix**: Flat solid colors only; elevation via 1px borders and hard offsets. Enforced in design review against 20-ui-system tokens.
 
 ### AP-004: Physical CSS Properties in RTL
-**Problem**: Using ml-/mr-, pl-/pr-, border-left/border-right in RTL context.
-**Example**: `margin-left: 8px` instead of `margin-inline-start: 8px`.
-**Fix**: Use logical properties: ms-/me-, ps-/pe-, border-s-/border-e-.
+**Problem**: `ml-/mr-/pl-/pr-/border-left/right` break under `dir="rtl"`.
+**Fix**: Logical properties only: `ms-/me-/ps-/pe-/border-s/e`, `margin-inline-start`. The app is RTL-first, so physical props fail visually immediately.
 
-### AP-005: Services that Throw
-**Problem**: Services throwing exceptions instead of returning fallback values.
-**Fix**: All services must return fallback/empty result. Log error, never crash.
+### AP-005: Services That Throw for Expected Failures
+**Problem**: Raising exceptions for predictable conditions, forcing routers into try/except noise.
+**Fix**: Services return result tuples `(payload, error_message)`; routers map them to status codes. Only genuinely unexpected errors may propagate to main.py handlers.
 
-### AP-006: JSON Bridge Columns for M:N
-**Problem**: Storing related IDs as JSON arrays on parent instead of junction tables.
-**Example**: `skill_ids` JSON field on job_roles instead of job_role_skills table.
-**Fix**: Phase 11 migrated to junction tables (skill_categories, skill_prerequisites, job_role_skills, path_skills).
+### AP-006: JSON Columns Where Relations Belong
+**Problem**: Storing M:N or repeated references as JSON arrays instead of junction tables.
+**Example**: The two documented exceptions on path_steps (`resource_ids`, `assessment_ids`) exist only as frozen wire-format bridges.
+**Fix**: Real relations get real junction tables — `skill_prerequisites` (skill→prerequisite DAG) and `job_role_skills` (role→skill mappings), both composite-PK FK tables in src/migrations/003_reduced_schema.sql. New M:N data MUST be a junction table; do not add a third JSON bridge without an ADR.
 
-### AP-007: transition: all
-**Problem**: Using `transition: all` instead of specifying explicit properties.
-**Impact**: Unintended animations, performance impact.
-**Fix**: Always specify explicit properties: `transition: opacity 300ms ease-out`.
+### AP-007: `transition: all`
+**Problem**: Unspecified transition properties animate unintended layout values.
+**Fix**: Explicit property lists: `transition: opacity 200ms ease, transform 150ms ease`.
 
-## ERD References
-- Anti-patterns relate to database schema design (AP-006)
-- Code-level anti-patterns linked to specific modules
+### AP-008: Skipping Integrity Guards for "Trusted" Callers
+**Problem**: Assuming admin-only endpoints can skip FK/cycle validation because "admins don't send garbage".
+**Fix**: Every mutating service runs the same ensure_* guards (services/catalog_integrity.py); tests prove 400/409 semantics for admin calls too (tests/test_catalog_integrity.py). The IntegrityError net is a safety net, never the intended validation layer.
+
+### AP-009: Reintroducing Removed Features
+**Problem**: Rebuilding gamification counters, notification tables, role hierarchies, or second transports "temporarily".
+**Fix**: Removals are ADR-recorded decisions (ADR-013). Resurrection requires a superseding ADR first — no code before the ADR.
+
+### AP-010: Docs Drift
+**Problem**: Documentation describing removed commands/files (legacy seed scripts, deleted layers) or invented endpoints.
+**Fix**: Docs cite only existing files/commands; grep gates for stale terms run before docs commits (see 19-conventions).
 
 ## Rules
-1. Anti-patterns must have concrete examples (BAD vs GOOD)
-2. Each anti-pattern must document impact and fix
-3. Anti-pattern catalog is reviewed quarterly
-4. New anti-patterns added as discovered
-5. Fixed anti-patterns marked with fix version
+1. Every entry keeps its BAD/GOOD example current with real symbol names
+2. An anti-pattern without an enforcement mechanism is a wish, not a rule — add the lint/test or cut the entry
+3. Fixed systemic issues graduate here so they stay fixed
 
 ## Examples
-- Good: `transition: transform 300ms ease-out, opacity 200ms ease`
-- Bad: `transition: all 300ms`
-- Good: junction tables for M:N relationships
-- Bad: JSON array columns for M:N
+- GOOD junction usage: learning graph endpoint reads skill_prerequisites edges directly (learning_service)
+- BAD junction avoidance: appending prerequisite ids to a skills.prereq_ids JSON column
 
 ## Edge Cases
-- Legacy code containing anti-patterns → refactor when touched
-- Third-party code with anti-patterns → document as known issue
-- Performance optimization requiring anti-pattern → document trade-off
+- Performance-critical denormalization → allowed only with a measured benchmark and an ADR note
 
 ## Failure Cases
-- Anti-pattern introduced → caught in code review
-- Anti-pattern not documented → repeat offender
-- Anti-pattern accepted without trade-off documentation → technical debt
+- Reviewer spots a violation post-merge → fix forward plus add the missing guard
 
 ## Recovery Procedures
-1. Identify anti-pattern instance
-2. Apply fix per documented solution
-3. Add regression prevention (lint rule, test)
+1. Sweep with targeted greps (e.g., `rg "transition:\s*all" src/frontend`), fix, add CI grep where cheap
 
 ## Refactoring Strategy
-- Use ESLint rules to catch anti-patterns automatically
-- Add architectural tests to detect violations
-- Schedule dedicated anti-pattern cleanup phases
-- Track anti-pattern frequency in code quality metrics
+- Quarterly pass: delete entries guarding against things that can no longer occur

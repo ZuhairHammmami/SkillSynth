@@ -1,91 +1,76 @@
 # SS-EDS: Resource Engine
 
 ## Purpose
-Document the resource selection and management system for SkillSynth. Covers resource metadata, filtering, selection strategy, and deduplication for learning path resources.
+Document how learning resources are stored, selected, and attached to path steps. Resources live in the `resources` table (87 rows seeded by seed_v3.py); there is no separate resource service — selection is a function inside the learning service.
 
 ## Responsibilities
-- Maintain resource catalog (87+ resources in seed_all.py)
-- Implement resource selection algorithm (language, format, free/premium, official priority)
-- Handle resource deduplication by URL
-- Support multiple resource types (video, article, book, course, documentation)
+- Own the `resources` catalog (title, url, type, language, is_free, is_official, author_or_platform)
+- Link resources to skills via `resources.skill_id` (FK → skills, ON DELETE SET NULL)
+- Select up to two resources per generated step (`_pick_resource_ids` in src/backend/services/learning_service.py:105)
+- Expose admin CRUD for resources (GET/POST/PUT/DELETE under /api/admin/resources)
 
 ## Inputs
-- Resource metadata from seed_all.py / src/data/learning_paths/resources.json
-- Learner preferences (language, format)
-- Skill-to-resource mappings
+- Seeded catalog: `PYTHONPATH=src python seed_v3.py` inserts 87 resources
+- Learner preferences from the wizard payload (`language`, `format`, `is_free`)
+- Skill-to-resource ownership (`resources.skill_id`)
 
 ## Outputs
-- Selected resource lists for each path step
-- Deduplicated resource assignments
+- `path_steps.resource_ids` JSON bridge (documented exception to strict 3NF)
+- Resource blocks rendered on step detail (id/title/url/type resolved via GET resources by ids)
 
 ## Dependencies
-- 10-database (resources table)
-- 11-learning-engine (path generation uses resource selection)
-- 05-domain (resource-to-skill relationships)
+- 10-database (resources table; canonical DDL src/migrations/003_reduced_schema.sql)
+- 11-learning-engine (path generation calls the selection helper)
+- 09-admin (resource CRUD pages in src/admin-app)
 
-## Sequence: Resource Selection
-```
-Path Generator → select_resources(skills, prefs)
-  → Query resources for each skill
-  → Filter by language (Arabic preferred if available)
-  → Filter by format preference
-  → Prioritize free resources over paid
-  → Prioritize official resources (documentation, courses)
-  → Deduplicate by URL
-  → Return unique resource list
-  → Assign to path steps
+## Current Inventory (dev DB)
+```bash
+sqlite3 skillsynth.db "SELECT count(*) FROM resources;"          # 87
+sqlite3 skillsynth.db "SELECT type, count(*) FROM resources GROUP BY type;"
+# documentation 50 · course 15 · interactive 10 · article 7 · book 5
 ```
 
-## State Diagram: Resource Lifecycle
+## Sequence: Step Resource Selection
 ```
-[Draft] → [Published] → [Deprecated] → [Archived]
-             ↓
-       [Updated]
+generate_path → _persist_plan (per planned skill)
+  → _pick_resource_ids(db, skill, preferences):
+      1. owned = resources where skill_id == skill.id
+      2. candidates = pool filtered by is_free preference
+      3. filter by format (type) unless "any"
+      4. prefer resources matching language, else fall back to full candidates
+      5. order owned first, deduplicate, take first 2 ids
+  → ids persisted to path_steps.resource_ids
 ```
 
 ## ERD References
-- resources table: title, url, type, is_free, is_official, author_or_platform, language
-- path_steps: resource_ids (JSON array referencing resources)
-
-## Resource Types
-| Type | Description | Priority |
-|------|-------------|----------|
-| documentation | Official docs, reference | Highest |
-| course | Structured online course | High |
-| video | Tutorial video | Medium |
-| article | Blog post, guide | Medium |
-| book | Textbook, ebook | Low |
-| interactive | Coding platform, sandbox | Medium |
+- resources: id, title, url, type(50), language(en), is_free, is_official, author_or_platform, skill_id FK
+- path_steps.resource_ids → JSON array of resource ids
 
 ## Rules
-1. Resources deduplicated by URL before assignment
-2. Free resources preferred over paid
-3. Official documentation prioritized over third-party
-4. Language preference filters before other criteria
-5. Maximum 3-5 resources per skill per step
-6. Resources must be unique within a path
+1. Resources are DB rows only — no JSON fallback files exist
+2. Maximum 2 resources per step, deduplicated by identity before slicing
+3. Free-first honoring is honored only when the wizard preference requests it (default true)
+4. Language match is preferred, never mandatory (falls back to unfiltered candidates)
+5. Deleting a skill sets resources.skill_id to NULL (ON DELETE SET NULL), never deletes rows
+6. Resource URLs are stored as-is; availability is not probed at runtime
 
 ## Examples
-- Learner with language="ar": Arabic resources selected first, English fallback
-- Learner with format="video": video resources prioritized
+- Wizard preferences {"is_free": true, "format": "course", "language": "en"} → free courses first, other types as fallback
+- Skill with no owned resources → selection draws from the whole filtered pool
 
 ## Edge Cases
-- No matching resources for a skill after filtering → step content-only (no external links)
-- Same resource URL appears for multiple skills → deduplicated, assigned to first matching skill
-- Resource URL broken/unavailable → logged but not removed from DB
+- Empty pool after filtering → step stores empty resource_ids list
+- Same resource relevant to multiple steps → may repeat across steps (deduplication is per-step only)
 
 ## Failure Cases
-- resources table empty → fallback to resources.json
-- Resource type not recognized → defaults to "article"
-- All resources filtered out → empty resource section in step
+- resources table empty (seed skipped) → all steps render without external links
+- Unknown type string in DB → rendered verbatim, no filtering crash
 
 ## Recovery Procedures
-1. Seed resources with `python seed_all.py`
-2. Verify resource URLs are accessible
-3. Check resource filter criteria against database
+1. Re-seed: `PYTHONPATH=src python seed_v3.py`
+2. Verify counts with the sqlite3 queries above
+3. Check /api/admin/resources returns the expected rows (require_admin)
 
 ## Refactoring Strategy
-- Migrate from JSON file to fully DB-backed resources
-- Add resource quality scoring (ratings, relevance score)
-- Implement resource version tracking for updates
-- Add resource caching for frequently accessed items
+- Promote resource_ids JSON to a junction table if per-step resource metadata is ever needed
+- Add URL health probing as an offline maintenance job, not a request-time check

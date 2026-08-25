@@ -1,103 +1,84 @@
 # SS-EDS: Analytics
 
 ## Purpose
-Document the analytics system for SkillSynth, covering learner analytics dashboard, admin reports, skill growth tracking, learning velocity, and system health metrics.
+Document the learner analytics endpoints and their exact payload keys, implemented in src/backend/services/analytics_service.py. All aggregates derive from step_progress completions and user_skills proficiency; there are no XP, level, or streak metrics anywhere in the system.
 
 ## Responsibilities
-- Provide learner analytics (XP, level, velocity, streak, skill growth, recent activity)
-- Generate admin reports (user activity, content engagement, system health)
-- Track skill proficiency growth over time
-- Compute learning velocity (weekly/monthly)
-- Serve aggregated dashboard data
+- Serve the learner dashboard aggregate (GET /api/analytics/dashboard)
+- Track per-skill proficiency buckets (mastered ≥ 3, learning 1–2, not_started 0)
+- Compute learning velocity from 7/30-day completion counts
+- Expose admin aggregated reports (GET /api/admin/reports/aggregated, /system-health)
 
 ## Inputs
-- Step completion data
-- Assessment results
-- User profile data
-- Event logs
+- step_progress rows (completed_at NOT NULL counts as a completion)
+- user_skills.proficiency_level (0–5, written by assessment scoring)
+- paths/path_steps for per-path progress blocks
 
 ## Outputs
-- Analytics dashboard API responses
-- Admin report data
-- Skill growth trajectories
-- Learning velocity metrics
+- Four Bearer-authenticated GET endpoints under /api/analytics/*
+- Admin report payloads via admin_service.py
 
 ## Dependencies
-- 07-backend (analytics_router.py)
-- 10-database (step_progress, assessment_results, activity_log)
-- ~~28-gamification (XP, level)~~, streak data (streaks retained)
+- 07-backend (routers/analytics.py → analytics_service.py → repositories/learning_repository.py)
+- 10-database (step_progress, user_skills, paths, path_steps)
 
-## Sequence: Analytics Dashboard Load
+## Dashboard Keys (learner_dashboard, wire-frozen)
+| Key | Meaning |
+|-----|---------|
+| total_paths | Paths owned by the user (soft-deleted excluded) |
+| total_completed_steps / completed_steps | Lifetime completions (legacy duplicate key kept) |
+| total_steps | Steps across the user's paths |
+| completion_rate | completed/total %, one decimal |
+| mastered_skills / learning_skills | Profile skills with level ≥ 3 / 1–2 |
+| total_skill_areas | Distinct skills in the user's profile |
+| weekly_completions | Completions in trailing 7 days |
+| total_hours · completed_hours · remaining_hours | Estimated hours and progress-scaled split |
+| learning_velocity | 30-day completions averaged to per-week |
+| recent_activity | Last 5 {type:"step_completed", description, date} items |
+| path_progress | Per-path {path_id, path_title, total_steps, completed_steps, percentage} |
+
+## Endpoint Payloads
+| Endpoint | Keys |
+|----------|------|
+| GET /api/analytics/skill-growth | skills[{skill, level, status}], mastered_count, in_progress_count, not_started_count, weak_skills[3], strong_skills[3], knowledge_gaps |
+| GET /api/analytics/path-progress/{id} | path_id, total_steps, completed_steps, completion_percentage, hour splits, estimated_weeks, goal_role, step_progress[] |
+| GET /api/analytics/learning-history | recent_activity[{step_title, path_title, ids, completed_at}], total_completions, weekly_completions, daily_activity[7 days] |
+| GET /api/analytics/learning-velocity | weekly_velocity, monthly_velocity, total_completions, total_hours, average_per_week |
+
+Mastery rule shared by dashboard/growth: `_status_for` — level ≥ 3 mastered, > 0 learning, else not_started (analytics_service.py:17).
+
+## Sequence: Dashboard Load
 ```
-User → Navigate to /analytics → GET /api/analytics/dashboard
-  → Aggregate path progress
-  → Compute skill growth
-  → Calculate learning velocity
-  → Fetch recent activity
-  → Return combined dashboard data
-  → Render charts with dynamic imports
+Frontend analytics page → GET /api/analytics/dashboard (Bearer JWT)
+  → analytics_service.learner_dashboard
+    → count_paths/count_completions/count_steps + sum_total_hours
+    → get_skill_profile (user_skills) → bucket mastered/learning
+    → _path_progress_list (batch step fetch, single completions query)
+  → JSON payload rendered by charts + stat cards
 ```
-
-## State Diagram: Analytics Data Freshness
-```
-[Real-time] → Step completions, XP updates
-[Cached (30s)] → Dashboard aggregates
-[Daily] → Admin reports
-[Weekly] → Learning velocity trends
-[Monthly] → Skill growth trajectories
-```
-
-## Analytics Endpoints
-| Endpoint | Purpose |
-|----------|---------|
-| GET /api/analytics/dashboard | All analytics aggregated |
-| GET /api/analytics/path-progress/{path_id} | Per-path step-by-step progress |
-| GET /api/analytics/skill-growth | Skill proficiency breakdown + gaps |
-| GET /api/analytics/learning-history | Last 20 completions + 7-day daily activity |
-| GET /api/analytics/learning-velocity | Weekly/monthly velocity |
-
-## Admin Report Endpoints
-| Endpoint | Purpose |
-|----------|---------|
-| GET /api/admin/analytics/overview | 7-day admin overview |
-| GET /api/admin/reports/user-activity | User stats |
-| GET /api/admin/reports/content-engagement | Content stats |
-| GET /api/admin/reports/system-health | System status |
-| GET /api/admin/reports/most-active-users | Top 10 users |
-| GET /api/admin/reports/most-requested-skills | Top skills |
-
-## ERD References
-- step_progress: user_id, step_id, completed_at, score
-- events: category, action, entity_type
-- profiles: ~~total_xp, level,~~ streak_count, last_activity_date
 
 ## Rules
-1. Dashboard aggregates must respond < 50ms (currently 21.4ms)
-2. Charts dynamically imported to reduce bundle size
-3. All analytics data is read-only from materialized queries
-4. Admin reports paginate at 20 items per page
-5. Skill growth calculated from assessment result history
+1. Key sets are frozen for wire compatibility (see module docstring, analytics_service.py:1)
+2. All aggregates computed on request — no materialized views, no cache layer
+3. Empty profile → zeros across counters; empty activity lists, never errors
+4. Admin reports live in admin_service.py (most_active_users, count_paths) served through /api/admin/reports/aggregated
+5. No gamification metrics exist: no XP, level, streak, or achievement fields
 
 ## Examples
-- Learning velocity: steps completed per week over last 30 days → trend line
-- Skill growth: skill_proficiency JSON before/after assessment → delta chart
+- User completed 9 steps in 30 days → learning_velocity = round(9/(30/7), 1) = 2.1
+- skill-growth weak_skills = first 3 learning-level skills sorted by level desc
 
 ## Edge Cases
-- User with no completions → empty state with "Start a path to see analytics"
-- Single data point → no trend line, show current value only
-- Very high XP/level → display formatting without overflow
+- Path with zero steps → percentage 0 (guard at analytics_service.py:36)
+- Not the path owner → path-progress returns None → router maps to 404
 
 ## Failure Cases
-- Analytics aggregates fail on empty database → return zeros
-- Chart rendering fails → error boundary shows fallback message
-- Report takes too long → timeout at 30s
+- DB unreachable → FastAPI 500 via global handler; frontend error boundary renders retry UI
 
 ## Recovery Procedures
-1. Check step_progress and activity_log tables for data
-2. Verify analytics_router endpoint works
-3. Check admin report generation logic
+1. `PYTHONPATH=src python -m pytest tests/test_analytics.py -q` (8 tests)
+2. Inspect step_progress/user_skills via /api/admin/db-inspector
 
 ## Refactoring Strategy
-- Pre-materialize dashboard aggregates for faster queries
-- Add export functionality (CSV, PDF) for reports
-- Implement predictive analytics using historical trends
+- Keep key freezing discipline: new fields append-only, removals require a frontend release
+- Consider ETag caching if dashboards become hot paths

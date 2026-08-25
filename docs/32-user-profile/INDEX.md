@@ -1,100 +1,79 @@
 # SS-EDS: User Profile
 
 ## Purpose
-Document the user profile system for SkillSynth, covering profile data model, skill profile management, preferences, and learner-facing profile features.
+Document the user identity model and how skill proficiency is represented. The users table carries identity only (id, email, hashed_password, full_name, is_admin, timestamps); the skill profile is not a JSON column — it is the set of user_skills rows.
 
 ## Responsibilities
-- Manage user profile data (email, name, avatar, preferences)
-- Maintain skill proficiency profile (skill_profile JSON)
-- Handle gamification profile (~~achievements, XP, level~~ — **removed, streaks retained**)
-- Provide profile editing and viewing functionality
+- Own account identity: registration, login, profile read/update (src/backend/routers/auth.py)
+- Expose ProfileUpdate with a single editable field: full_name (src/backend/dto/auth.py)
+- Derive the skill profile from user_skills.proficiency_level (0–5) written by assessment scoring
 
 ## Inputs
-- Registration data (email, password, full_name)
-- Assessment results (skill_profile updates)
-- Gamification events (XP, level, streak updates)
-- User preferences (language, learning format)
+- Registration payload {email, password, full_name?} (RegisterInput)
+- PUT /api/auth/me body {full_name?} (ProfileUpdate — nothing else is updatable)
+- Assessment submissions upserting user_skills via assess_repository
 
 ## Outputs
-- Profile API responses
-- Updated skill_profile JSON
-- ~~Updated gamification fields~~ (removed)
+- ProfileOut {email, full_name} from GET/PUT /api/auth/me
+- Skill profile consumed by path generation and analytics (27-analytics)
 
 ## Dependencies
-- 10-database (profiles table)
-- 07-backend (auth_router.py, user profile endpoints)
-- ~~28-gamification (XP, level, achievements)~~ streaks only retained
-- 11-learning-engine (skill profile used for path generation)
+- 10-database (users, user_skills; DDL src/migrations/003_reduced_schema.sql)
+- 14-security (JWT 24h access token, lockout after 5 failed logins → 15 min)
+- 11-learning-engine (user_skills feeds prerequisite filtering)
+
+## Data Model
+| Table.Field | Type | Notes |
+|-------------|------|-------|
+| users.email | string unique | login identifier |
+| users.hashed_password | string | bcrypt |
+| users.full_name | string nullable | the only user-editable profile field |
+| users.is_admin | bool | binary admin gate (33-admin-profile) |
+| users.created_at / updated_at | timestamp | server defaults |
+| user_skills.user_id + skill_id | composite PK | FKs CASCADE to users/skills |
+| user_skills.proficiency_level | int 0–5 | default 1; last_assessed_at nullable |
+
+Removed with ADR-013: profiles table merge, streak columns, XP/level fields, role_id, preferences JSON, avatar_url. No gamification columns exist anywhere.
 
 ## Sequence: Profile Update Flow
 ```
-User → Edit Profile → PUT /api/auth/users/me
-  → Validate fields
-  → Update profile record
-  → Return updated profile
-  → Invalidate React Query (user.me)
+User edits name → PUT /api/auth/me {full_name} (Bearer JWT)
+  → auth_service validates + sanitizes full_name
+  → identity repository updates users row
+  → ProfileOut returned → frontend invalidates the me query
 ```
 
-## Profile Data Model
-| Field | Type | Source |
-|-------|------|--------|
-| email | string (unique) | Registration |
-| full_name | string | Registration |
-| hashed_password | string (bcrypt) | Registration |
-| is_admin | boolean | Admin assignment |
-| ~~role_id~~ | ~~int (FK→roles)~~ | ~~Role assignment~~ **REMOVED** |
-| skill_profile | JSON | Assessment results |
-| streak_count | int | Gamification (retained) |
-| current_streak | int | Gamification (retained) |
-| longest_streak | int | Gamification (retained) |
-| last_activity_date | date | Gamification (retained) |
-| preferences | JSON | User settings |
-| ~~total_xp, level, achievements~~ | | **REMOVED** |
-| avatar_url | string (nullable) | Upload |
-
-## Skill Profile JSON
-```json
-{
-  "html": 4,
-  "css": 3,
-  "javascript": 2,
-  "python": 0
-}
+## Skill Profile Access Pattern
+```python
+# repositories/assess_repository.get_skill_profile(db, user_id)
+# → {skill_name: proficiency_level} dict built from user_skills ⨝ skills
+{"html": 4, "css": 3, "javascript": 2}
 ```
-Levels: 0=not_started, 1-2=learning, 3-4=competent, 5=mastered
-
-## ERD References
-- profiles: all above fields ~~role_id FK→roles~~ (removed from profiles)
-- assessment_results: skill profile source data
+Buckets used across the app: level ≥ 3 mastered · 1–2 learning · 0/absent not_started.
 
 ## Rules
-1. Email must be unique
-2. Password: min 8 chars, ≥1 uppercase, ≥1 digit
-3. Skill levels: 0-5 integer only
-4. XP and level are calculated, not manually editable
-5. Profile changes propagate to path generation on next assessment
+1. Email is immutable through the API (no email-change endpoint exists)
+2. Password changes go through POST /api/auth/change-password (current password required)
+3. proficiency_level is clamped to 0–5 by scoring logic before upsert
+4. Deleting a user cascades to user_skills, paths, path_steps, step_progress
+5. The wizard treats absent user_skills rows as level 0 (skill still enters the plan)
 
 ## Examples
-- New user: skill_profile = {}~~, total_xp = 0, level = 1~~
-- ~~After 10 step completions: total_xp = 100, level = 1 (still, since level 2 = 200 XP)~~ (XP/level removed)
+- New user: zero user_skills rows → dashboard shows total_skill_areas = 0
+- After assessment: one row per assessed skill with clamped level and last_assessed_at
 
 ## Edge Cases
-- Email change requires re-verification (future)
-- Profile deletion cascades to paths, completions, assessment results
-- Empty skill_profile → all skills considered "not started"
+- full_name null or empty string → sanitized on write (dto/auth.py validator)
+- Duplicate email at registration → 409 conflict
 
 ## Failure Cases
-- Duplicate email on registration → 409 Conflict
-- Invalid skill level (e.g., 6) → validation error
-- Profile not found → 404
+- PUT /api/auth/me without token → 401; with malformed body → 422 flattened detail
+- Orphaned user_skills impossible by schema (composite PK + FKs)
 
 ## Recovery Procedures
-1. Check profiles table for user record
-2. Verify auth token matches profile_id
-3. Use admin API to update profile if needed
+1. Verify row state: sqlite3 skillsynth.db "SELECT * FROM users WHERE email='…';"
+2. Re-run auth tests: PYTHONPATH=src python -m pytest tests/test_auth.py -q
 
 ## Refactoring Strategy
-- Add profile versioning for skill profile history
-- Implement email verification flow
-- Add profile export (JSON download) feature
-- Separate user settings into preferences table
+- If profile editing expands beyond full_name, extend ProfileUpdate deliberately — never widen implicitly
+- Consider an explicit email-change flow with re-verification if product requires it

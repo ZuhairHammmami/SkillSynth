@@ -1,98 +1,69 @@
 # SS-EDS: Decision Records (ADR)
 
 ## Purpose
-Document architectural decision records (ADRs) for SkillSynth. Captures significant architecture decisions, their context, consequences, and rationale.
+Index the architectural decision records for SkillSynth. The directory contains only live decision documents; historical inventory reports were deleted during the 2026-08 cleanup.
 
 ## Responsibilities
-- Record all significant architectural decisions
-- Document decision context, options considered, and chosen approach
-- Track decision status (proposed, accepted, deprecated, superseded)
-- Provide rationale for future developers
+- Record significant architecture decisions with context and consequences
+- Track status (Proposed / Accepted / Superseded) and supersession chains
 
 ## Inputs
-- Architecture discussions
-- Design reviews
-- Performance/security findings
+- Architecture discussions and review findings
+- Schema/API changes requiring recorded rationale
 
 ## Outputs
-- ADR documents (doc/41-decision-records/adr-XXX.md)
-- Decision log
+- ADR files in this directory (adr-XXX.md)
+- Decision table below
 
 ## Dependencies
-- 06-architecture (decision recording)
-- 00-principles (decisions align with principles)
+- 06-architecture (decisions shape the architecture)
+- 00-principles (decisions must align with principles)
 
-## Sequence: ADR Process
+## ADR Process
 ```
-Identify Decision → Draft ADR → Review → Accept/Reject → Implement → Revisit if needed
+Identify Decision → Draft ADR → Review → Accept/Reject → Implement → Supersede via newer ADR when reversed
 ```
 
-## ADR Template
+## Decision Table
+| ADR | Title | Status | File |
+|-----|-------|--------|------|
+| ADR-001 | Dual-backend pattern (FastAPI + Next.js apps) | Accepted | not digitized |
+| ADR-002 | SSE over second socket transport for realtime | Accepted | not digitized |
+| ADR-003 | JWT access-only auth (24h), no refresh rotation | Accepted | not digitized |
+| ADR-006 | SQLite dev / PostgreSQL prod mode switching | Accepted | not digitized |
+| ADR-007 | Gamification as side effects | **Superseded by ADR-013** (gamification fully removed) | file never created; title preserved here |
+| ADR-010 | Local-first LLM provider chain → static fallback | Accepted | not digitized |
+| ADR-011 | Post-rebuild consolidation (dead layers removed, isolated tests, canonical DDL v2, separate admin app) | **Superseded by ADR-013** (schema specifics; operational points stand) | adr-011.md |
+| ADR-013 | Feature reduction to the 15-table core (admin CRUD completion, integrity layer, removal of gamification/notifications/sessions/granular roles) — see [adr-013.md](adr-013.md) | Accepted | adr-013.md |
+| ADR-014 | Referential-Integrity Policy (restricted deletes, census payloads, ?force=true semantics) | Proposed — document in progress | (being written) |
+
+## Template
 ```markdown
 # ADR-XXX: Title
-
-## Status
-[Proposed | Accepted | Deprecated | Superseded]
-
-## Context
-What is the issue motivating this decision?
-
-## Decision
-What is the chosen approach?
-
-## Consequences
-What are the trade-offs, costs, and benefits?
-
+## Status   [Proposed | Accepted | Superseded by ADR-YYY]
+## Context  What motivates this decision?
+## Decision What is the chosen approach?
+## Consequences  Trade-offs, costs, benefits?
 ## Options Considered
-1. Option A — pros/cons
-2. Option B — pros/cons
 ```
 
-## Key Architectural Decisions
-| ADR | Title | Status |
-|-----|-------|--------|
-| ADR-001 | Dual-backend pattern (FastAPI + Next.js) | Accepted |
-| ADR-002 | SSE over WebSockets for real-time | Accepted |
-| ADR-003 | JWT auth with 7-day expiry, no blacklist | Accepted (known gap) |
-| ADR-004 | Flat solid colors, no gradients | Accepted |
-| ADR-005 | RTL-first, Arabic-default | Accepted |
-| ADR-006 | SQLite dev / PostgreSQL prod mode switching | Accepted |
-| ADR-007 | Gamification as side-effects, not standalone | Accepted |
-| ADR-008 | Static JSON files as legacy fallback | Accepted |
-| ADR-009 | RBAC with 6 fixed roles | Accepted |
-| ADR-010 | Local-first LLM (Ollama) → OpenAI → static fallback | Accepted |
-| ADR-011 | Post-rebuild consolidation (dead layers removed, cache/scheduler wired, isolated test DB, canonical DDL, separate admin app) — see [adr-011.md](adr-011.md) | Accepted |
-| ADR-013 | Feature reduction to 15-table core (RBAC/notifications/sessions dropped, 7-router API, divide-and-conquer code) — see [adr-013.md](adr-013.md) | Accepted |
-
-## ERD References
-- No ADR-specific database tables
-
 ## Rules
-1. ADRs are written for significant decisions only (not trivial choices)
-2. Each ADR has a unique number (ADR-XXX)
-3. Status must be one of: Proposed, Accepted, Deprecated, Superseded
-4. Superseded ADRs must reference the superseding ADR
-5. ADRs are immutable once accepted (add new ADR to change)
+1. One unique number per decision; numbers are never reused
+2. A superseding ADR names its predecessor, and the predecessor's Status line is updated the same day
+3. ADRs are immutable after acceptance except for the Status line
+4. Only significant decisions get ADRs; trivia lives in commit messages
 
 ## Examples
-- ADR-002: "SSE over WebSockets" — simpler implementation, sufficient for event types (step_completed, step_reverted, etc.), no bidirectional communication needed
+- ADR-002 rationale: one-way event push suffices for connected/ping/path_generated/assessment_completed; no client→server stream needed
 
 ## Edge Cases
-- Decision reversed after acceptance → new ADR supersedes old one
-- Multiple decisions on same topic → latest status takes precedence
-- Missing ADR for past decisions → retrospective documentation
+- Partially superseded ADRs (like ADR-011) state exactly which clauses survive
 
 ## Failure Cases
-- Not recording a decision → future developers don't know rationale
-- ADR too vague → not useful for decision rationale
-- ADR not reviewed → may contain errors
+- Reversing a decision without an ADR → future contributors re-litigate settled ground
 
 ## Recovery Procedures
-1. Document decision retroactively with available context
-2. Link to related code changes and discussions
-3. Seek team input for missing context
+1. Missing ADR for shipped behavior → write it retrospectively, marked as such in Context
 
 ## Refactoring Strategy
-- ~~Use ADR template CLI tool for consistent formatting~~ (CLI tool removed)
-- Link ADRs to code via commit messages (ADR-XXX references)
-- Regular ADR review for continued relevance
+- Digitize "not digitized" entries only when their rationale becomes load-bearing again

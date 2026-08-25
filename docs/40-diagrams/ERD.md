@@ -162,7 +162,7 @@ erDiagram
 
 | # | Table | Domain | Cascade policy | Notes |
 |---|-------|--------|----------------|-------|
-| 1 | users | Identity | — | Absorbed profiles; is_admin binary RBAC |
+| 1 | users | Identity | — | Absorbed profiles; is_admin binary admin flag |
 | 2 | categories | Catalog | — | Self-ref parent_id (SET NULL) |
 | 3 | skills | Catalog | — | category_id FK (SET NULL); absorbed skill_categories |
 | 4 | skill_prerequisites | Catalog (J) | CASCADE | Self-referencing prerequisite DAG |

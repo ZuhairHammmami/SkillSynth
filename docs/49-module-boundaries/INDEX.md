@@ -1,104 +1,83 @@
 # SS-EDS: Module Boundaries
 
 ## Purpose
-Document the module boundary definitions for SkillSynth, defining separation of concerns between backend, frontend, and services layers. Covers import rules, dependency direction, and encapsulation principles.
+Define what each backend layer and frontend app may depend on. Dependency direction is one-way; crossing rules below are enforced by review and kept simple enough to check by reading imports.
 
 ## Responsibilities
-- Define module boundaries and their responsibilities
-- Enforce dependency direction (layers import in one direction)
-- Document acceptable cross-boundary communication patterns
-- Prevent circular dependencies and architectural violations
+- Fix the allowed import direction across the 8 backend layers
+- Separate the two frontend apps from the backend (HTTP only)
+- Prevent circular imports
 
 ## Inputs
-- Architecture decisions (06-architecture)
-- Backend structure (07-backend)
-- Frontend structure (08-frontend)
-- Services inventory (docs/SERVICES.md)
+- src/backend layout (8 layer directories + main.py/database.py/limiter.py)
+- src/frontend and src/admin-app layouts
 
 ## Outputs
-- Module boundary map
-- Dependency graph
-- Import rule documentation
+- Boundary map and import rules (below)
 
 ## Dependencies
-- 06-architecture (overall architecture)
-- 07-backend (backend modules)
-- 08-frontend (frontend modules)
-- 12-realtime (cross-boundary events)
+- 06-architecture (layer inventory this document constrains)
+- 07-backend / 08-frontend / 09-admin (implementations)
 
-## Backend Module Boundaries
+## Backend Boundaries
 ```
-src/backend/
-├── main.py              → Entry point, depends on all routers
-├── routers/             → API handlers, depend on crud + auth + schemas
-├── crud.py              → Data access, depends on models + database
-├── models.py            → ORM models, depends on database
-├── schemas.py           → Pydantic schemas, standalone
-├── auth.py              → Auth logic, depends on models + database
-├── events.py            → SSE events, depends on database
-├── ~~gamification.py~~      → ~~Gamification logic~~ **REMOVED**
-└── database.py          → Engine/session, standalone
+main.py ──────────────▶ routers/ ──▶ services/ ──▶ repositories/ ──▶ entities/
+   │                       │             │                                ▲
+   ├─▶ middlewares/        │             ├─▶ services/catalog_integrity.py┤
+   ├─▶ config/             ├─▶ policies/ │                                │
+   └─▶ events/ ◀───────────┴─────────────┘        (integrity helpers)     │
+dto/ ◀── imported by routers + services            entities/ ◀── repositories
 ```
+| Layer | May import | Must not import |
+|-------|-----------|-----------------|
+| routers/ | dto, policies, services, error_mapping | repositories, entities directly |
+| services/ | dto, repositories, other services (catalog_integrity), events | routers |
+| repositories/ | entities only | services, routers |
+| policies/ | config, identity repository | routers, services |
+| dto/ | nothing internal (Pydantic only) | everything |
+| events/, middlewares/, config/ | stdlib/fastapi/config only | higher layers |
 
-## Frontend Module Boundaries
-```
-src/frontend/src/
-├── app/                 → Pages (routes), depends on features + shared
-├── features/            → Feature modules (auth, paths, admin, analytics)
-├── shared/              → Shared components, hooks, lib, store
-├── i18n/                → Localization config and messages
-└── entities/            → TypeScript entity definitions
-```
+Removed layers (no re-creation without an ADR): mappers/, validators/, commands/, queries/, cache/, infrastructure/.
 
-## Services Layer
+## Frontend Boundaries
 ```
-src/services/
-├── HybridLLMProvider.ts           → Standalone, no project imports
-├── VectorSearchService.ts         → Standalone, DI interface
-├── ProjectSubmissionService.ts    → Standalone, stubbed
-├── shared/
-│   ├── notification/              → NotificationService (not wired)
-│   └── conflict-checker/          → ConflictCheckerService (pure functions)
+src/frontend/src/          src/admin-app/src/
+├── app/      (routes)     ├── app/           (routes incl. categories/, job-roles/)
+├── shared/   (ui, lib)    ├── shared/
+├── i18n/     (ar/en)      └── (English-only, no i18n runtime)
+├── types/
+└── middleware.ts
 ```
+1. Student app (:3000) and admin app (:3001) never import from each other — duplication is accepted at this boundary
+2. Neither frontend imports Python; all coupling is HTTP + JSON key contracts (frozen per 27-analytics)
 
-## Sequence: Dependency Direction
+## Sequence: Cross-Boundary Call
 ```
-Frontend Pages → Feature Hooks → Shared API Client → Backend API → Backend Router → CRUD → Models → Database
+app/(dashboard)/page.tsx → shared/lib api client → fetch :8000/api/analytics/dashboard
+→ router/analytics.py → analytics_service → learning_repository → entities → SQLite
 ```
 
 ## Rules
-1. Backend should not import from frontend
-2. Frontend imports from services via @/services alias (crosses outside src/frontend/)
-3. Services layer should not import from backend or frontend
-4. Pages only import from features and shared (not directly from backend)
-5. No circular dependencies between feature modules
-6. Python imports: always `from backend import X` (not `from src.backend`)
-
-## ERD References
-- 12 database tables mapped by backend models.py
+1. Python imports are always `from backend.xxx import yyy` — run.py injects src/ into sys.path
+2. No layer skips the layer below it (routers never touch repositories)
+3. SSE publishing goes through events/publisher.py — no direct Response streaming in services
+4. Admin authorization is checked only in policies/require_admin, never inline in handlers
+5. Zero circular imports: `python -c "import backend.main"` under PYTHONPATH=src must succeed
+6. No file >300 lines, no function >40 lines
 
 ## Examples
-- Correct: `pages/dashboard/page.tsx` imports from `@/features/paths/hooks`
-- Correct: `api.ts` makes HTTP request to backend, never imports backend code
-- Wrong: frontend component importing from `src/backend/` directly
+- Allowed: services/admin_service.py importing repositories/catalog_repository.py
+- Violation: routers/auth.py importing repositories/identity_repository.py directly (must go through auth_service)
 
 ## Edge Cases
-- Type sharing between backend and frontend → duplicate entity definitions in src/entities/
-- Shared validation logic → duplicated (not shared package yet)
-- Services alias crosses project boundary → intentional design
+- Shared DTO shape between two routers → defined once in dto/, both import it
+- Integrity helpers used by multiple services → they live in services/catalog_integrity.py, not a new layer
 
 ## Failure Cases
-- Circular import → Python: ImportError, TypeScript: runtime error
-- Module boundary violation → architectural debt, hard to test
-- Shared code duplicated → maintenance overhead
+- Circular import surfaces as partial-module ImportError at startup → break the cycle by moving shared code down a layer
 
 ## Recovery Procedures
-1. Identify violation by checking import graph
-2. Extract shared logic to appropriate module
-3. Update boundary documentation
+1. Draw the offending import on the map above, find the lowest legal home, move the code
 
 ## Refactoring Strategy
-- Create shared types package for backend/frontend type consistency
-- Convert services layer to proper microservices
-- Add import boundary enforcement tool (e.g., dependency-cruiser)
-- Document module boundaries with architecture tests
+- Add an import-linter CI check when violations exceed one per quarter

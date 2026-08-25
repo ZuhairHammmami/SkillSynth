@@ -1,116 +1,72 @@
 # SS-EDS: Glossary
 
 ## Purpose
-Provide a comprehensive glossary of terms used across SkillSynth documentation, codebase, and domain language. Includes both technical terms and synth-metaphor replacements.
+Define the terms used in current SkillSynth code and documentation. Removed-feature vocabulary (gamification terms, synth-metaphor UI names, superseded schema names) is intentionally absent — if a term is not here, do not use it.
 
 ## Responsibilities
-- Maintain consistent terminology across the project
-- Document synth-metaphor term replacements
-- Define domain-specific terminology
-- Provide cross-references to relevant documentation
+- Single, unambiguous definition per term
+- Map each domain term to its owning table/endpoint
 
 ## Inputs
-- Codebase terminology
-- Design system term replacements
-- Domain language from learning science
+- Schema (src/migrations/003_reduced_schema.sql)
+- Router/service naming
 
 ## Outputs
-- Alphabetical glossary
-- Metaphor term mapping
+- Alphabetical glossary below
 
 ## Dependencies
-- 05-domain (domain language)
-- 20-ui-system (design term replacements)
+- 05-domain (domain rules behind these terms)
+- 10-database (table definitions)
 
 ## Glossary
 
-### A
-- **Achievements**: ~~Milestones awarded for completing N steps (1/10/50/100) or reaching N level~~ **REMOVED**
-- **ADRs**: Architectural Decision Records — documentation of significant architecture decisions
-- **AEIS**: Adaptive Education Information Schema — Supabase schema for mastery tracking
-- **Amplifier Rack**: Manager Studio component showing group/department learner overview
-- **Assessment**: Quiz or test that evaluates learner skill proficiency
+### A–C
+- **Access token**: JWT granting API access for 24h; renewal is re-login. No refresh token exists.
+- **ADR**: Architectural Decision Record in docs/41-decision-records/.
+- **Assessment**: Question set per skill/job-role; submit scores answers into user_skills (0–5).
+- **Census**: Docs shorthand for the per-table dependent counts blocking a restricted delete; returned in the 409 body under the `dependents` key.
+- **Cycle guard**: Validation rejecting self/direct/ancestor cycles for category parents and skill prerequisites with a 400.
 
-### B
-- **Brass (#D4A843)**: Primary accent color for active states, cables, and highlights
-- **Bounded Context**: Domain-driven design concept — distinct area of the domain with its own model
+### D–J
+- **DAG**: Prerequisite graph over skills (skill_prerequisites); resolved by topological sort during path generation.
+- **Force delete**: `?force=true` query flag on restricted deletes; executes the ERD cascade contract.
+- **Gap analysis**: GET /api/learning/gaps — compares user_skills levels against role expectations.
+- **Integrity net**: Global handler mapping uncaught SQLAlchemy IntegrityError to 409 (main.py).
 
-### C
-- **Cable**: SVG Bézier curve connecting module jacks, representing connections
-- **Chamfer**: 2px diagonal cut on module corners via clip-path
-- **Command Rail**: Top navigation bar with logo, section knobs, and user module
+### K–P
+- **Learning velocity**: Completions per week, derived from trailing 30-day completions.
+- **Mastery threshold**: proficiency_level ≥ 3; such skills are omitted from new generated paths.
+- **Path / Path step**: Generated learning plan (paths) and its ordered steps (path_steps).
+- **Proficiency level**: user_skills.proficiency_level, integer 0–5 written by assessment scoring.
 
-### D
-- **DAG**: Directed Acyclic Graph — prerequisite structure for learning path generation
-- **Domain Event**: Significant occurrence within the domain (step_completed, assessment_completed)
-
-### E
-- **Events Table**: Database table logging all system events for audit and learning analytics
-- **External Resource**: Learning material (video, article, book) linked to path steps
-
-### F-K
-- **Gamification**: ~~XP, levels, achievements,~~ and streaks for learner motivation — **XP/achievements removed, streaks retained**
-- **Jack**: Circular connection point on modules (input/output)
-- **Junction Tables**: skill_categories, skill_prerequisites, job_role_skills, path_skills
-- **Kahn's Algorithm**: Topological sort algorithm for prerequisite DAG resolution
-
-### L-P
-- **LED**: 8px notification indicator on modules with color/animation states
-- **Level**: ~~Learner progression level (each level = level * 100 XP total)~~ **REMOVED**
-- **Module**: Self-contained UI component (synth metaphor) — primary building block
-- **N+1 Query**: Anti-pattern where related data is fetched in a loop (10 instances fixed in Phase 9)
-- **Patch Bay**: The main workspace area where modules are placed and connected
-
-### Q-Z
-- **RBAC**: Role-Based Access Control — 6 roles with granular permissions
-- **RTL**: Right-to-Left layout — Arabic-first design
-- **SSE**: Server-Sent Events — real-time event streaming
-- **Skill Profile**: JSON object on Profile storing proficiency levels per skill
-- **Streak**: Consecutive days of learning activity
-- **Teal (#3D5A5C)**: Secondary accent color for learning paths and calm indicators
-- **XP**: ~~Experience Points — earned by completing steps (+10) or deducted by undo (-10)~~ **REMOVED**
-
-## Metaphor Term Replacements
-| Standard Term | Synth Term |
-|---------------|------------|
-| Login | Signal Tuning |
-| Button | Knob / Jack |
-| Progress bar | VU Meter |
-| Dashboard | Workspace / Patch Bay |
-| Sidebar | Command Rail |
-| Form | Control Panel / Groove |
-| Error | System Noise |
-| Success | Signal Locked |
+### Q–Z
+- **Restricted delete**: DELETE on skills/categories/job-roles that returns 409 with dependent counts when dependents exist (ADR-014).
+- **RTL-first**: Arabic-default layout direction (`<html lang="ar" dir="rtl">`), English secondary via i18n.
+- **SSE**: Server-Sent Events; the only push transport (/api/realtime/events, admin channel). No second socket channel exists.
+- **Skill profile**: The user's user_skills rows viewed as {skill_name: level}; no JSON column stores it.
+- **Soft delete (path)**: paths.deleted_at timestamp excluding a path from listings without row removal.
+- **Step completion**: step_progress row with completed_at set; composite PK makes double-complete idempotent.
+- **user_skills**: Table holding per-user proficiency; composite PK (user_id, skill_id), FKs CASCADE.
 
 ## ERD References
-- Glossary terms map to database entities
+Every glossary entry above maps to tables documented in docs/40-diagrams/ERD.md.
 
 ## Rules
-1. Terms must have a single, unambiguous definition
-2. Cross-references to related docs must be maintained
-3. Synth metaphor replacements must be used in user-facing text
-4. Technical terms (SSE, RBAC, DAG) defined in plain language
+1. Documentation uses these terms verbatim; synonyms create drift
+2. New feature → add its terms here in the same PR
+3. Terms tied to removed features are deleted from this file when the feature dies
 
 ## Examples
-- "Login" → always displayed as "Signal Tuning" in UI, but code uses "login"
-- "Skill profile" → stored as JSON, displayed as proficiency levels
+- "census" appears only in prose about restricted deletes — the wire key it describes is `dependents`
 
 ## Edge Cases
-- Term used differently in code vs. UI → note both definitions
-- New term introduced → add to glossary before use
-- Metaphor term confusion → clarify with examples
+- Term spans layers (proficiency level: schema + service + analytics) → defined once here, referenced everywhere
 
 ## Failure Cases
-- Missing glossary entry → add when discovered
-- Contradictory definitions → resolve and update
-- Outdated metaphor mapping → review with design team
+- Undocumented term spotted in review → either rename or add an entry
 
 ## Recovery Procedures
-1. Search codebase for term usage patterns
-2. Align definition with actual usage
-3. Update all documentation referencing the term
+1. Conflicting definitions → fix the outlier doc, keep this file authoritative
 
 ## Refactoring Strategy
-- Generate glossary from code annotations
-- Link glossary terms to documentation sections
-- Add glossary search functionality to docs website
+- Keep alphabetical flat list; split by letter only past ~60 entries
