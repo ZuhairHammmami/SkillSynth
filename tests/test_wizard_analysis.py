@@ -9,12 +9,25 @@ def _headers(api_client):
     return {"Authorization": f"Bearer {tok}"}
 
 
-def _profile(db, uid=4):
-    """Snapshot user_skills rows for the zero-write assertion.
+def _auth_uid(api_client, headers):
+    """Authenticated principal's id from /api/auth/me.
 
-    uid defaults to 4 (veteran, matching test_learning.py); commits
-    first so each query opens a fresh transaction and sees whatever
-    the request session may have (wrongly) written.
+    Called by every test that needs the snapshot uid; uses the SAME
+    bearer headers as the requests under test so the zero-write proof
+    tracks the user the endpoint actually acts on (no seed-order
+    coupling). Wire key `id` per dto/auth.py UserOut.
+    """
+    return api_client.get("/api/auth/me", headers=headers).json()["id"]
+
+
+def _profile(db, uid):
+    """Snapshot user_skills rows of the authenticated principal.
+
+    uid MUST come from _auth_uid (/api/auth/me) for the same session —
+    the snapshot has to watch whoever the endpoint authenticates as,
+    or the equality assertion proves nothing. Commits first so each
+    query opens a fresh transaction and sees whatever the request
+    session may have (wrongly) written.
     """
     from backend.entities.learning import UserSkill
     db.commit()
@@ -25,7 +38,8 @@ def _profile(db, uid=4):
 def test_analysis_is_pure(api_client, db_session):
     """Endpoint computes levels without touching user_skills."""
     headers = _headers(api_client)
-    before = _profile(db_session)
+    uid = _auth_uid(api_client, headers)
+    before = _profile(db_session, uid)
     r = api_client.post("/api/wizard/analysis", headers=headers, json={
         "goal": "Frontend Developer", "weekly_hours": 10, "answers": {}})
     assert r.status_code == 200
@@ -33,7 +47,7 @@ def test_analysis_is_pure(api_client, db_session):
     assert set(body) >= {"per_skill", "weaknesses", "strengths",
                          "recommended_focus", "narrative_available"}
     assert body["narrative"] is None and body["narrative_available"] is False
-    assert _profile(db_session) == before
+    assert _profile(db_session, uid) == before
 
 
 def test_levels_match_formula(api_client, db_session):
