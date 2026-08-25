@@ -13,13 +13,16 @@ import {
   LayoutDashboard, Users, BookOpen, FileText, ClipboardCheck,
   Compass, BarChart3, HeartPulse, Settings, ScrollText, LogOut,
   Menu, X, ChevronRight, Database, HardDrive, ToggleLeft,
+  FolderTree, Briefcase,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/users', label: 'Users', icon: Users },
+  { href: '/categories', label: 'Categories', icon: FolderTree },
   { href: '/skills', label: 'Skills', icon: BookOpen },
   { href: '/resources', label: 'Resources', icon: FileText },
+  { href: '/job-roles', label: 'Job Roles', icon: Briefcase },
   { href: '/assessments', label: 'Assessments', icon: ClipboardCheck },
   { href: '/paths', label: 'Paths', icon: Compass },
   { href: '/reports', label: 'Reports', icon: BarChart3 },

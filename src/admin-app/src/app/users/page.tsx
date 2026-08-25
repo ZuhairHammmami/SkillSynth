@@ -1,32 +1,22 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { toast } from 'sonner';
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import apiClient from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2 } from 'lucide-react';
 import { CreateUserDialog } from './create-user-dialog';
+import { EditUserDialog } from './edit-user-dialog';
+import { DeleteButton } from '@/components/delete-button';
 import type { Profile } from '@/types/api';
 
 export default function UsersPage() {
   const { data: users, isLoading } = useQuery<Profile[]>({
     queryKey: ['adminUsers'],
     queryFn: async () => { const res = await apiClient.get<Profile[]>('/admin/users'); return res.data; },
-  });
-  const queryClient = useQueryClient();
-  const deleteUser = useMutation({
-    mutationFn: async (id: number) => { await apiClient.delete(`/admin/users/${id}`); },
-    onSuccess: () => {
-      toast.success('User deleted');
-      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
-    },
-    onError: (error) => toast.error(getApiErrorMessage(error)),
   });
   const [search, setSearch] = useState('');
 
@@ -36,10 +26,6 @@ export default function UsersPage() {
     (u) => u.email.toLowerCase().includes(search.toLowerCase()) ||
       (u.full_name || '').toLowerCase().includes(search.toLowerCase())
   );
-
-  const handleDelete = async (id: number) => {
-    if (confirm('Delete this user?')) await deleteUser.mutateAsync(id).catch(() => undefined);
-  };
 
   return (
     <div className="space-y-6">
@@ -74,9 +60,13 @@ export default function UsersPage() {
                     <TableCell>{user.email}</TableCell>
                     <TableCell><Badge variant={user.is_admin ? 'default' : 'secondary'}>{user.is_admin ? 'Admin' : 'User'}</Badge></TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(user.id)} className="text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <EditUserDialog user={user} />
+                      <DeleteButton
+                        endpoint={`/admin/users/${user.id}`}
+                        label="user"
+                        queryKeys={['adminUsers']}
+                        confirmText="Delete this user? Their paths, progress and assessment results are removed too."
+                      />
                     </TableCell>
                   </TableRow>
                 ))

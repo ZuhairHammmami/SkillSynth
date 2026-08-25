@@ -9,6 +9,8 @@ export interface Profile {
 export interface Category {
   id: number;
   name: string;
+  description?: string;
+  parent_id?: number | null;
   created_at?: string;
 }
 
@@ -17,10 +19,11 @@ export interface Skill {
   name: string;
   description?: string;
   difficulty_level?: number;
+  estimated_hours?: number;
   icon?: string;
   color?: string;
-  categories?: Category[];
-  prerequisites?: Skill[];
+  category_id?: number | null;
+  prerequisite_ids?: number[];
   resource_ids?: number[];
 }
 
@@ -29,10 +32,11 @@ export interface Resource {
   title: string;
   url: string;
   type: string;
-  is_free?: boolean;
-  is_official?: boolean;
+  is_free?: boolean | null;
+  is_official?: boolean | null;
   author_or_platform?: string;
   language?: string;
+  skill_id?: number | null;
 }
 
 export interface JobRole {
@@ -40,7 +44,7 @@ export interface JobRole {
   title: string;
   description?: string;
   career_field?: string;
-  skills?: Skill[];
+  skill_ids?: number[];
 }
 
 export interface Assessment {
