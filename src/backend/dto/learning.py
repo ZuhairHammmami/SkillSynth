@@ -1,8 +1,8 @@
 """Learning DTOs — wizard options, path generation, progress, graph.
 
 Consumed by services/learning_service.py and the learning/progress routers
-(Task 3). Wire keys are frozen: PathOut.id stays a string, steps keep
-`content` + `is_completed`, dashboard keeps total_completed/weekly/etc.
+(Task 3). Wire keys are frozen: PathOut.id is an int, steps keep
+`content` + `is_completed`, dashboard keeps total_paths/completed_steps/etc.
 """
 
 from __future__ import annotations
