@@ -34,9 +34,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy application code
 COPY src/backend /app/src/backend
 COPY src/migrations /app/src/migrations
-COPY src/migrations_alembic /app/src/migrations_alembic
-COPY run.py alembic.ini ./
-COPY skillsynth.db /app/skynth.db
+COPY run.py ./
 
 # Run as non-root user
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
