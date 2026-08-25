@@ -1,6 +1,6 @@
 """Auth service — registration, login, tokens and password lifecycle.
 
-Called by routers/auth_router.py (Task 3) and policies/auth_policy.py
+Called by routers/auth.py and policies/auth_policy.py
 (decode_token). Owns JWT helpers (documented decision: they live here,
 not in policies) and ports password rules verbatim from the old
 password_service. Auth events are written through engagement_repository.

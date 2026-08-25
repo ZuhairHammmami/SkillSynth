@@ -1,0 +1,70 @@
+# ============================================================================
+# Docker build context — ignore unnecessary files
+# ============================================================================
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# Environment (injected at runtime)
+.env
+.env.local
+.env.*.local
+.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# Node
+node_modules/
+.next/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+docs/
+*.md
+
+# Reports
+PHASE_A/
+PHASE_B/
+*.md
+
+# Tools
+tools/
+
+# Tests
+tests/
+
+# Scripts (not needed in container)
+start.sh
+seed_v2.py
+
+# Frontend specific (not needed for backend build)
+src/frontend/node_modules/
+src/frontend/.next/
+src/frontend/public/
+src/admin-app/node_modules/
+src/admin-app/.next/
+
+# Migrations source
+src/migrations/001_final_schema*.sql
+
+# Backups
+*.backup
+*.bak

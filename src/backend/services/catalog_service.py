@@ -1,6 +1,6 @@
 """Catalog service — skill/category/resource/job-role CRUD + wizard.
 
-Called by the admin catalog routers and options_router (Task 3).
+Called by routers/admin.py (catalog endpoints) and learning/paths services.
 Validation lives in dto/catalog.py; persistence in catalog_repository.
 """
 

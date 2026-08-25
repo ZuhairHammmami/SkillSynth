@@ -1,22 +1,18 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
-  content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
-	],
+  content: ['./src/**/*.{ts,tsx}'],
   prefix: "",
   theme: {
     container: {
       center: true,
       padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
+      screens: { "2xl": "1400px" },
     },
     extend: {
+      fontFamily: {
+        sans: ['var(--font-tajawal)', 'Tajawal', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -58,6 +54,18 @@ module.exports = {
         sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
+        "fade-in": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        "slide-up": {
+          from: { opacity: "0", transform: "translateY(8px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "scale-in": {
+          from: { opacity: "0", transform: "scale(0.95)" },
+          to: { opacity: "1", transform: "scale(1)" },
+        },
         "accordion-down": {
           from: { height: "0" },
           to: { height: "var(--radix-accordion-content-height)" },
@@ -68,42 +76,13 @@ module.exports = {
         },
       },
       animation: {
+        "fade-in": "fade-in 0.3s ease-out",
+        "slide-up": "slide-up 0.3s ease-out",
+        "scale-in": "scale-in 0.2s ease-out",
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
-    
-    animation: {
-    "blob": "blob 7s infinite", // تعريف التحريك الجديد
-    "accordion-down": "accordion-down 0.2s ease-out",
-    "accordion-up": "accordion-up 0.2s ease-out",
-  },
-  keyframes: {
-    blob: {
-      "0%": { transform: "translate(0px, 0px) scale(1)" },
-      "33%": { transform: "translate(30px, -50px) scale(1.1)" },
-      "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
-      "100%": { transform: "translate(0px, 0px) scale(1)" },
-    },
-    "accordion-down": {
-      from: { height: "0" },
-      to: { height: "var(--radix-accordion-content-height)" },
-    },
-    "accordion-up": {
-      from: { height: "var(--radix-accordion-content-height)" },
-      to: { height: "0" },
-    },
-  },
-  
-  animation: {
-    "dash": "dash 10s linear infinite",
-    // ...
-  },
-  keyframes: {
-    dash: {
-      "0%": { strokeDasharray: "10, 10", strokeDashoffset: "0" },
-      "100%": { strokeDasharray: "10, 10", strokeDashoffset: "100" },
-    },}
     },
   },
   plugins: [require("tailwindcss-animate")],
-}
+};

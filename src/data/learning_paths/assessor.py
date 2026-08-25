@@ -1,68 +1,76 @@
-
-
 import json
 import os
-
-# --- التغيير 1: استيراد أدوات قاعدة البيانات بدلاً من مسار rules.json ---
 from .db_connector import fetch_skills_for_job_role
 
-# لم نعد بحاجة إلى RULES_PATH
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ASSESSMENTS_PATH = os.path.join(BASE_DIR, 'assessments.json')
 
 
 def run_assessment(goal, user_answers):
-    """
-    يقوم بتشغيل تقييم للمستخدم بناءً على هدفه الوظيفي (من قاعدة البيانات) وإجاباته.
-    """
-    # --- التغيير 2: قراءة ملف الأسئلة فقط ---
     try:
         with open(ASSESSMENTS_PATH, 'r', encoding='utf-8') as f:
             all_questions = json.load(f)
     except FileNotFoundError:
         return {"error": f"Assessments file not found at: {ASSESSMENTS_PATH}"}
 
-    # --- التغيير 3: تحديد المهارات للاختبار من قاعدة البيانات ---
-    # نستدعي الدالة من db_connector لجلب المهارات المرتبطة بالوظيفة
-    skills_to_test_data = fetch_skills_for_job_role(goal)
-    if not skills_to_test_data:
+    skills_data = fetch_skills_for_job_role(goal)
+    if not skills_data:
         return {"error": f"Could not find skills for job role '{goal}' in the database."}
-    
-    # نستخرج أسماء المهارات فقط من البيانات التي حصلنا عليها
-    skills_to_test = [skill['name'].lower() for skill in skills_to_test_data]
-    
+
+    skill_names = [s['name'] for s in skills_data]
+
     skill_levels = {}
 
-    # --- باقي المنطق يبقى كما هو تمامًا ---
-    for skill in skills_to_test:
-        questions_for_skill = all_questions.get(skill, [])
-        if not questions_for_skill:
-            skill_levels[skill] = 0
+    for skill_name in skill_names:
+        question_group = all_questions.get(skill_name, None)
+        if not question_group:
+            skill_levels[skill_name.lower()] = 0
+            continue
+
+        questions = question_group.get("questions", [])
+        if not questions:
+            skill_levels[skill_name.lower()] = 0
             continue
 
         correct_count = 0
-        total_questions = len(questions_for_skill)
+        total_for_skill = 0
 
-        for question in questions_for_skill:
-            question_id = question['id']
-            correct_answer_index = question['correct_option_index']
-            user_answer_index = user_answers.get(question_id)
+        for q_idx, question in enumerate(questions):
+            qid = f"{skill_name.lower()}_q{q_idx}"
+            user_answer_index = user_answers.get(qid)
+            if user_answer_index is None:
+                continue
 
-            if user_answer_index == correct_answer_index:
+            correct_text = question.get("correct", "")
+            options = question.get("options", [])
+            try:
+                correct_index = options.index(correct_text)
+            except ValueError:
+                continue
+
+            total_for_skill += 1
+            if user_answer_index == correct_index:
                 correct_count += 1
-        
-        score_percentage = (correct_count / total_questions) * 100 if total_questions > 0 else 0
-        
-        level = 0
-        if score_percentage == 100:
+
+        if total_for_skill == 0:
+            skill_levels[skill_name.lower()] = 0
+            continue
+
+        score_pct = (correct_count / total_for_skill) * 100
+
+        if score_pct == 100:
+            level = 5
+        elif score_pct >= 80:
+            level = 4
+        elif score_pct >= 60:
             level = 3
-        elif score_percentage >= 50:
+        elif score_pct >= 40:
             level = 2
-        elif score_percentage > 0:
+        elif score_pct > 0:
             level = 1
         else:
             level = 0
-            
-        skill_levels[skill] = level
+
+        skill_levels[skill_name.lower()] = level
 
     return skill_levels

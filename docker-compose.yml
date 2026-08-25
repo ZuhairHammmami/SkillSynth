@@ -1,0 +1,95 @@
+# ============================================================================
+# SkillSynth — Docker Compose
+# ============================================================================
+# Start all services: docker compose up -d
+# Stop all services:  docker compose down
+# View logs:          docker compose logs -f
+# ============================================================================
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: skillsynth-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - MODE=prod
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - DATABASE_URL=${DATABASE_URL:-}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY:-}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@skillsynth.io}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - LLM_PROVIDER=${LLM_PROVIDER:-local}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-mistral}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    env_file:
+      - .env
+    volumes:
+      - skillsynth-data:/app/data
+      - ./skillsynth.db:/app/skillsynth.db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - skillsynth-net
+
+  frontend:
+    build:
+      context: src/frontend
+      dockerfile: Dockerfile
+    container_name: skillsynth-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - skillsynth-net
+
+  admin:
+    build:
+      context: src/admin-app
+      dockerfile: Dockerfile
+    container_name: skillsynth-admin
+    ports:
+      - "3001:3001"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - skillsynth-net
+
+  # Optional: Ollama for local LLM inference
+  ollama:
+    image: ollama/ollama:latest
+    container_name: skillsynth-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+    profiles:
+      - llm
+    networks:
+      - skillsynth-net
+
+volumes:
+  skillsynth-data:
+  ollama-data:
+
+networks:
+  skillsynth-net:
+    driver: bridge

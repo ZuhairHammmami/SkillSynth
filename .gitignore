@@ -1,3 +1,8 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
 # Virtual Environment
 .venv/
 venv/
@@ -6,8 +11,14 @@ venv/
 __pycache__/
 *.pyc
 
+# TypeScript incremental build artifacts
+*.tsbuildinfo
+
 # Database file
 *.db
+*.db-journal
+*.db-wal
+*.db-shm
 *.sqlite3
 
 # IDE settings
@@ -30,11 +41,30 @@ src/frontend/out/
 # Environment variables
 src/frontend/.env*.local
 
+# =========================
+# Admin App - Next.js Specific Ignores
+# =========================
+
+# Dependency directories
+src/admin-app/node_modules/
+
+# Build directory
+src/admin-app/.next/
+
+# Production build files
+src/admin-app/out/
+
+# Environment variables
+src/admin-app/.env*.local
+
 # Log files
+*.log
 src/frontend/npm-debug.log*
 src/frontend/yarn-debug.log*
 src/frontend/yarn-error.log*
-node_modules
+
+# Dependency directories (any level)
+node_modules/
 
 # Python egg-info (auto-generated)
 *.egg-info/

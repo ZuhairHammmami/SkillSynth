@@ -1,6 +1,6 @@
 """Auth DTOs — registration, profile and password payloads.
 
-Consumed by routers/auth_router.py (Task 3) and services/auth_service.py.
+Consumed by routers/auth.py and services/auth_service.py.
 ProfileOut is the wire shape of /auth/me + /auth/register; its flat
 `skill_profile` dict is synthesized by auth_service.build_profile_out.
 """

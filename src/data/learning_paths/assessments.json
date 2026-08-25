@@ -1,78 +1,5057 @@
 {
-  "html": [
-    {
-      "id": "html_q1",
-      "text": "What does HTML stand for?",
-      "options": [
-        "Hyper Text Markup Language",
-        "Home Tool Markup Language",
-        "Hyperlinks and Text Markup Language"
-      ],
-      "correct_option_index": 0
-    },
-    {
-      "id": "html_q2",
-      "text": "Which HTML tag is used to define an internal style sheet?",
-      "options": [
-        "<script>",
-        "<css>",
-        "<style>"
-      ],
-      "correct_option_index": 2
-    },
-    {
-      "id": "html_q3",
-      "text": "How can you make a numbered list?",
-      "options": [
-        "<ul>",
-        "<ol>",
-        "<list>"
-      ],
-      "correct_option_index": 1
-    }
-  ],
-  "css": [
-    {
-      "id": "css_q1",
-      "text": "What is the correct CSS syntax for making all the <p> elements bold?",
-      "options": [
-        "p {text-size:bold;}",
-        "p {font-weight:bold;}",
-        "<p style='font-size:bold;'>"
-      ],
-      "correct_option_index": 1
-    },
-    {
-      "id": "css_q2",
-      "text": "How do you select an element with id 'demo'?",
-      "options": [
-        ".demo",
-        "#demo",
-        "demo"
-      ],
-      "correct_option_index": 1
-    }
-  ],
-  "javascript": [
-    {
-      "id": "js_q1",
-      "text": "Inside which HTML element do we put the JavaScript?",
-      "options": [
-        "<js>",
-        "<scripting>",
-        "<script>"
-      ],
-      "correct_option_index": 2
-    },
-    {
-      "id": "js_q2",
-      "text": "How do you write 'Hello World' in an alert box?",
-      "options": [
-        "alert('Hello World');",
-        "msgBox('Hello World');",
-        "alertBox('Hello World');"
-      ],
-      "correct_option_index": 0
-    }
-  ]
+  "HTML": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What does HTML stand for?",
+        "options": [
+          "Hyper Text Markup Language",
+          "High Tech Modern Language",
+          "Hyper Transfer Markup Language",
+          "Home Tool Markup Language"
+        ],
+        "correct": "Hyper Text Markup Language",
+        "difficulty": 1
+      },
+      {
+        "question": "Which tag creates a hyperlink?",
+        "options": [
+          "<link>",
+          "<a>",
+          "<href>",
+          "<nav>"
+        ],
+        "correct": "<a>",
+        "difficulty": 1
+      },
+      {
+        "question": "What is the correct HTML for inserting an image?",
+        "options": [
+          "<img src='image.jpg' alt='My Image'>",
+          "<image src='image.jpg'>",
+          "<img alt='My Image'>image.jpg</img>",
+          "<img href='image.jpg'>"
+        ],
+        "correct": "<img src='image.jpg' alt='My Image'>",
+        "difficulty": 1
+      },
+      {
+        "question": "Which HTML element is used for the largest heading?",
+        "options": [
+          "<h1>",
+          "<heading>",
+          "<h6>",
+          "<head>"
+        ],
+        "correct": "<h1>",
+        "difficulty": 1
+      },
+      {
+        "question": "What does the <article> tag represent?",
+        "options": [
+          "A self-contained composition",
+          "A navigation menu",
+          "An article in a blog",
+          "A sidebar"
+        ],
+        "correct": "A self-contained composition",
+        "difficulty": 2
+      }
+    ]
+  },
+  "CSS": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What does CSS stand for?",
+        "options": [
+          "Cascading Style Sheets",
+          "Creative Style System",
+          "Computer Style Sheets",
+          "Colorful Style Sheets"
+        ],
+        "correct": "Cascading Style Sheets",
+        "difficulty": 1
+      },
+      {
+        "question": "Which property changes the background color?",
+        "options": [
+          "background-color",
+          "color",
+          "bgcolor",
+          "background"
+        ],
+        "correct": "background-color",
+        "difficulty": 1
+      },
+      {
+        "question": "What does 'display: flex' do?",
+        "options": [
+          "Creates a flex container",
+          "Makes text flexible",
+          "Hides the element",
+          "Adds spacing"
+        ],
+        "correct": "Creates a flex container",
+        "difficulty": 2
+      },
+      {
+        "question": "Which CSS property controls the text size?",
+        "options": [
+          "font-size",
+          "text-size",
+          "font-style",
+          "text-style"
+        ],
+        "correct": "font-size",
+        "difficulty": 1
+      },
+      {
+        "question": "What is the box model composed of?",
+        "options": [
+          "Content, Padding, Border, Margin",
+          "Content, Margin, Padding",
+          "Width, Height, Depth",
+          "Inner, Outer, Border"
+        ],
+        "correct": "Content, Padding, Border, Margin",
+        "difficulty": 2
+      }
+    ]
+  },
+  "JavaScript": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "Which keyword declares a constant variable?",
+        "options": [
+          "const",
+          "let",
+          "var",
+          "static"
+        ],
+        "correct": "const",
+        "difficulty": 1
+      },
+      {
+        "question": "What does 'typeof' operator return for an array?",
+        "options": [
+          "object",
+          "array",
+          "undefined",
+          "list"
+        ],
+        "correct": "object",
+        "difficulty": 2
+      },
+      {
+        "question": "Which method adds an element to the end of an array?",
+        "options": [
+          "push()",
+          "pop()",
+          "shift()",
+          "unshift()"
+        ],
+        "correct": "push()",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a closure?",
+        "options": [
+          "A function with access to its outer scope",
+          "A closed function",
+          "A private variable",
+          "A loop construct"
+        ],
+        "correct": "A function with access to its outer scope",
+        "difficulty": 3
+      },
+      {
+        "question": "What does '===' do?",
+        "options": [
+          "Strict equality (type + value)",
+          "Loose equality",
+          "Assignment",
+          "Comparison"
+        ],
+        "correct": "Strict equality (type + value)",
+        "difficulty": 1
+      }
+    ]
+  },
+  "TypeScript": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "How do you specify a number type in TypeScript?",
+        "options": [
+          ": number",
+          ": int",
+          ": float",
+          ": numeric"
+        ],
+        "correct": ": number",
+        "difficulty": 1
+      },
+      {
+        "question": "What does 'any' type mean?",
+        "options": [
+          "Opt out of type checking",
+          "Any value allowed but checked",
+          "A generic type",
+          "A union of all types"
+        ],
+        "correct": "Opt out of type checking",
+        "difficulty": 1
+      },
+      {
+        "question": "What is an interface in TypeScript?",
+        "options": [
+          "A structure for object shapes",
+          "A class implementation",
+          "A function type",
+          "A module"
+        ],
+        "correct": "A structure for object shapes",
+        "difficulty": 2
+      },
+      {
+        "question": "What are generics used for?",
+        "options": [
+          "Reusable components with multiple types",
+          "Creating generic functions",
+          "Type aliases",
+          "Module imports"
+        ],
+        "correct": "Reusable components with multiple types",
+        "difficulty": 3
+      },
+      {
+        "question": "What does 'readonly' modifier do?",
+        "options": [
+          "Prevents property modification after init",
+          "Makes property read-only in class",
+          "Creates a constant",
+          "Prevents serialization"
+        ],
+        "correct": "Prevents property modification after init",
+        "difficulty": 2
+      }
+    ]
+  },
+  "React": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What is JSX?",
+        "options": [
+          "JavaScript XML syntax extension",
+          "A state management tool",
+          "A React component",
+          "A build tool"
+        ],
+        "correct": "JavaScript XML syntax extension",
+        "difficulty": 1
+      },
+      {
+        "question": "What hook manages state in React?",
+        "options": [
+          "useState",
+          "useEffect",
+          "useContext",
+          "useReducer"
+        ],
+        "correct": "useState",
+        "difficulty": 1
+      },
+      {
+        "question": "What does useEffect handle?",
+        "options": [
+          "Side effects",
+          "State changes",
+          "Rendering",
+          "Event handling"
+        ],
+        "correct": "Side effects",
+        "difficulty": 2
+      },
+      {
+        "question": "What is virtual DOM?",
+        "options": [
+          "Lightweight copy of real DOM for performance",
+          "A separate DOM for React",
+          "A browser API",
+          "A rendering engine"
+        ],
+        "correct": "Lightweight copy of real DOM for performance",
+        "difficulty": 2
+      },
+      {
+        "question": "How do you pass data from parent to child?",
+        "options": [
+          "Props",
+          "State",
+          "Context",
+          "Refs"
+        ],
+        "correct": "Props",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Vue.js": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "How do you declare reactive data in Vue 3?",
+        "options": [
+          "ref() or reactive()",
+          "data()",
+          "reactive() only",
+          "watch()"
+        ],
+        "correct": "ref() or reactive()",
+        "difficulty": 2
+      },
+      {
+        "question": "What directive conditionally renders elements?",
+        "options": [
+          "v-if",
+          "v-for",
+          "v-bind",
+          "v-model"
+        ],
+        "correct": "v-if",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a computed property?",
+        "options": [
+          "Derived value that updates automatically",
+          "A method that calculates",
+          "A watcher",
+          "A template variable"
+        ],
+        "correct": "Derived value that updates automatically",
+        "difficulty": 2
+      },
+      {
+        "question": "What does v-model do?",
+        "options": [
+          "Two-way data binding",
+          "One-way binding",
+          "Model declaration",
+          "Template compilation"
+        ],
+        "correct": "Two-way data binding",
+        "difficulty": 1
+      },
+      {
+        "question": "What is Vue Router used for?",
+        "options": [
+          "Client-side routing",
+          "Server-side routing",
+          "State management",
+          "HTTP requests"
+        ],
+        "correct": "Client-side routing",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Angular": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What language is Angular built with?",
+        "options": [
+          "TypeScript",
+          "JavaScript",
+          "Python",
+          "Dart"
+        ],
+        "correct": "TypeScript",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a component in Angular?",
+        "options": [
+          "Building block of UI",
+          "A service",
+          "A module",
+          "A directive"
+        ],
+        "correct": "Building block of UI",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Svelte": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What is unique about Svelte?",
+        "options": [
+          "Compiles at build time, no virtual DOM",
+          "Uses virtual DOM",
+          "Requires no compiler",
+          "Only for mobile"
+        ],
+        "correct": "Compiles at build time, no virtual DOM",
+        "difficulty": 2
+      }
+    ]
+  },
+  "Next.js": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What rendering methods does Next.js support?",
+        "options": [
+          "SSR, SSG, ISR, CSR",
+          "Only CSR",
+          "Only SSR",
+          "Only SSG"
+        ],
+        "correct": "SSR, SSG, ISR, CSR",
+        "difficulty": 2
+      },
+      {
+        "question": "What is the App Router?",
+        "options": [
+          "New routing system based on file system",
+          "A UI component",
+          "State manager",
+          "Build tool"
+        ],
+        "correct": "New routing system based on file system",
+        "difficulty": 2
+      }
+    ]
+  },
+  "Nuxt.js": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What is Nuxt.js primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Nuxt.js?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Nuxt.js?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Nuxt.js?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Nuxt.js skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Tailwind CSS": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What is Tailwind CSS?",
+        "options": [
+          "Utility-first CSS framework",
+          "Component library",
+          "CSS preprocessor",
+          "Design tool"
+        ],
+        "correct": "Utility-first CSS framework",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Bootstrap": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What is Bootstrap primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Bootstrap?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Bootstrap?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Bootstrap?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Bootstrap skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "jQuery": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What is jQuery primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes jQuery?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of jQuery?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn jQuery?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve jQuery skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Redux": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What is Redux primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Redux?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Redux?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Redux?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Redux skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "GraphQL": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What does GraphQL allow?",
+        "options": [
+          "Clients to request exactly the data they need",
+          "Only REST endpoints",
+          "No data fetching",
+          "Only mutations"
+        ],
+        "correct": "Clients to request exactly the data they need",
+        "difficulty": 2
+      }
+    ]
+  },
+  "Webpack": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What is Webpack primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Webpack?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Webpack?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Webpack?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Webpack skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Vite": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What is Vite primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Vite?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Vite?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Vite?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Vite skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Node.js": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What is Node.js primarily used for?",
+        "options": [
+          "Server-side JavaScript",
+          "Frontend development",
+          "Database management",
+          "CSS preprocessing"
+        ],
+        "correct": "Server-side JavaScript",
+        "difficulty": 1
+      },
+      {
+        "question": "What is npm?",
+        "options": [
+          "Node package manager",
+          "Node process monitor",
+          "Node performance module",
+          "New programming method"
+        ],
+        "correct": "Node package manager",
+        "difficulty": 1
+      },
+      {
+        "question": "What does module.exports do?",
+        "options": [
+          "Exports a module for use elsewhere",
+          "Imports a module",
+          "Creates a module",
+          "Removes a module"
+        ],
+        "correct": "Exports a module for use elsewhere",
+        "difficulty": 2
+      },
+      {
+        "question": "What is the Event Loop?",
+        "options": [
+          "Handles async operations",
+          "A loop of events",
+          "A DOM feature",
+          "A CSS property"
+        ],
+        "correct": "Handles async operations",
+        "difficulty": 3
+      },
+      {
+        "question": "Which method creates a web server?",
+        "options": [
+          "http.createServer()",
+          "server.create()",
+          "web.start()",
+          "http.server()"
+        ],
+        "correct": "http.createServer()",
+        "difficulty": 2
+      }
+    ]
+  },
+  "Python": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "Which keyword defines a function?",
+        "options": [
+          "def",
+          "function",
+          "func",
+          "define"
+        ],
+        "correct": "def",
+        "difficulty": 1
+      },
+      {
+        "question": "What type is result of 3/2 in Python 3?",
+        "options": [
+          "float",
+          "int",
+          "string",
+          "list"
+        ],
+        "correct": "float",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a list comprehension?",
+        "options": [
+          "Compact list creation",
+          "List method",
+          "Loop construct",
+          "Function decorator"
+        ],
+        "correct": "Compact list creation",
+        "difficulty": 2
+      },
+      {
+        "question": "What does the 'with' statement do?",
+        "options": [
+          "Context management",
+          "Import module",
+          "Exception handling",
+          "Loop control"
+        ],
+        "correct": "Context management",
+        "difficulty": 2
+      },
+      {
+        "question": "What is a decorator?",
+        "options": [
+          "Function that modifies another function",
+          "Class with special methods",
+          "Design pattern",
+          "Type annotation"
+        ],
+        "correct": "Function that modifies another function",
+        "difficulty": 3
+      }
+    ]
+  },
+  "Java": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What is JVM?",
+        "options": [
+          "Java Virtual Machine",
+          "Java Version Manager",
+          "Java Variable Module",
+          "Java Visual Monitor"
+        ],
+        "correct": "Java Virtual Machine",
+        "difficulty": 1
+      },
+      {
+        "question": "What is OOP?",
+        "options": [
+          "Object-Oriented Programming",
+          "Optimized Operations",
+          "Ordered Processing",
+          "Output Protocol"
+        ],
+        "correct": "Object-Oriented Programming",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Go": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "Who developed Go?",
+        "options": [
+          "Google",
+          "Microsoft",
+          "Apple",
+          "Facebook"
+        ],
+        "correct": "Google",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a goroutine?",
+        "options": [
+          "Lightweight thread managed by Go runtime",
+          "A function",
+          "A package",
+          "A variable type"
+        ],
+        "correct": "Lightweight thread managed by Go runtime",
+        "difficulty": 2
+      }
+    ]
+  },
+  "Rust": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What is Rust known for?",
+        "options": [
+          "Memory safety without GC",
+          "Ease of use",
+          "Dynamic typing",
+          "Interpreted execution"
+        ],
+        "correct": "Memory safety without GC",
+        "difficulty": 2
+      }
+    ]
+  },
+  "C#": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What company created C#?",
+        "options": [
+          "Microsoft",
+          "Google",
+          "Apple",
+          "Oracle"
+        ],
+        "correct": "Microsoft",
+        "difficulty": 1
+      }
+    ]
+  },
+  "PHP": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What does PHP stand for?",
+        "options": [
+          "PHP: Hypertext Preprocessor",
+          "Personal Home Page",
+          "Professional Hypertext Processor",
+          "Private Hosting Protocol"
+        ],
+        "correct": "PHP: Hypertext Preprocessor",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Ruby": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What is Ruby on Rails?",
+        "options": [
+          "Web framework built with Ruby",
+          "A Ruby library",
+          "A Ruby compiler",
+          "A database"
+        ],
+        "correct": "Web framework built with Ruby",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Scala": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What is Scala primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Scala?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Scala?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Scala?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Scala skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Kotlin": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What platforms does Kotlin target?",
+        "options": [
+          "JVM, Android, Native, JS",
+          "Only Android",
+          "Only JVM",
+          "Only iOS"
+        ],
+        "correct": "JVM, Android, Native, JS",
+        "difficulty": 2
+      }
+    ]
+  },
+  "FastAPI": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What is FastAPI based on?",
+        "options": [
+          "Starlette + Pydantic",
+          "Flask",
+          "Django",
+          "Express"
+        ],
+        "correct": "Starlette + Pydantic",
+        "difficulty": 2
+      },
+      {
+        "question": "How do you define a route in FastAPI?",
+        "options": [
+          "@app.get()",
+          "@route.get()",
+          "@api.get()",
+          "@endpoint.get()"
+        ],
+        "correct": "@app.get()",
+        "difficulty": 1
+      },
+      {
+        "question": "What does Pydantic provide?",
+        "options": [
+          "Data validation via models",
+          "ORM functionality",
+          "Authentication",
+          "Caching"
+        ],
+        "correct": "Data validation via models",
+        "difficulty": 2
+      },
+      {
+        "question": "What is async support for?",
+        "options": [
+          "Concurrent request handling",
+          "Database queries",
+          "File operations",
+          "All of the above"
+        ],
+        "correct": "Concurrent request handling",
+        "difficulty": 2
+      }
+    ]
+  },
+  "Django": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What pattern does Django follow?",
+        "options": [
+          "MTV (Model-Template-View)",
+          "MVC",
+          "MVVM",
+          "MVP"
+        ],
+        "correct": "MTV (Model-Template-View)",
+        "difficulty": 2
+      },
+      {
+        "question": "What is Django ORM?",
+        "options": [
+          "Object-Relational Mapping for DB",
+          "Template engine",
+          "Auth system",
+          "Admin interface"
+        ],
+        "correct": "Object-Relational Mapping for DB",
+        "difficulty": 2
+      }
+    ]
+  },
+  "Flask": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What type of framework is Flask?",
+        "options": [
+          "Micro-framework",
+          "Full-stack framework",
+          "ORM framework",
+          "Testing framework"
+        ],
+        "correct": "Micro-framework",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Spring Boot": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What is Spring Boot?",
+        "options": [
+          "Framework for Java microservices",
+          "Frontend framework",
+          "Database",
+          "Testing tool"
+        ],
+        "correct": "Framework for Java microservices",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Express.js": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What is Express.js?",
+        "options": [
+          "Web framework for Node.js",
+          "Frontend framework",
+          "Database library",
+          "CSS framework"
+        ],
+        "correct": "Web framework for Node.js",
+        "difficulty": 1
+      },
+      {
+        "question": "What is middleware in Express?",
+        "options": [
+          "Functions that process requests",
+          "Database layer",
+          "View engine",
+          "Router config"
+        ],
+        "correct": "Functions that process requests",
+        "difficulty": 2
+      }
+    ]
+  },
+  "ASP.NET": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What is ASP.NET primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes ASP.NET?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of ASP.NET?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn ASP.NET?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve ASP.NET skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "REST API Design": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What HTTP method retrieves data?",
+        "options": [
+          "GET",
+          "POST",
+          "PUT",
+          "DELETE"
+        ],
+        "correct": "GET",
+        "difficulty": 1
+      },
+      {
+        "question": "What does REST stand for?",
+        "options": [
+          "Representational State Transfer",
+          "Remote Execution System",
+          "Request-Response System",
+          "Rapid Exchange Service"
+        ],
+        "correct": "Representational State Transfer",
+        "difficulty": 2
+      }
+    ]
+  },
+  "PostgreSQL": {
+    "category": "Databases",
+    "questions": [
+      {
+        "question": "What type of database is PostgreSQL?",
+        "options": [
+          "Relational (SQL)",
+          "NoSQL",
+          "Graph",
+          "Key-Value"
+        ],
+        "correct": "Relational (SQL)",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a primary key?",
+        "options": [
+          "Unique identifier for a row",
+          "A table name",
+          "A column type",
+          "A database name"
+        ],
+        "correct": "Unique identifier for a row",
+        "difficulty": 1
+      },
+      {
+        "question": "What does SELECT do?",
+        "options": [
+          "Retrieves data from a table",
+          "Inserts new data",
+          "Updates existing data",
+          "Deletes data"
+        ],
+        "correct": "Retrieves data from a table",
+        "difficulty": 1
+      },
+      {
+        "question": "What is an index?",
+        "options": [
+          "Performance optimization for queries",
+          "A table constraint",
+          "A data type",
+          "A database object"
+        ],
+        "correct": "Performance optimization for queries",
+        "difficulty": 2
+      },
+      {
+        "question": "What is a JOIN?",
+        "options": [
+          "Combines rows from two tables",
+          "Inserts data",
+          "Creates a table",
+          "Drops a table"
+        ],
+        "correct": "Combines rows from two tables",
+        "difficulty": 2
+      }
+    ]
+  },
+  "MySQL": {
+    "category": "Databases",
+    "questions": [
+      {
+        "question": "What is MySQL primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes MySQL?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of MySQL?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn MySQL?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve MySQL skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "MongoDB": {
+    "category": "Databases",
+    "questions": [
+      {
+        "question": "What type of database is MongoDB?",
+        "options": [
+          "NoSQL document database",
+          "Relational database",
+          "Graph database",
+          "Key-Value store"
+        ],
+        "correct": "NoSQL document database",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a document in MongoDB?",
+        "options": [
+          "JSON-like data record",
+          "A file",
+          "A table row",
+          "A collection"
+        ],
+        "correct": "JSON-like data record",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Redis": {
+    "category": "Databases",
+    "questions": [
+      {
+        "question": "What type of data store is Redis?",
+        "options": [
+          "In-memory data structure store",
+          "Relational database",
+          "Document store",
+          "Graph database"
+        ],
+        "correct": "In-memory data structure store",
+        "difficulty": 1
+      },
+      {
+        "question": "What is Redis commonly used for?",
+        "options": [
+          "Caching and session storage",
+          "File storage",
+          "Data warehousing",
+          "Image processing"
+        ],
+        "correct": "Caching and session storage",
+        "difficulty": 1
+      }
+    ]
+  },
+  "SQLite": {
+    "category": "Databases",
+    "questions": [
+      {
+        "question": "What is SQLite?",
+        "options": [
+          "Embedded relational database engine",
+          "Client-server database",
+          "Cloud database",
+          "Graph database"
+        ],
+        "correct": "Embedded relational database engine",
+        "difficulty": 1
+      }
+    ]
+  },
+  "MariaDB": {
+    "category": "Databases",
+    "questions": [
+      {
+        "question": "What is MariaDB primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes MariaDB?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of MariaDB?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn MariaDB?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve MariaDB skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Cassandra": {
+    "category": "Databases",
+    "questions": [
+      {
+        "question": "What is Cassandra primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Cassandra?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Cassandra?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Cassandra?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Cassandra skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "DynamoDB": {
+    "category": "Databases",
+    "questions": [
+      {
+        "question": "What type of DB is DynamoDB?",
+        "options": [
+          "NoSQL key-value and document",
+          "Relational SQL",
+          "Graph database",
+          "Time-series"
+        ],
+        "correct": "NoSQL key-value and document",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Elasticsearch": {
+    "category": "Databases",
+    "questions": [
+      {
+        "question": "What is Elasticsearch primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Elasticsearch?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Elasticsearch?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Elasticsearch?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Elasticsearch skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Neo4j": {
+    "category": "Databases",
+    "questions": [
+      {
+        "question": "What is Neo4j primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Neo4j?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Neo4j?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Neo4j?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Neo4j skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Firebase": {
+    "category": "Databases",
+    "questions": [
+      {
+        "question": "What is Firebase primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Firebase?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Firebase?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Firebase?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Firebase skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Supabase": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What is Supabase?",
+        "options": [
+          "Open-source Firebase alternative",
+          "Google Cloud service",
+          "AWS service",
+          "Database only"
+        ],
+        "correct": "Open-source Firebase alternative",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Docker": {
+    "category": "DevOps",
+    "questions": [
+      {
+        "question": "What is a Docker container?",
+        "options": [
+          "Lightweight, standalone executable package",
+          "A virtual machine",
+          "A programming language",
+          "A database"
+        ],
+        "correct": "Lightweight, standalone executable package",
+        "difficulty": 1
+      },
+      {
+        "question": "What does Dockerfile define?",
+        "options": [
+          "Instructions to build an image",
+          "Container network settings",
+          "Volume mounts",
+          "Environment variables"
+        ],
+        "correct": "Instructions to build an image",
+        "difficulty": 1
+      },
+      {
+        "question": "What is Docker Compose?",
+        "options": [
+          "Multi-container orchestration tool",
+          "Docker's CI/CD tool",
+          "Image registry",
+          "Container monitor"
+        ],
+        "correct": "Multi-container orchestration tool",
+        "difficulty": 2
+      },
+      {
+        "question": "What command runs a container?",
+        "options": [
+          "docker run",
+          "docker start",
+          "docker exec",
+          "docker create"
+        ],
+        "correct": "docker run",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a Docker volume?",
+        "options": [
+          "Persistent data storage",
+          "Container configuration",
+          "Network setting",
+          "Image layer"
+        ],
+        "correct": "Persistent data storage",
+        "difficulty": 2
+      }
+    ]
+  },
+  "Kubernetes": {
+    "category": "DevOps",
+    "questions": [
+      {
+        "question": "What is a Kubernetes pod?",
+        "options": [
+          "Smallest deployable unit with containers",
+          "A virtual machine",
+          "A Docker image",
+          "A service"
+        ],
+        "correct": "Smallest deployable unit with containers",
+        "difficulty": 2
+      },
+      {
+        "question": "What does a Service do?",
+        "options": [
+          "Exposes pods to network traffic",
+          "Stores data",
+          "Builds images",
+          "Monitors logs"
+        ],
+        "correct": "Exposes pods to network traffic",
+        "difficulty": 2
+      },
+      {
+        "question": "What is kubectl?",
+        "options": [
+          "CLI tool for Kubernetes",
+          "Kubernetes dashboard",
+          "Monitoring tool",
+          "Deployment tool"
+        ],
+        "correct": "CLI tool for Kubernetes",
+        "difficulty": 1
+      }
+    ]
+  },
+  "AWS": {
+    "category": "DevOps",
+    "questions": [
+      {
+        "question": "What is EC2?",
+        "options": [
+          "Virtual servers in the cloud",
+          "Database service",
+          "Storage service",
+          "CDN service"
+        ],
+        "correct": "Virtual servers in the cloud",
+        "difficulty": 1
+      },
+      {
+        "question": "What is S3 used for?",
+        "options": [
+          "Object storage",
+          "Compute",
+          "Database",
+          "Networking"
+        ],
+        "correct": "Object storage",
+        "difficulty": 1
+      },
+      {
+        "question": "What is IAM?",
+        "options": [
+          "Access management service",
+          "Compute service",
+          "Database service",
+          "Storage service"
+        ],
+        "correct": "Access management service",
+        "difficulty": 2
+      }
+    ]
+  },
+  "Google Cloud": {
+    "category": "DevOps",
+    "questions": [
+      {
+        "question": "What is Google Cloud primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Google Cloud?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Google Cloud?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Google Cloud?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Google Cloud skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Azure": {
+    "category": "DevOps",
+    "questions": [
+      {
+        "question": "What is Azure primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Azure?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Azure?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Azure?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Azure skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Terraform": {
+    "category": "DevOps",
+    "questions": [
+      {
+        "question": "What paradigm does Terraform follow?",
+        "options": [
+          "Infrastructure as Code",
+          "Manual infrastructure",
+          "Serverless",
+          "Containerization"
+        ],
+        "correct": "Infrastructure as Code",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Ansible": {
+    "category": "DevOps",
+    "questions": [
+      {
+        "question": "What language are Ansible playbooks written in?",
+        "options": [
+          "YAML",
+          "JSON",
+          "Python",
+          "XML"
+        ],
+        "correct": "YAML",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Jenkins": {
+    "category": "DevOps",
+    "questions": [
+      {
+        "question": "What is Jenkins primarily used for?",
+        "options": [
+          "CI/CD automation",
+          "Code editing",
+          "Database management",
+          "UI design"
+        ],
+        "correct": "CI/CD automation",
+        "difficulty": 1
+      }
+    ]
+  },
+  "GitHub Actions": {
+    "category": "DevOps",
+    "questions": [
+      {
+        "question": "What format are GitHub Actions workflows?",
+        "options": [
+          "YAML",
+          "JSON",
+          "XML",
+          "TOML"
+        ],
+        "correct": "YAML",
+        "difficulty": 1
+      }
+    ]
+  },
+  "GitLab CI": {
+    "category": "DevOps",
+    "questions": [
+      {
+        "question": "Where is GitLab CI config stored?",
+        "options": [
+          ".gitlab-ci.yml",
+          "config.yml",
+          "ci-config.json",
+          "Dockerfile"
+        ],
+        "correct": ".gitlab-ci.yml",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Git": {
+    "category": "Tools & Utilities",
+    "questions": [
+      {
+        "question": "What command initializes a repository?",
+        "options": [
+          "git init",
+          "git start",
+          "git new",
+          "git create"
+        ],
+        "correct": "git init",
+        "difficulty": 1
+      },
+      {
+        "question": "What does git commit do?",
+        "options": [
+          "Saves changes to local repository",
+          "Uploads to remote",
+          "Creates a branch",
+          "Merges branches"
+        ],
+        "correct": "Saves changes to local repository",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a branch?",
+        "options": [
+          "A separate line of development",
+          "A repository copy",
+          "A commit",
+          "A file"
+        ],
+        "correct": "A separate line of development",
+        "difficulty": 1
+      },
+      {
+        "question": "What does git merge do?",
+        "options": [
+          "Combines two branches",
+          "Deletes a branch",
+          "Creates a branch",
+          "Renames a branch"
+        ],
+        "correct": "Combines two branches",
+        "difficulty": 2
+      },
+      {
+        "question": "What is a merge conflict?",
+        "options": [
+          "When changes conflict in a merge",
+          "A git error",
+          "A branch issue",
+          "A repository error"
+        ],
+        "correct": "When changes conflict in a merge",
+        "difficulty": 2
+      }
+    ]
+  },
+  "Linux": {
+    "category": "DevOps",
+    "questions": [
+      {
+        "question": "What command lists files in a directory?",
+        "options": [
+          "ls",
+          "dir",
+          "list",
+          "show"
+        ],
+        "correct": "ls",
+        "difficulty": 1
+      },
+      {
+        "question": "What does chmod do?",
+        "options": [
+          "Changes file permissions",
+          "Creates a file",
+          "Removes a file",
+          "Copies a file"
+        ],
+        "correct": "Changes file permissions",
+        "difficulty": 2
+      }
+    ]
+  },
+  "NGINX": {
+    "category": "DevOps",
+    "questions": [
+      {
+        "question": "What is NGINX primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes NGINX?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of NGINX?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn NGINX?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve NGINX skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Prometheus": {
+    "category": "DevOps",
+    "questions": [
+      {
+        "question": "What is Prometheus primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Prometheus?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Prometheus?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Prometheus?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Prometheus skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Grafana": {
+    "category": "DevOps",
+    "questions": [
+      {
+        "question": "What is Grafana primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Grafana?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Grafana?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Grafana?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Grafana skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "React Native": {
+    "category": "Mobile Development",
+    "questions": [
+      {
+        "question": "What does React Native build?",
+        "options": [
+          "Native mobile apps with React",
+          "Web applications",
+          "Desktop applications",
+          "CLI tools"
+        ],
+        "correct": "Native mobile apps with React",
+        "difficulty": 1
+      },
+      {
+        "question": "Which component is for scrolling?",
+        "options": [
+          "ScrollView",
+          "View",
+          "Text",
+          "Image"
+        ],
+        "correct": "ScrollView",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a bridge in React Native?",
+        "options": [
+          "Connects JS to native code",
+          "A UI component",
+          "A navigation tool",
+          "A state manager"
+        ],
+        "correct": "Connects JS to native code",
+        "difficulty": 3
+      }
+    ]
+  },
+  "Flutter": {
+    "category": "Mobile Development",
+    "questions": [
+      {
+        "question": "What language does Flutter use?",
+        "options": [
+          "Dart",
+          "JavaScript",
+          "Python",
+          "Swift"
+        ],
+        "correct": "Dart",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a widget in Flutter?",
+        "options": [
+          "Building block of UI",
+          "A state manager",
+          "A database",
+          "A service"
+        ],
+        "correct": "Building block of UI",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Swift": {
+    "category": "Mobile Development",
+    "questions": [
+      {
+        "question": "What platform is Swift primarily for?",
+        "options": [
+          "Apple platforms",
+          "Android",
+          "Windows",
+          "Linux desktop"
+        ],
+        "correct": "Apple platforms",
+        "difficulty": 1
+      }
+    ]
+  },
+  "iOS Development": {
+    "category": "Mobile Development",
+    "questions": [
+      {
+        "question": "What is iOS Development primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes iOS Development?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of iOS Development?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn iOS Development?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve iOS Development skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Android Development": {
+    "category": "Mobile Development",
+    "questions": [
+      {
+        "question": "What is Android Development primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Android Development?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Android Development?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Android Development?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Android Development skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Ionic": {
+    "category": "Mobile Development",
+    "questions": [
+      {
+        "question": "What is Ionic primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Ionic?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Ionic?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Ionic?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Ionic skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Xamarin": {
+    "category": "Mobile Development",
+    "questions": [
+      {
+        "question": "What is Xamarin primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Xamarin?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Xamarin?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Xamarin?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Xamarin skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "TensorFlow": {
+    "category": "AI & Machine Learning",
+    "questions": [
+      {
+        "question": "What company created TensorFlow?",
+        "options": [
+          "Google",
+          "Facebook",
+          "Microsoft",
+          "Amazon"
+        ],
+        "correct": "Google",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a Tensor?",
+        "options": [
+          "Multi-dimensional array",
+          "A function",
+          "A variable",
+          "A model"
+        ],
+        "correct": "Multi-dimensional array",
+        "difficulty": 2
+      }
+    ]
+  },
+  "PyTorch": {
+    "category": "AI & Machine Learning",
+    "questions": [
+      {
+        "question": "What company created PyTorch?",
+        "options": [
+          "Meta (Facebook)",
+          "Google",
+          "Microsoft",
+          "Amazon"
+        ],
+        "correct": "Meta (Facebook)",
+        "difficulty": 1
+      }
+    ]
+  },
+  "scikit-learn": {
+    "category": "AI & Machine Learning",
+    "questions": [
+      {
+        "question": "What is scikit-learn used for?",
+        "options": [
+          "Machine learning with classic algorithms",
+          "Deep learning",
+          "Data visualization",
+          "Web development"
+        ],
+        "correct": "Machine learning with classic algorithms",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Pandas": {
+    "category": "AI & Machine Learning",
+    "questions": [
+      {
+        "question": "What is a DataFrame in Pandas?",
+        "options": [
+          "2D labeled data structure",
+          "A list",
+          "A function",
+          "A plot"
+        ],
+        "correct": "2D labeled data structure",
+        "difficulty": 1
+      }
+    ]
+  },
+  "NumPy": {
+    "category": "AI & Machine Learning",
+    "questions": [
+      {
+        "question": "What is ndarray in NumPy?",
+        "options": [
+          "N-dimensional array object",
+          "A list",
+          "A tuple",
+          "A dictionary"
+        ],
+        "correct": "N-dimensional array object",
+        "difficulty": 1
+      }
+    ]
+  },
+  "LangChain": {
+    "category": "AI & Machine Learning",
+    "questions": [
+      {
+        "question": "What is LangChain used for?",
+        "options": [
+          "Building LLM-powered applications",
+          "Web scraping",
+          "Database management",
+          "UI design"
+        ],
+        "correct": "Building LLM-powered applications",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a chain in LangChain?",
+        "options": [
+          "Sequence of LLM calls or components",
+          "A data structure",
+          "A UI component",
+          "A database"
+        ],
+        "correct": "Sequence of LLM calls or components",
+        "difficulty": 2
+      }
+    ]
+  },
+  "OpenAI API": {
+    "category": "AI & Machine Learning",
+    "questions": [
+      {
+        "question": "What can OpenAI API do?",
+        "options": [
+          "Generate text, images, and more with AI",
+          "Only text generation",
+          "Only image generation",
+          "Only code completion"
+        ],
+        "correct": "Generate text, images, and more with AI",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Hugging Face": {
+    "category": "AI & Machine Learning",
+    "questions": [
+      {
+        "question": "What is Hugging Face?",
+        "options": [
+          "Platform for ML models and datasets",
+          "A chatbot",
+          "A database",
+          "A code editor"
+        ],
+        "correct": "Platform for ML models and datasets",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Natural Language Processing": {
+    "category": "AI & Machine Learning",
+    "questions": [
+      {
+        "question": "What is Natural Language Processing primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Natural Language Processing?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Natural Language Processing?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Natural Language Processing?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Natural Language Processing skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Computer Vision": {
+    "category": "AI & Machine Learning",
+    "questions": [
+      {
+        "question": "What is Computer Vision primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Computer Vision?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Computer Vision?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Computer Vision?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Computer Vision skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Jupyter Notebooks": {
+    "category": "Data Science",
+    "questions": [
+      {
+        "question": "What is Jupyter Notebooks primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Jupyter Notebooks?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Jupyter Notebooks?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Jupyter Notebooks?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Jupyter Notebooks skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Matplotlib": {
+    "category": "Data Science",
+    "questions": [
+      {
+        "question": "What is Matplotlib primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Matplotlib?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Matplotlib?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Matplotlib?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Matplotlib skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Figma": {
+    "category": "Design",
+    "questions": [
+      {
+        "question": "What is Figma?",
+        "options": [
+          "Collaborative design tool",
+          "Code editor",
+          "Database",
+          "Browser"
+        ],
+        "correct": "Collaborative design tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What are Figma frames?",
+        "options": [
+          "Top-level containers for designs",
+          "Image formats",
+          "Color palettes",
+          "Font styles"
+        ],
+        "correct": "Top-level containers for designs",
+        "difficulty": 1
+      },
+      {
+        "question": "What is auto layout?",
+        "options": [
+          "Dynamic layout that adapts to content",
+          "Manual positioning",
+          "Grid system",
+          "CSS framework"
+        ],
+        "correct": "Dynamic layout that adapts to content",
+        "difficulty": 2
+      }
+    ]
+  },
+  "Adobe XD": {
+    "category": "Design",
+    "questions": [
+      {
+        "question": "What is Adobe XD primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Adobe XD?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Adobe XD?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Adobe XD?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Adobe XD skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Sketch": {
+    "category": "Design",
+    "questions": [
+      {
+        "question": "What is Sketch primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Sketch?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Sketch?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Sketch?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Sketch skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Photoshop": {
+    "category": "Design",
+    "questions": [
+      {
+        "question": "What is Photoshop primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Photoshop?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Photoshop?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Photoshop?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Photoshop skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Illustrator": {
+    "category": "Design",
+    "questions": [
+      {
+        "question": "What is Illustrator primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Illustrator?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Illustrator?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Illustrator?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Illustrator skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "UI/UX Design Principles": {
+    "category": "Design",
+    "questions": [
+      {
+        "question": "What is UI/UX Design Principles primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes UI/UX Design Principles?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of UI/UX Design Principles?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn UI/UX Design Principles?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve UI/UX Design Principles skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Wireframing": {
+    "category": "Design",
+    "questions": [
+      {
+        "question": "What is Wireframing primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Wireframing?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Wireframing?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Wireframing?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Wireframing skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Prototyping": {
+    "category": "Design",
+    "questions": [
+      {
+        "question": "What is Prototyping primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Prototyping?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Prototyping?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Prototyping?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Prototyping skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Design Systems": {
+    "category": "Design",
+    "questions": [
+      {
+        "question": "What is Design Systems primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Design Systems?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Design Systems?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Design Systems?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Design Systems skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Accessibility (a11y)": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What is Accessibility (a11y) primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Accessibility (a11y)?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Accessibility (a11y)?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Accessibility (a11y)?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Accessibility (a11y) skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Responsive Design": {
+    "category": "Web Development",
+    "questions": [
+      {
+        "question": "What is Responsive Design primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Responsive Design?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Responsive Design?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Responsive Design?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Responsive Design skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Jest": {
+    "category": "Testing & QA",
+    "questions": [
+      {
+        "question": "What is Jest primarily used for?",
+        "options": [
+          "JavaScript testing",
+          "CSS styling",
+          "Web development",
+          "Database management"
+        ],
+        "correct": "JavaScript testing",
+        "difficulty": 1
+      },
+      {
+        "question": "What function creates a mock in Jest?",
+        "options": [
+          "jest.fn()",
+          "mock()",
+          "createMock()",
+          "fake()"
+        ],
+        "correct": "jest.fn()",
+        "difficulty": 2
+      }
+    ]
+  },
+  "Cypress": {
+    "category": "Testing & QA",
+    "questions": [
+      {
+        "question": "What is Cypress best for?",
+        "options": [
+          "End-to-end web testing",
+          "Unit testing",
+          "Mobile testing",
+          "API testing"
+        ],
+        "correct": "End-to-end web testing",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Playwright": {
+    "category": "Testing & QA",
+    "questions": [
+      {
+        "question": "What browsers does Playwright support?",
+        "options": [
+          "Chromium, Firefox, WebKit",
+          "Only Chromium",
+          "Only Firefox",
+          "Only Safari"
+        ],
+        "correct": "Chromium, Firefox, WebKit",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Selenium": {
+    "category": "Testing & QA",
+    "questions": [
+      {
+        "question": "What does Selenium WebDriver do?",
+        "options": [
+          "Automates browser interactions",
+          "Runs unit tests",
+          "Measures performance",
+          "Builds websites"
+        ],
+        "correct": "Automates browser interactions",
+        "difficulty": 1
+      }
+    ]
+  },
+  "pytest": {
+    "category": "Testing & QA",
+    "questions": [
+      {
+        "question": "What is pytest?",
+        "options": [
+          "Python testing framework",
+          "JavaScript testing",
+          "CSS testing",
+          "Database testing"
+        ],
+        "correct": "Python testing framework",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Mocha": {
+    "category": "Testing & QA",
+    "questions": [
+      {
+        "question": "What is Mocha primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Mocha?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Mocha?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Mocha?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Mocha skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Unit Testing": {
+    "category": "Testing & QA",
+    "questions": [
+      {
+        "question": "What is Unit Testing primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Unit Testing?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Unit Testing?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Unit Testing?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Unit Testing skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Integration Testing": {
+    "category": "Testing & QA",
+    "questions": [
+      {
+        "question": "What is Integration Testing primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Integration Testing?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Integration Testing?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Integration Testing?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Integration Testing skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "TDD": {
+    "category": "Testing & QA",
+    "questions": [
+      {
+        "question": "What is TDD primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes TDD?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of TDD?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn TDD?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve TDD skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "OWASP Top 10": {
+    "category": "Security",
+    "questions": [
+      {
+        "question": "What is the OWASP Top 10?",
+        "options": [
+          "List of critical web security risks",
+          "Top 10 programming languages",
+          "Top 10 frameworks",
+          "Top 10 databases"
+        ],
+        "correct": "List of critical web security risks",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Penetration Testing": {
+    "category": "Security",
+    "questions": [
+      {
+        "question": "What is penetration testing?",
+        "options": [
+          "Simulated cyber attack on a system",
+          "Software performance test",
+          "Unit testing",
+          "Code review"
+        ],
+        "correct": "Simulated cyber attack on a system",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Cryptography": {
+    "category": "Security",
+    "questions": [
+      {
+        "question": "What is Cryptography primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Cryptography?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Cryptography?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Cryptography?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Cryptography skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Authentication & Authorization": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What is Authentication & Authorization primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Authentication & Authorization?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Authentication & Authorization?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Authentication & Authorization?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Authentication & Authorization skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Network Security": {
+    "category": "Security",
+    "questions": [
+      {
+        "question": "What is Network Security primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Network Security?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Network Security?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Network Security?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Network Security skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Unity": {
+    "category": "Game Development",
+    "questions": [
+      {
+        "question": "What is Unity?",
+        "options": [
+          "Cross-platform game engine",
+          "Code editor",
+          "Database",
+          "Design tool"
+        ],
+        "correct": "Cross-platform game engine",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Unreal Engine": {
+    "category": "Game Development",
+    "questions": [
+      {
+        "question": "What is Unreal Engine primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Unreal Engine?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Unreal Engine?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Unreal Engine?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Unreal Engine skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Blender": {
+    "category": "Design",
+    "questions": [
+      {
+        "question": "What is Blender primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Blender?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Blender?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Blender?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Blender skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "C++ for Games": {
+    "category": "Programming Languages",
+    "questions": [
+      {
+        "question": "What is C++ for Games primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes C++ for Games?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of C++ for Games?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn C++ for Games?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve C++ for Games skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Solidity": {
+    "category": "Blockchain",
+    "questions": [
+      {
+        "question": "What platform does Solidity primarily target?",
+        "options": [
+          "Ethereum",
+          "Bitcoin",
+          "Solana",
+          "Polkadot"
+        ],
+        "correct": "Ethereum",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Web3.js": {
+    "category": "Blockchain",
+    "questions": [
+      {
+        "question": "What is Web3.js primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Web3.js?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Web3.js?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Web3.js?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Web3.js skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Smart Contracts": {
+    "category": "Blockchain",
+    "questions": [
+      {
+        "question": "What is Smart Contracts primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Smart Contracts?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Smart Contracts?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Smart Contracts?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Smart Contracts skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Agile Methodologies": {
+    "category": "Soft Skills",
+    "questions": [
+      {
+        "question": "What is Agile?",
+        "options": [
+          "Iterative software development approach",
+          "A programming language",
+          "A database",
+          "A design tool"
+        ],
+        "correct": "Iterative software development approach",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Scrum": {
+    "category": "Soft Skills",
+    "questions": [
+      {
+        "question": "What is a Sprint in Scrum?",
+        "options": [
+          "Time-boxed iteration of work",
+          "A meeting",
+          "A document",
+          "A tool"
+        ],
+        "correct": "Time-boxed iteration of work",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Code Review": {
+    "category": "Soft Skills",
+    "questions": [
+      {
+        "question": "What is Code Review primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Code Review?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Code Review?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Code Review?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Code Review skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Technical Writing": {
+    "category": "Soft Skills",
+    "questions": [
+      {
+        "question": "What is Technical Writing primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Technical Writing?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Technical Writing?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Technical Writing?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Technical Writing skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "System Design": {
+    "category": "Soft Skills",
+    "questions": [
+      {
+        "question": "What is horizontal scaling?",
+        "options": [
+          "Adding more machines to handle load",
+          "Adding more CPU to a machine",
+          "Adding more RAM",
+          "Adding more storage"
+        ],
+        "correct": "Adding more machines to handle load",
+        "difficulty": 3
+      }
+    ]
+  },
+  "API Design": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What is API Design primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes API Design?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of API Design?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn API Design?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve API Design skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "Microservices Architecture": {
+    "category": "Backend Development",
+    "questions": [
+      {
+        "question": "What is Microservices Architecture primarily used for?",
+        "options": [
+          "Building applications",
+          "Data analysis",
+          "Infrastructure management",
+          "Software development"
+        ],
+        "correct": "Software development",
+        "difficulty": 1
+      },
+      {
+        "question": "Which best describes Microservices Architecture?",
+        "options": [
+          "A developer tool",
+          "A programming concept",
+          "A software framework",
+          "A methodology"
+        ],
+        "correct": "A developer tool",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a key feature of Microservices Architecture?",
+        "options": [
+          "Performance",
+          "Scalability",
+          "Flexibility",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 2
+      },
+      {
+        "question": "Best way to learn Microservices Architecture?",
+        "options": [
+          "Official documentation",
+          "Online courses",
+          "Practice projects",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      },
+      {
+        "question": "How to improve Microservices Architecture skills?",
+        "options": [
+          "Build projects",
+          "Read documentation",
+          "Take courses",
+          "All of the above"
+        ],
+        "correct": "All of the above",
+        "difficulty": 1
+      }
+    ]
+  },
+  "SQL": {
+    "category": "Databases",
+    "questions": [
+      {
+        "question": "What does SQL stand for?",
+        "options": [
+          "Structured Query Language",
+          "Simple Query Language",
+          "Standard Query Language",
+          "Sequential Query Language"
+        ],
+        "correct": "Structured Query Language",
+        "difficulty": 1
+      },
+      {
+        "question": "Which statement retrieves data?",
+        "options": [
+          "SELECT",
+          "GET",
+          "FETCH",
+          "RETRIEVE"
+        ],
+        "correct": "SELECT",
+        "difficulty": 1
+      },
+      {
+        "question": "What does WHERE clause do?",
+        "options": [
+          "Filters results based on condition",
+          "Orders results",
+          "Groups results",
+          "Joins tables"
+        ],
+        "correct": "Filters results based on condition",
+        "difficulty": 1
+      },
+      {
+        "question": "What is a foreign key?",
+        "options": [
+          "References primary key of another table",
+          "A unique column",
+          "An indexed column",
+          "A primary key"
+        ],
+        "correct": "References primary key of another table",
+        "difficulty": 2
+      },
+      {
+        "question": "What does GROUP BY do?",
+        "options": [
+          "Groups rows with same values",
+          "Orders rows",
+          "Filters rows",
+          "Joins tables"
+        ],
+        "correct": "Groups rows with same values",
+        "difficulty": 2
+      }
+    ]
+  }
 }

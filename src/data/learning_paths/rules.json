@@ -1,4 +1,76 @@
 {
+  "full_stack_developer": [
+    {
+      "skill": "HTML",
+      "hours": 6,
+      "tag": "html"
+    },
+    {
+      "skill": "CSS",
+      "hours": 10,
+      "tag": "css"
+    },
+    {
+      "skill": "JavaScript",
+      "hours": 25,
+      "tag": "javascript"
+    },
+    {
+      "skill": "TypeScript",
+      "hours": 10,
+      "tag": "typescript"
+    },
+    {
+      "skill": "React",
+      "hours": 25,
+      "tag": "react"
+    },
+    {
+      "skill": "Next.js",
+      "hours": 15,
+      "tag": "next.js"
+    },
+    {
+      "skill": "Tailwind CSS",
+      "hours": 8,
+      "tag": "tailwind_css"
+    },
+    {
+      "skill": "Node.js",
+      "hours": 20,
+      "tag": "node.js"
+    },
+    {
+      "skill": "Express.js",
+      "hours": 10,
+      "tag": "express.js"
+    },
+    {
+      "skill": "SQL",
+      "hours": 15,
+      "tag": "sql"
+    },
+    {
+      "skill": "PostgreSQL",
+      "hours": 12,
+      "tag": "postgresql"
+    },
+    {
+      "skill": "MongoDB",
+      "hours": 10,
+      "tag": "mongodb"
+    },
+    {
+      "skill": "Git",
+      "hours": 6,
+      "tag": "git"
+    },
+    {
+      "skill": "REST API",
+      "hours": 8,
+      "tag": "rest_api"
+    }
+  ],
   "frontend_developer": [
     {
       "skill": "HTML",
@@ -7,8 +79,186 @@
     },
     {
       "skill": "CSS",
-      "hours": 8,
+      "hours": 10,
       "tag": "css"
+    },
+    {
+      "skill": "JavaScript",
+      "hours": 25,
+      "tag": "javascript"
+    },
+    {
+      "skill": "TypeScript",
+      "hours": 10,
+      "tag": "typescript"
+    },
+    {
+      "skill": "React",
+      "hours": 25,
+      "tag": "react"
+    },
+    {
+      "skill": "Vue.js",
+      "hours": 15,
+      "tag": "vue.js"
+    },
+    {
+      "skill": "Angular",
+      "hours": 15,
+      "tag": "angular"
+    },
+    {
+      "skill": "Next.js",
+      "hours": 15,
+      "tag": "next.js"
+    },
+    {
+      "skill": "Tailwind CSS",
+      "hours": 8,
+      "tag": "tailwind_css"
+    },
+    {
+      "skill": "Git",
+      "hours": 6,
+      "tag": "git"
+    },
+    {
+      "skill": "REST API",
+      "hours": 8,
+      "tag": "rest_api"
+    },
+    {
+      "skill": "GraphQL",
+      "hours": 8,
+      "tag": "graphql"
+    }
+  ],
+  "backend_developer": [
+    {
+      "skill": "Python",
+      "hours": 25,
+      "tag": "python"
+    },
+    {
+      "skill": "Node.js",
+      "hours": 20,
+      "tag": "node.js"
+    },
+    {
+      "skill": "Express.js",
+      "hours": 10,
+      "tag": "express.js"
+    },
+    {
+      "skill": "SQL",
+      "hours": 15,
+      "tag": "sql"
+    },
+    {
+      "skill": "PostgreSQL",
+      "hours": 12,
+      "tag": "postgresql"
+    },
+    {
+      "skill": "MongoDB",
+      "hours": 10,
+      "tag": "mongodb"
+    },
+    {
+      "skill": "Redis",
+      "hours": 8,
+      "tag": "redis"
+    },
+    {
+      "skill": "Docker",
+      "hours": 10,
+      "tag": "docker"
+    },
+    {
+      "skill": "Git",
+      "hours": 6,
+      "tag": "git"
+    },
+    {
+      "skill": "REST API",
+      "hours": 8,
+      "tag": "rest_api"
+    },
+    {
+      "skill": "GraphQL",
+      "hours": 8,
+      "tag": "graphql"
+    }
+  ],
+  "devops_engineer": [
+    {
+      "skill": "Docker",
+      "hours": 15,
+      "tag": "docker"
+    },
+    {
+      "skill": "Git",
+      "hours": 6,
+      "tag": "git"
+    },
+    {
+      "skill": "SQL",
+      "hours": 10,
+      "tag": "sql"
+    },
+    {
+      "skill": "PostgreSQL",
+      "hours": 10,
+      "tag": "postgresql"
+    },
+    {
+      "skill": "Redis",
+      "hours": 8,
+      "tag": "redis"
+    },
+    {
+      "skill": "Node.js",
+      "hours": 12,
+      "tag": "node.js"
+    },
+    {
+      "skill": "Python",
+      "hours": 15,
+      "tag": "python"
+    },
+    {
+      "skill": "REST API",
+      "hours": 6,
+      "tag": "rest_api"
+    }
+  ],
+  "ui_ux_designer": [
+    {
+      "skill": "HTML",
+      "hours": 8,
+      "tag": "html"
+    },
+    {
+      "skill": "CSS",
+      "hours": 12,
+      "tag": "css"
+    },
+    {
+      "skill": "JavaScript",
+      "hours": 10,
+      "tag": "javascript"
+    },
+    {
+      "skill": "Tailwind CSS",
+      "hours": 6,
+      "tag": "tailwind_css"
+    }
+  ],
+  "mobile_developer": [
+    {
+      "skill": "React",
+      "hours": 25,
+      "tag": "react"
     },
     {
       "skill": "JavaScript",
@@ -16,43 +266,51 @@
       "tag": "javascript"
     },
     {
-        "skill": "React",
-        "hours": 25,
-        "tag": "react"
+      "skill": "TypeScript",
+      "hours": 10,
+      "tag": "typescript"
+    },
+    {
+      "skill": "Git",
+      "hours": 6,
+      "tag": "git"
+    },
+    {
+      "skill": "REST API",
+      "hours": 8,
+      "tag": "rest_api"
+    },
+    {
+      "skill": "GraphQL",
+      "hours": 8,
+      "tag": "graphql"
     }
   ],
   "data_scientist": [
     {
       "skill": "Python",
-      "hours": 20,
+      "hours": 25,
       "tag": "python"
     },
     {
-      "skill": "Pandas",
+      "skill": "SQL",
       "hours": 15,
-      "tag": "pandas"
+      "tag": "sql"
     },
     {
-        "skill": "NumPy",
-        "hours": 12,
-        "tag": "numpy"
+      "skill": "PostgreSQL",
+      "hours": 10,
+      "tag": "postgresql"
+    },
+    {
+      "skill": "MongoDB",
+      "hours": 8,
+      "tag": "mongodb"
+    },
+    {
+      "skill": "Redis",
+      "hours": 6,
+      "tag": "redis"
     }
-  ],
-"backend_developer": [
-  {
-    "skill": "Python",
-    "hours": 20,
-    "tag": "python"
-  },
-  {
-    "skill": "Django",
-    "hours": 30,
-    "tag": "django"
-  },
-  {
-    "skill": "Databases",
-    "hours": 15,
-    "tag": "databases"
-  }
-]
+  ]
 }
