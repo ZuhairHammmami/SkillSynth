@@ -1,149 +1,113 @@
 # SS-EDS: Security
 
 ## Purpose
-Document the authentication, authorization, and security architecture. Covers JWT with refresh token rotation, account lockout, RBAC, rate limiting, CSRF, CSP, HSTS, and audit logging.
+Document the security architecture: JWT access-token-only auth, account lockout, binary is_admin authorization, rate limiting, CSRF, security headers/CSP/HSTS, and activity_log audit trail.
 
 ## Responsibilities
-- Implement JWT access/refresh/sse/password-reset tokens (HS256, python-jose)
-- Enforce password complexity (min 8, upper, lower, digit, special, no common patterns)
-- Implement account lockout after 5 failed attempts (15-min reset)
-- Apply rate limiting: global 100/min, auth 10/min, admin 60/min
-- Configure CSRF double-submit cookie (prod-only)
-- Apply security headers (CSP, HSTS, XFO, Referrer-Policy, Permissions-Policy)
-- Log all auth and admin actions via AuditService
+- Issue and verify HS256 JWTs (access 24h; SSE stream token 5 min; password-reset token 30 min — all stateless)
+- Enforce password policy and account lockout (5 failures → 15-minute cooldown)
+- Apply rate limits via slowapi: global 100/min, auth 10/min, admin 60/min (+ register 5/min, forgot/reset 3/min)
+- Configure CSRF double-submit cookie (prod only) and full security-header set
+- Record auth and admin actions in activity_log
 
 ## Inputs
-- Security best practices (OWASP Top 10)
-- Compliance requirements
-- Threat model analysis
+- OWASP Top 10 requirements
+- Credentials from environment (SECRET_KEY, PASSWORD_PEPPER)
 
 ## Outputs
-- JWT tokens (24h access, 30d refresh, 5min SSE, 15min reset)
-- Rate-limited endpoints
-- Security headers on all responses
-- RBAC permission checks
-- Audit log entries (events table + JSON logger)
+- Bearer tokens for API access
+- Hardened responses (headers on every response)
+- Audit rows in activity_log (category ∈ {audit, auth, system, learning, realtime})
 
 ## Dependencies
-- 07-backend (auth_service.py, auth_router.py, middlewares/)
-- 10-database (profiles table, roles table)
-- 08-frontend (middleware.ts, AuthGuard)
+- 07-backend (auth_service.py, routers/auth.py, limiter.py, middlewares/)
+- 10-database (users.is_admin, activity_log)
+- 08-frontend / 09-admin (token storage, guards)
 
 ## Sequence: Authentication Flow
 ```
-Client → POST /api/auth/token (email + password)
-  → Backend checks _is_locked_out (5 failed attempts in 15 min?)
-  → 429 if locked, "Try again in 15 minutes"
-  → Verifies bcrypt hash (with pepper)
-  → Records attempt (success/failure)
-  → AuditService.log_auth (login / login_failed)
-  → Creates access token (24h) + refresh token (30d)
-  → Returns {access_token, token_type, expires_in}
+Client → POST /api/auth/token (form-encoded email+password)
+  → lockout check (_login_attempts, 5 in 15 min → 429)
+  → bcrypt verify (optional SHA-256 pepper pre-hash)
+  → record attempt; log to activity_log on success/failure
+  → return {access_token, token_type:"bearer"}   # access JWT valid 24h
 ```
 
-## Sequence: Token Refresh Flow
+Token renewal is re-authentication; the system issues one token kind per purpose (access, SSE stream, password reset) and nothing else.
+
+## Sequence: Password Reset Flow
 ```
-Client → POST /api/auth/refresh (refresh_token)
-  → AuthService.rotate_refresh_token(old)
-  → Validates JWT, checks type="refresh"
-  → Deletes old JTI from _refresh_tokens
-  → Creates new access token + new refresh token
-  → Returns new tokens
+Client → POST /api/auth/forgot-password (3/min) → always 200
+  → stateless signed reset JWT (type=password_reset, sub=email, exp 30 min)
+Client → POST /api/auth/reset-password (3/min) with token + new password
+  → signature/expiry verified → password updated
 ```
 
 ## State Diagram: Account Lockout
 ```
-[Active] → Failed Login → [1 Attempt] → ... → [5 Failed in 15 min] → [Locked]
-                                                                          ↓
-                                                              [Wait 15 min or Admin Unlock]
-                                                                          ↓
-                                                                      [Active]
+[Active] → failed logins accumulate (15-min window) → [5th failure] → [Locked 15 min]
+                                                                        ↓ (window passes)
+                                                                    [Active]
 ```
 
-## Rate Limiting Configuration (limiter.py)
+## Rate Limiting (limiter.py, slowapi)
 | Scope | Limit | Storage |
 |-------|-------|---------|
-| Global | 100/minute | Redis (prod) / InMemory (dev) |
-| Auth | 10/minute | Redis / InMemory |
-| Admin | 60/minute | Redis / InMemory |
-| Register | 5/minute | slowapi decorator |
-| Forgot Password | 3/minute | slowapi decorator |
+| Global | 100/minute | In-memory (Redis if REDIS_URL set in prod) |
+| Auth router | 10/minute | same |
+| Admin routers | 60/minute | same |
+| Register | 5/minute | same |
+| Forgot/Reset password | 3/minute each | same |
 
-## CSRF Protection (prod only)
-```
-Safe methods (GET, HEAD, OPTIONS, TRACE): cookie rotated on each response
-Unsafe methods (POST, PUT, DELETE): X-CSRF-Token header must match csrf_token cookie
-+ GET /api/auth/csrf → returns token + sets cookie
-```
+## Authorization
+- `get_current_user` decodes the Bearer JWT → user row
+- `require_admin` additionally requires `users.is_admin = True` — the only authorization gate; no roles/permissions tables exist
 
-## Content Security Policy (prod)
+## CSRF Protection (prod only, middlewares/csrf.py)
 ```
-default-src 'self'
-script-src 'self'
-style-src 'self' 'unsafe-inline' https://fonts.googleapis.com
-font-src 'self' https://fonts.gstatic.com
-img-src 'self' data: https:
-connect-src 'self' https://skillsynth.vercel.app
-frame-ancestors 'none'
-form-action 'self'
-base-uri 'self'
+Safe methods: csrf_token cookie rotated per response
+Unsafe methods: X-CSRF-Token header must match the csrf_token cookie
+GET /api/auth/csrf issues the initial token; that path itself is exempt
 ```
 
-## Security Headers (all responses)
+## Security Headers (middlewares/security.py, every response)
 ```
-X-Content-Type-Options: nosniff
-X-Frame-Options: DENY
-X-XSS-Protection: 1; mode=block
-Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff · X-Frame-Options: DENY · X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000; includeSubDomains (+" preload" in prod)
+Content-Security-Policy:
+  prod: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
+        https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;
+        img-src 'self' data: https:; connect-src 'self' https://skillsynth.vercel.app;
+        frame-ancestors 'none'; form-action 'self'; base-uri 'self'
+  dev:  script-src adds 'unsafe-eval' 'unsafe-inline'; connect-src allows localhost:*
 Referrer-Policy: strict-origin-when-cross-origin
-Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
-Cross-Origin-Resource-Policy: same-origin
-Cross-Origin-Opener-Policy: same-origin
+Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=()
+Cross-Origin-Resource-Policy: same-origin · Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
 ```
 
 ## Password Policy
-- Min 8 characters
-- At least 1 uppercase letter
-- At least 1 lowercase letter
-- At least 1 digit
-- At least 1 special character
-- No whitespace
-- No common patterns (password, 123456, qwerty, admin)
-- Peppered (SHA-256 + PASSWORD_PEPPER) before bcrypt
-
-## Audit Logging (AuditService)
-```python
-AuditService.log_auth(profile_id, email, success, ip)
-AuditService.log_permission_violation(profile_id, email, "users:create", ip)
-AuditService.log_admin_action(admin_id, email, "user.delete", "profile", user_id, details, ip)
-```
+- Minimum 8 characters (PASSWORD_MIN_LENGTH); complexity validated by auth_service
+- Optional pepper: SHA-256(password + PASSWORD_PEPPER) before bcrypt when the env var is set
 
 ## Rules
-1. Passwords: bcrypt + pepper. Min 8, upper, lower, digit, special.
-2. Account lockout: 5 failed attempts → 15 min cooldown
-3. Rate limits: global 100/min, auth 10/min, admin 60/min
-4. CSRF double-submit cookie enabled in prod only
-5. All auth/admin events logged via AuditService
-6. JWT secret key configurable via SECRET_KEY env var
+1. All statelessness: no sessions table; revocation = secret rotation or expiry
+2. Lockout counters are in-process (thread-safe), reset by restart
+3. CSRF enabled only when MODE=prod (CSRF_ENABLED in config/app_settings.py)
+4. Every auth event and admin mutation writes an activity_log row
+5. SECRET_KEY is mandatory in prod — startup fails without it
 
 ## Edge Cases
-- Concurrent login attempts tracked via thread-safe _login_lock
-- Admin with is_admin=True bypasses RBAC permission checks
-- CSRF exempt for /api/auth/csrf endpoint only
+- Concurrent login attempts share the thread-safe attempt registry
+- SSE streams authenticate via the dedicated 5-min token, not the access cookie
 
 ## Failure Cases
-- SECRET_KEY missing in prod → app refuses to start
-- Brute force → rate limited at 10/min + lockout after 5
-- XSS if attacker accesses cookie (no HttpOnly — intentional, known gap)
+- Brute force → rate limit at 10/min plus lockout after 5 failures
+- Token theft risk mitigated by short-lived SSE/reset tokens; access token lifetime is 24h (documented trade-off)
 
 ## Recovery Procedures
-1. Rotate SECRET_KEY: AuthService.rotate_secret_key(new_key)
-2. Clear rate limiter state via server restart
-3. Admin manually unlocks account (clear _login_attempts dict)
+1. Rotate SECRET_KEY and restart to invalidate all outstanding tokens
+2. Restart the process to clear rate-limit buckets and lockout counters
 
 ## Refactoring Strategy
-- Add token blacklist (Redis) for immediate revocation
-- Implement HttpOnly cookie option as configurable
-- Add 2FA/MFA support
-- Migrate to full Redis-backed distributed rate limiting
+- Candidate improvements (require ADR): token blacklist, HttpOnly cookie mode, 2FA

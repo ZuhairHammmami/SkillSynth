@@ -1,110 +1,100 @@
 # SS-EDS: Testing
 
 ## Purpose
-Document the current testing setup: 79/79 tests passing against an isolated temporary SQLite DB (created per session by conftest and seeded from seed_v3 data — the dev DB is never touched), TypeScript type-check (0 errors), ESLint (0 errors, 0 warnings), frontend build passes. Covers available verification commands and test infrastructure.
+Document the verification suite: 142 backend pytest tests across 11 files against an isolated temporary SQLite database (conftest-built per run; dev DB untouched), plus TypeScript type-check, ESLint, and production builds for both frontends.
 
 ## Responsibilities
-- Maintain the backend test suite (79 tests covering auth, catalog, learning, assessments, analytics, admin, realtime, schema) in repo-root `tests/`
-- Guarantee test isolation: each pytest session builds its own temp SQLite DB seeded via seed_v3 logic
-- Run TypeScript type-check (tsc --noEmit) with 0 errors
-- Run ESLint (next lint) with 0 errors (0 warnings)
-- Verify frontend build (type-check + next build)
-- Track test gaps and document verification procedures
+- Maintain the pytest suite in repo-root `tests/` (pytest + httpx)
+- Guarantee isolation: every run builds a temp DB from seed_v3 data via conftest.py
+- Run `tsc --noEmit` (0 errors) for src/frontend and src/admin-app
+- Run `next lint` and production builds as merge gates
+- Verify schema parity with tools/verify_schema.py
 
 ## Inputs
-- Feature specifications
-- API contracts (Pydantic schemas)
-- UI component specifications
+- Feature code changes
+- API contracts (Pydantic DTOs)
 
 ## Outputs
-- Test results and coverage reports
-- Verification command documentation
-- CI/CD configuration requirements
+- Pass/fail evidence for every layer
+- Coverage of auth, catalog integrity, learning guards, assessments, analytics, admin CRUD, realtime, schema
 
 ## Dependencies
-- Backend test suite at repo-root `tests/` (pytest + httpx, declared in requirements.txt)
-- 08-frontend (type-check, lint, build)
-- 44-test-scenarios (test case definitions)
+- Backend suite at tests/ (requirements.txt declares pytest + httpx)
+- 08-frontend / 09-admin build pipelines
+- 10-database (verify_schema.py)
 
-## Sequence: Pre-Commit Verification
+## Sequence: Pre-Merge Verification
 ```
-Code Change → pnpm type-check (tsc --noEmit) → 0 errors? → pnpm lint → 0 errors? → pnpm build → Pass? → Commit
-                    ↓ fail                              ↓ fail               ↓ fail
-                Fix types                          Fix lint              Fix build
+PYTHONPATH=src python -m pytest tests/ -q        → 142 passed?
+cd src/frontend  && pnpm type-check && pnpm lint && pnpm build
+cd src/admin-app && pnpm type-check && pnpm build
 ```
 
 ## Sequence: Test Execution
 ```
 PYTHONPATH=src python -m pytest tests/ -q
-  → conftest creates an isolated temp SQLite DB (seeded from seed_v3 data; dev DB untouched)
-  → 79 tests collected
-  → Test auth endpoints (login, me, register)
-  → Test CRUD flows, DB integrity, headers
-  → Temp DB discarded after the session
-  → 79/79 passed ✓
+  → conftest.py creates an isolated temp SQLite DB (seeded from seed_v3 data; dev DB never touched)
+  → 142 tests collected across 11 files
+  → temp DB discarded after the session
 ```
 
 ## Current Test State
 | Component | Status | Details |
 |-----------|--------|---------|
-| Backend tests (pytest) | ✅ 79/79 passed | Isolated temp SQLite DB per session, seeded from seed_v3 |
-| TypeScript type-check | ✅ 0 errors | tsc --noEmit (frontend + admin app) |
-| ESLint | ✅ 0 errors | 3 font warnings (expected) |
-| Frontend build | ✅ Passes | type-check + next build |
-| Admin app build | ✅ Passes | type-check + next build (`src/admin-app`) |
-| DB seed | ✅ Verified | `PYTHONPATH=src python seed_v3.py` (~1109 rows) |
+| Backend tests | ✅ 142/142 | isolated temp SQLite per run |
+| Frontend type-check + lint + build | ✅ pass | src/frontend |
+| Admin app type-check + build | ✅ pass | src/admin-app |
+| Schema verifier | ✅ SCHEMA MATCH | tools/verify_schema.py |
+
+## Test Files (tests/, counts verified via --collect-only)
+| File | Tests | Area |
+|------|-------|------|
+| test_admin.py | 22 | admin CRUD, backups, reports, restricted deletes |
+| test_catalog_integrity.py | 20 | rename uniqueness, cycles, FK validation → 400/409 |
+| test_catalog.py | 19 | catalog reads/writes |
+| test_auth.py | 17 | register/login/me, lockout, password flows |
+| test_learning.py | 15 | graph, gaps, generation |
+| test_assessments.py | 13 | questions, role sets, submit scoring |
+| test_integrity.py | 10 | cross-cutting IntegrityError handling |
+| test_analytics.py | 8 | dashboard, growth, history |
+| test_realtime.py | 7 | SSE streams, event emission |
+| test_schema.py | 7 | DDL/ORM parity |
+| test_learning_guards.py | 4 | ownership/guard rails |
 
 ## Available Verification Commands
 ```bash
-PYTHONPATH=src python -m pytest tests/ -q    # 79 tests, isolated temp DB
-cd src/frontend && pnpm type-check           # tsc --noEmit
-cd src/frontend && pnpm lint                 # next lint (3 font warnings expected)
-cd src/frontend && pnpm build                # type-check + next build
+PYTHONPATH=src python -m pytest tests/ -q      # 142 tests, isolated temp DB
+cd src/frontend && pnpm type-check             # tsc --noEmit
+cd src/frontend && pnpm lint                   # next lint
+cd src/frontend && pnpm build                  # type-check + next build
 cd src/admin-app && pnpm type-check && pnpm build
-python tools/verify_schema.py                # prints SCHEMA MATCH on success
-PYTHONPATH=src python seed_v3.py             # Re-seed dev database
-# Backend: source .venv/bin/activate && pip install -r requirements.txt && python run.py
+PYTHONPATH=src python tools/verify_schema.py   # prints SCHEMA MATCH
+PYTHONPATH=src python seed_v3.py               # re-seed dev database (~1,100 rows)
 ```
 
-## Manual Test Scripts
-- npx ts-node src/scripts/test-path-resolver.ts (DAG logic)
-- npx ts-node src/scripts/test-ui-rendering.ts (mastery page)
-- npx ts-node src/scripts/test-notification-loop.ts (validation)
-- npx ts-node src/scripts/test-db-connection.ts (Supabase)
-
 ## Rules
-1. Before any frontend commit: pnpm type-check && pnpm lint
-2. Before merge: pnpm build (type-check + build)
-3. After backend changes: run `PYTHONPATH=src python -m pytest tests/ -q`
-4. After DB changes: re-run `PYTHONPATH=src python seed_v3.py`, then `python tools/verify_schema.py`
-5. Tests must always run against the isolated temp DB — never against the dev database
-6. All tests must pass before deployment
+1. Tests always run against the conftest temp DB — never the dev skillsynth.db
+2. All 142 must pass before any merge
+3. New endpoints require tests in the matching file before merge
+4. After schema edits: update DDL + entities, then verify_schema.py must print SCHEMA MATCH
+5. Frontend commits require type-check + lint; merges require builds
 
 ## Examples
-- pnpm type-check → "0 errors" exit code
-- pnpm lint → 0 errors, 3 warnings (font loading)
-- pnpm build → "✓ Compiled successfully" exit code
+- Restricted delete: DELETE skill with children → expect 409 census (test_admin.py)
+- Rename conflict: PUT duplicate name differing only by case → expect 409 (test_catalog_integrity.py)
 
 ## Edge Cases
-- TypeScript strict mode catches null/undefined issues at compile time
-- ESLint catches hardcoded Arabic strings (i18n violations)
-- Build fails on missing module imports vs. dev-mode success
+- TypeScript strict mode catches null-safety issues pre-runtime
+- ESLint flags hardcoded user-facing strings (i18n violations)
 
 ## Failure Cases
-- pnpm type-check fails → type errors must be resolved before commit
-- ESLint errors > 0 → lint errors must be fixed (warnings are acceptable)
-- Build fails → silent compilation error missed in development
-- API test fails → regression introduced by backend changes
+- Any pytest failure → merge blocked until fixed
+- Build failure on a clean checkout → environment or missing-import bug
 
 ## Recovery Procedures
-1. Fix type errors by adding proper type annotations
-2. Fix lint errors by following ESLint rule suggestions
-3. Run pnpm build locally to verify before push
-4. Check API test output for specific failing assertion
+1. Read the failing assertion; fix implementation or test intent
+2. Re-run the full suite — partial runs are not evidence
 
 ## Refactoring Strategy
-- Add Vitest for frontend unit tests
-- Add pytest fixtures for cleaner API test setup
-- Add Playwright for E2E tests
-- Add pre-commit hooks (husky + lint-staged)
-- Automate test execution in CI pipeline
+- Keep one file per feature area to preserve the traceability table above
+- Future candidates (require discussion): Vitest units, Playwright E2E, CI wiring

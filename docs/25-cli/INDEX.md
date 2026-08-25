@@ -1,94 +1,80 @@
-# SS-EDS: CLI — DEPRECATED
-
-> **⚠️ CLI tool removed.** Standalone `tools/cli/` package deleted. Script commands below remain in AGENTS.md for reference.
+# SS-EDS: CLI
 
 ## Purpose
-Document the command-line interface tools and scripts available for SkillSynth development, seed, and verification tasks.
+Document the command-line entry points and scripts that actually exist: `run.py` (backend), `seed_v3.py` (seed), `tools/verify_schema.py` (schema verifier), pytest, and the pnpm task runners for both frontends.
 
 ## Responsibilities
-- Maintain CLI scripts for common development tasks
-- Provide seed, verification, and admin management commands
-- Document proper usage and expected outputs
+- Provide the canonical command table with working directories
+- Document seed and verification workflows
+- Point to the environment each command expects
 
 ## Inputs
-- Developer workflow requirements
-- Automation needs (seeding, testing, admin creation)
+- Developer workflow needs (run, seed, verify, test, build)
+- requirements.txt / pnpm manifests
 
 ## Outputs
-- CLI scripts documentation
-- Usage examples and expected outputs
+- Repeatable commands for every verification gate in 16-testing
 
 ## Dependencies
-- 07-backend (Python scripts)
-- 08-frontend (TypeScript scripts)
-- 10-database (seed scripts)
+- 07-backend (run.py)
+- 10-database (seed_v3.py, tools/verify_schema.py)
+- 08-frontend / 09-admin (pnpm scripts)
 
-## CLI Commands Reference
+## Command Reference
 | Command | Purpose | Working Dir |
 |---------|---------|-------------|
-| `python run.py` | Start FastAPI backend (port 8000) | Root |
-| `pnpm dev` | Start Next.js dev server (port 3000) | src/frontend |
-| `pnpm build` | Build frontend (tsc + next build) | src/frontend |
-| `pnpm type-check` | TypeScript strict check | src/frontend |
-| `pnpm lint` | ESLint check | src/frontend |
-| `python seed_all.py` | Full DB seed | Root |
-| `npx ts-node src/scripts/test-path-resolver.ts` | Test DAG logic | Root |
-| `npx ts-node src/scripts/test-ui-rendering.ts` | Test UI rendering | Root |
-| `npx ts-node src/scripts/test-notification-loop.ts` | Test notifications | Root |
-| `npx ts-node src/scripts/test-db-connection.ts` | Test DB connection | Root |
-| `python src/backend/create_admin.py` | Create admin user | Root |
+| `python run.py` | Start FastAPI backend on :8000 (uvicorn; reload when MODE=dev) | repo root |
+| `PYTHONPATH=src python seed_v3.py` | Seed all 15 tables (~1,100 rows, idempotent, FK-gated) | repo root |
+| `PYTHONPATH=src python tools/verify_schema.py` | Verify DDL ↔ ORM parity → prints SCHEMA MATCH | repo root |
+| `PYTHONPATH=src python -m pytest tests/ -q` | Run the 142-test backend suite (isolated temp DB) | repo root |
+| `pnpm dev` | Student frontend dev server :3000 | src/frontend |
+| `pnpm build` / `pnpm type-check` / `pnpm lint` | Build / tsc --noEmit / next lint | src/frontend |
+| `pnpm dev` / `pnpm build` / `pnpm type-check` | Admin app dev/build/check (:3001) | src/admin-app |
+| `bash start.sh` | Full-stack launcher (venv + pnpm PATH bootstrap) | repo root |
+| `docker compose up -d` | Container stack: backend/frontend/admin (+ollama) | repo root |
 
-## Sequence: CLI Command Resolution
+## Sequence: First-Run Bootstrap
 ```
-User Command → Shell → Working Directory Check → Script Path Resolution → Execute → Output
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+PYTHONPATH=src python seed_v3.py          # create + populate skillsynth.db
+python run.py                             # API live on :8000
 ```
 
-## Seed Scripts
-| Script | Tables Seeded | When |
-|--------|---------------|------|
-| python seed_all.py | All 12+ tables | First setup, DB reset |
-| python src/scripts/seed.py | Minimal (2 categories, 6 skills, 1 role) | PostgreSQL testing |
-| npx ts-node src/scripts/seed-engineering-path.ts | Engineering path DAG | Phase 3 testing |
+## Seed & Verification Scripts
+| Script | Scope | Notes |
+|--------|-------|-------|
+| seed_v3.py | All 15 tables | Single authoritative seed; rebuilds schema from ORM metadata then inserts; PRAGMA foreign_key_check gate |
+| tools/verify_schema.py | Tables/columns/PKs/FKs/ON DELETE/uniques | Compares canonical DDL against ORM; prints SCHEMA MATCH on success |
 
-## ERD References
-- seed_all.py populates all database tables
+Removed tooling (one line): legacy seed scripts, TypeScript ad-hoc test scripts, standalone admin-creation scripts, and the old `tools/cli/` package no longer exist; admin provisioning happens via ADMIN_EMAIL/ADMIN_PASSWORD at startup or admin CRUD.
 
 ## Rules
-1. Always run from correct working directory (AGENTS.md specifies for each command)
-2. seed_all.py is idempotent — checks existing_skills_count > 0 before seeding
-3. Python scripts use `PYTHONPATH=src` prefix when running directly
-4. TypeScript scripts use `npx ts-node` for execution
+1. Python commands run from repo root with `PYTHONPATH=src`
+2. pnpm commands run from `src/frontend` or `src/admin-app` — never npm
+3. seed_v3.py is idempotent; re-running it is always safe in dev
+4. Tests use their own temp DB — never point pytest at skillsynth.db
 
 ## Examples
 ```bash
-# Start backend
-python run.py
-
-# Seed database
-python seed_all.py
-
-# TypeScript check
-cd src/frontend && pnpm type-check
+# Typical verification loop before a merge:
+PYTHONPATH=src python -m pytest tests/ -q
+cd src/frontend && pnpm type-check && pnpm lint && pnpm build
+cd src/admin-app && pnpm type-check && pnpm build
+PYTHONPATH=src python tools/verify_schema.py
 ```
 
 ## Edge Cases
-- Python path issues when running from wrong directory
-- Node modules not installed for ts-node scripts
-- seed_all.py partially completed on failure
+- pnpm missing from PATH → `export PATH="$HOME/.npm-global/bin:$PATH"` (start.sh does this automatically)
+- Port already bound (8000/3000/3001) → stop the process or override PORT
 
 ## Failure Cases
-- `python run.py` fails due to missing dependencies
-- `pnpm dev` fails due to port conflict
-- seed script fails due to database connection issue
-- ts-node script fails due to TypeScript compilation error
+- seed fails on FK violation → fix ordering/data in seed_v3.py; it refuses partial states by design
+- verify_schema mismatch → DDL and ORM drifted; align both before merging
 
 ## Recovery Procedures
-1. Verify correct working directory
-2. Install dependencies: `pip install -r requirements.txt` / `pnpm install`
-3. Check port availability (8000 for backend, 3000 for frontend)
-4. Delete DB file and re-run seed
+1. Delete skillsynth.db and re-run seed_v3.py for a clean dev database
+2. Reinstall deps (`pip install -r requirements.txt` / `pnpm install`) after manifest changes
 
 ## Refactoring Strategy
-- Add a unified CLI tool (e.g., `skill-synth-cli`) with subcommands
-- Migrate from ts-node to built JavaScript for script execution
-- Add argument parsing and help text for all scripts
+- Any new script must be added to this table or deleted outright — no undocumented scripts

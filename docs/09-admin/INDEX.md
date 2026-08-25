@@ -1,101 +1,95 @@
 # SS-EDS: Admin Application
 
 ## Purpose
-Document the admin application — a completely separate SPA within the Next.js app, with its own layout, navigation, state, permissions model, and feature set. No student features appear in the admin UI.
+Document the standalone admin application at `src/admin-app` (:3001) — a separate Next.js app (English-only, own layout and navigation) providing full CRUD over platform content plus operational tooling. No student features exist here.
 
 ## Responsibilities
-- Provide CRUD interfaces for users, skills, categories, learning paths, resources, job roles
-- Implement admin-specific navigation with collapsible sidebar and 11 nav items
-- Enforce permission gating: only users with `is_admin=True` can access
-- Render analytics dashboard with real-time charts
-- Stream audit log via SSE with search and pagination
-- Provide system health monitoring and feature flags in settings
+- Provide CRUD interfaces with create/edit dialogs for users, skills, categories, resources, job roles, assessments
+- Enforce access via the binary `users.is_admin` flag (AdminGuard; no roles/permissions UI)
+- Surface restricted-delete flows (409 dependency census → force-delete confirmation)
+- Provide reports, system health, backups, DB inspector, audit logs, and read-only System Configuration
 
 ## Inputs
-- Backend admin router endpoints (via 07-backend)
-- Role/permission definitions from database
-- SSE event stream for live audit log
+- Backend admin endpoints `/api/admin/*` (30 operations, require_admin-gated)
+- SSE admin channel for the audit feed
+- JWT of an `is_admin=True` user
 
 ## Outputs
-- 11 admin pages (dashboard + 10 management pages)
-- Admin layout with sidebar, breadcrumbs, and "Switch to Student" link
-- Query key factory scoped under `admin` namespace
+- 16 pages (see table below), sidebar navigation with 15 items
+- Query keys scoped under an admin namespace for cache isolation
 
 ## Dependencies
-- 08-frontend (Next.js App Router, shared components)
-- 35-state-management (React Query for admin data)
-- 14-security (JWT + admin guard)
-- 12-realtime (SSE for audit log)
+- 07-backend (admin.py + catalog_admin.py routers)
+- 14-security (JWT + is_admin gate)
+- 12-realtime / 23-events (SSE audit stream)
 
 ## Admin Pages
 | Route | Page | Description |
 |-------|------|-------------|
-| `/admin` | Dashboard | System overview, stats, recent activity |
-| `/admin/users` | Users | CRUD table, search, pagination |
-| `/admin/skills` | Skills | CRUD with difficulty level, icon, color |
-| `/admin/categories` | Categories | Tree view with nested categories |
-| `/admin/paths` | Paths | CRUD with prerequisite graph |
-| `/admin/resources` | Resources | CRUD with type, URL, skill association |
-| `/admin/job-roles` | Job Roles | CRUD with skill requirements |
-| `/admin/settings` | Settings | Feature flags, system configuration |
-| `/admin/audit-log` | Audit Log | SSE-streamed, searchable, paginated |
-| `/admin/analytics` | Analytics | Charts: user activity, engagement, health |
+| `/dashboard` | Dashboard | Overview stats and recent activity |
+| `/users` | Users | CRUD table + edit dialog, lock/unlock actions |
+| `/categories` | Categories | Tree CRUD with parent-cycle rejection feedback |
+| `/skills` | Skills | CRUD incl. prerequisites; delete shows dependency census |
+| `/resources` | Resources | CRUD with type/URL/skill association |
+| `/job-roles` | Job Roles | CRUD incl. skill weightings |
+| `/assessments` | Assessments | List + delete (restricted) |
+| `/paths` | Paths | Read-only management view |
+| `/reports` | Reports | Aggregated + system-health report views |
+| `/health` | System Health | GET /api/admin/reports/system-health rendering |
+| `/settings` | Settings | Change-password + account settings |
+| `/audit-logs` | Audit Logs | activity_log feed (SSE-backed) |
+| `/backups` | Backups | List/create database backups |
+| `/db-inspector` | DB Inspector | Table/row browser over the live schema |
+| `/feature-flags` | System Configuration | Read-only configuration view |
 
 ## Sequence: Admin CRUD Flow
 ```
-Admin Login → React Query fetches user profile → is_admin check → Redirect to /admin
-→ Navigate to page → useQuery fetches data → Render Table → Edit/Create/Delete
-→ useMutation → POST/PUT/DELETE API → onSuccess invalidate query key → Table refreshes
+Login → GET /api/auth/me → is_admin? → AdminGuard passes → page loads
+→ useQuery fetch → table render → Create/Edit dialog → mutation (POST/PUT)
+→ onSuccess invalidates query key → table refreshes
+Delete → 409 census? → confirm dialog → DELETE ?force=true → refresh
 ```
 
 ## State Diagram: Admin Access
 ```
-[Any User] → GET /api/auth/me → is_admin=True? → Yes → /admin renders
-                                                ↓  No
-                                           Redirect to /dashboard
+[Request] → token valid? ──no──→ /login
+                ↓ yes
+          is_admin=True? ──no──→ redirect (student app / error)
+                ↓ yes
+           [Dashboard renders]
 ```
 
 ## Layout Structure
 ```
-AdminLayout ('use client')
-├── Sidebar (fixed, w-60, collapsible on mobile)
-│   ├── Logo + "Admin" badge (rounded bg-primary/10)
-│   ├── Nav items (11 icons + labels, active highlight with ChevronRight)
-│   └── User section (avatar, name, "Switch to Student" link, Logout)
-├── Sticky Header (h-14, border-bottom)
-│   └── Mobile hamburger + LocaleSwitcher
-└── Main Content (p-6 lg:p-8)
+AdminLayout (English-only)
+├── Fixed sidebar — logo, 15 nav items, active highlight
+├── Sticky header (h-14) with page context
+└── Main content area (p-6 lg:p-8)
 ```
 
 ## Rules
-1. Admin pages are client components (`'use client'`) — interactivity required
-2. All admin data fetched via React Query with `admin`-scoped query keys
-3. "Switch to Student" link navigates to `/dashboard` — maintains same session
-4. Admin sidebar shows 11 items; dashboard is always first, settings is always last
-5. No student-specific features (learn, wizard, mastery) appear in admin UI
-6. Audit log uses SSE for real-time updates
+1. Pages are client components; all data via React Query with admin-scoped keys
+2. Access control is only `is_admin` — there is no role picker or permission matrix in the UI
+3. Deletes that return 409 present the dependency census and offer explicit force-delete (`?force=true`, ADR-014)
+4. English-only copy; design tokens match the student frontend's Linear/Notion style
+5. The admin app runs on :3001 and never imports code from `src/frontend`
 
 ## Examples
-- Admin creates a skill: POST `/api/admin/skills` with name, description, difficulty_level, icon, color
-- Audit log entry: `category="admin" action="create" entity_type="skill"` streamed via SSE
-- Settings page toggles feature flags like "enable_wizard", "maintenance_mode"
+- Edit a skill name → PUT /api/admin/skills/{id} → case-insensitive uniqueness enforced; duplicate returns 409
+- Delete a category with children → 409 + census list → confirm → DELETE with `?force=true`
 
 ## Edge Cases
-- Admin tries to delete own account → blocked by backend
-- Role with users assigned → cannot be deleted
-- SSE connection lost → audit log auto-reconnects with last event ID
+- Non-admin JWT reaching /api/admin/* → backend 403 regardless of UI state
+- SSE drop while viewing audit logs → feed resumes on EventSource auto-reconnect
 
 ## Failure Cases
-- Non-admin user navigates to /admin → redirected, no flash of admin UI
-- SSE fails → admin sees stale audit log, retry indicator shown
-- Empty admin dashboard → "No data available" state
+- Expired token mid-session → queries fail with 401 → re-login required
+- Empty datasets → pages render explicit empty states
 
 ## Recovery Procedures
-1. Check JWT token for `is_admin` claim
-2. Clear React Query cache for `['admin']` keys
-3. Verify SSE connection in browser DevTools Network tab
+1. Re-authenticate to mint a fresh 24h token
+2. Clear React Query cache (`['admin']` namespace) after auth changes
 
 ## Refactoring Strategy
-- Extract admin into dedicated micro-frontend
-- Add bulk operations (batch user role update, bulk skills import)
-- Implement admin SSE dashboard for real-time system metrics
+- New admin capability = new page + api module mirroring a new /api/admin endpoint group
+- Keep dialogs generic; reuse the census/force-delete pattern for any new restricted delete

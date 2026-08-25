@@ -1,24 +1,22 @@
 # SS-EDS: Principles
 
 ## Purpose
-Define the foundational design principles, philosophy, and architectural axioms that guide all decisions across the SkillSynth Adaptive Learning OS.
+Define the foundational design principles and architectural axioms that guide all decisions across the SkillSynth adaptive learning platform: a professional Linear/Notion-style aesthetic, RTL-first bilingual delivery, and Clean Architecture discipline.
 
 ## Responsibilities
 - Establish non-negotiable design axioms
-- Document RTL-first, Arabic-first localization commitments
-- Define the modular synthesizer metaphor as the UX paradigm
-- Enforce flat/solid color design tokens with zero gradients
+- Document RTL-first, Arabic-default localization commitments
+- Enforce flat/solid color design tokens — no gradients
+- Enforce layering and file-size discipline in all code
 
 ## Inputs
-- Product vision documents
-- Stakeholder requirements
+- Product goals (01-product)
 - Accessibility standards (WCAG 2.1 AA)
-- RTL typography research
+- RTL typography research (Tajawal)
 
 ## Outputs
-- Design token specification
-- Axiom validation checklist
-- Metaphor purity guidelines (term replacements)
+- Design token specification (20-ui-system)
+- Principle checklist applied in code review
 
 ## Dependencies
 - 01-product (product goals inform principles)
@@ -27,52 +25,45 @@ Define the foundational design principles, philosophy, and architectural axioms 
 
 ## Sequence: Principle Enforcement Flow
 ```
-PRD → Principle Review Board → Principle Violation? → Yes → Reject / Redesign
-                                                      ↓  No
-                                              Architecture Decision
-                                                      ↓
-                                              Implementation
-                                                      ↓
-                                              Audit (Lighthouse / a11y)
+Change → PR Review → Principle violation? → Yes → Reject / Redesign
+                                            ↓  No
+                                     Merge → Audit (Lighthouse / a11y)
 ```
 
 ## State Diagram: Principle Lifecycle
 ```
-[Draft] → [Reviewed] → [Approved] → [Active] → [Deprecated]
-    ↑                        ↓                         ↓
-    └──── Revision ──────────┘            [Superseded / Removed]
+[Draft] → [Reviewed] → [Approved] → [Active] → [Superseded]
+    ↑                        ↓
+    └──── Revision ──────────┘
 ```
 
 ## ERD References
-- docs/40-diagrams/ for token dependency graphs
+- None (principles are non-persistent); diagrams live in docs/40-diagrams/
 
 ## Rules
-1. No gradients anywhere — flat solid colors only
-2. No border-radius > 2px on containers (50% only on knobs)
-3. RTL-first: html lang="ar" dir="rtl" is default
-4. Tajawal font for body, IBM Plex Sans for headings
-5. All user-facing text must be i18n'd (en/ar)
-6. No HttpOnly cookie for JWT (known risk, intentional)
+1. No gradients, neon, glassmorphism, or heavy shadows — flat solid colors only
+2. Visual language follows Linear/Notion/Stripe: neutral surfaces, restrained accent (`--primary` blue), subtle borders
+3. RTL-first: `<html lang="ar" dir="rtl">` is the default document direction; Tajawal is the primary typeface
+4. All user-facing text must use i18n message keys (ar/en) — zero hardcoded strings
+5. Backend layering: Router → Service → Repository → Entity; imports as `from backend.xxx import yyy`
+6. No file > 300 lines, no function > 40 lines; every function carries a docstring stating its purpose and callers/callees
 
 ## Examples
-- `--bg-root: #0B0B0D` as infinite workspace background
-- Term replacements: "Login" → "Signal Tuning", "Button" → "Knob"
+- Button: solid `--primary` background, `rounded-md`, visible focus ring — no glow or gradient
+- A new endpoint lands in a router only if it delegates immediately to a service
 
 ## Edge Cases
-- Mixed RTL/LTR content in same view (e.g., code blocks in Arabic UI)
-- Screen reader handling of synth metaphor terminology
-- Colorblind accessibility with teal/brass/success/danger palette
+- Mixed RTL/LTR content in the same view (code blocks inside Arabic UI) — use logical CSS properties
+- English-only admin app (09-admin) still follows the same token system
 
 ## Failure Cases
-- Principle violation discovered during code review → block merge
-- WCAG AA failure due to insufficient contrast on brass (#D4A843 on #16161A)
+- Principle violation found in review → block merge until resolved
+- WCAG AA failure from a new color pairing → fix tokens before merge
 
 ## Recovery Procedures
-1. Log violation in decision record (docs/41-decision-records/)
-2. File issue with principle override rationale
-3. Update principle if override is accepted
+1. Record the exception rationale in a decision record (docs/41-decision-records/)
+2. Update this principle if the override is accepted
 
 ## Refactoring Strategy
-- Principles change only through formal RFC
-- Track principle adoption rate via audit scripts
-- Review principles quarterly against product evolution
+- Principles change only through a documented decision record
+- Re-audit contrast and Lighthouse scores on every UI change

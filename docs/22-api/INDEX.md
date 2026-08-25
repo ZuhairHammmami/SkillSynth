@@ -1,94 +1,109 @@
 # SS-EDS: API
 
 ## Purpose
-Document all FastAPI endpoints (55 operations across 45 paths (7 routers)) across 7 routers + inline app routes. Covers authentication, request/response schemas, and authorization requirements.
+Document every FastAPI endpoint — 63 operations across 49 paths (verified from OpenAPI) — grouped by router, with auth requirements, rate limits, and token lifetimes. JWT access tokens only; there is no refresh endpoint.
 
 ## Responsibilities
-- Maintain endpoint documentation by category
-- Define request/response schemas (Pydantic DTOs)
-- Document authentication and authorization requirements
-- Track API route status (functional, stubbed, planned)
+- Maintain the authoritative endpoint inventory
+- Document request/response schemas (Pydantic DTOs in dto/)
+- State auth and rate-limit rules per group
 
 ## Inputs
-- Backend router implementations (07-backend)
-- Pydantic schema definitions (dto/)
-- Authentication requirements (14-security)
+- Router modules (src/backend/routers/)
+- DTO definitions (src/backend/dto/)
 
 ## Outputs
-- API specification (this document)
-- OpenAPI/Swagger UI at /docs
+- This specification
+- Live OpenAPI/Swagger at /docs on :8000
 
 ## Dependencies
-- 07-backend (router implementations)
-- 14-security (auth requirements)
-- 08-frontend (API client usage)
+- 07-backend (implementations)
+- 14-security (auth/rate limits)
+- 08-frontend / 09-admin (consumers)
 
-## Sequence: API Request Lifecycle
+## Sequence: Request Lifecycle
 ```
-Client → HTTP → FastAPI → Middleware → Rate Limiter → Router → Auth Policy → DTO Validation → Service → Repository → DB → Response
-```
-
-## State Diagram: Endpoint Maturity
-```
-[Planned] → [Stubbed] → [Functional] → [Deprecated] → [Removed]
+Client → middleware (CORS → compression → security headers → CSRF[prod])
+→ rate limiter → router → get_current_user/require_admin → DTO validation
+→ service → repository → DB → JSON response
 ```
 
-## Endpoint Summary (55 operations / 45 paths)
+## Endpoint Inventory (63 operations / 49 paths)
 
-### Auth — /api/auth/* (10: register, login, profile, password, sse-token, reset)
-Rate: register 5/min, login 10/min, forgot-password 3/min, reset 3/min.
+### Authentication — /api/auth/* (7 paths / 8 ops)
+| Method & Path | Auth | Notes |
+|---------------|------|-------|
+| POST /api/auth/register | public | 5/min; creates student account |
+| POST /api/auth/token | public | 10/min; form-encoded login → {access_token} |
+| GET /api/auth/me · PUT /api/auth/me | Bearer | read/update own profile |
+| POST /api/auth/change-password | Bearer | current password required |
+| POST /api/auth/forgot-password | public | 3/min; issues 30-min signed reset token |
+| POST /api/auth/reset-password | public | 3/min; consumes reset token |
+| POST /api/auth/sse-token | Bearer | 5-min SSE stream token |
 
-### Paths — /api/paths/* (8: CRUD, generate, regenerate, skills update, analytics)
-All JWT. POST /generate-path/ creates via LearningEngine; PUT/DELETE owned paths.
+### Learning Engine — /api/learning/* (3 paths / 3 ops, Bearer)
+GET graph (prereq DAG nodes+edges) · GET gaps (skill-gap analysis) · POST generate (path generation alias)
 
-### Wizard — GET /wizard-options (1, public). Returns job roles, career fields, formats.
+### Paths & Progress — /api/* via paths.py (7 paths / 9 ops, Bearer)
+POST /generate-path/ (wizard scoring → path) · GET /paths/ · GET|PUT|DELETE /paths/{path_id} (owner-scoped) · POST /steps/{step_id}/complete · POST /steps/{step_id}/undo-complete · GET /progress/dashboard
 
-### Assessments — GET /assessments/{role}, POST /assessment-results (2, first public, second JWT).
+### Wizard Options — GET /api/wizard-options (1 op, public)
+Job roles + preference literals for the wizard.
 
-### Progress — /api/steps/* (3: complete, undo-complete, dashboard) — all JWT. ~~gamification/profile~~ removed.
+### Assessments — /api/assessments/* (3 paths / 3 ops, Bearer)
+GET /{skill_id}/questions · GET /role/{job_role_title} · POST /submit (scores → user_skills proficiency 0–5)
 
-### Analytics — /api/analytics/* (5: dashboard, path-progress, skill-growth, learning-history, learning-velocity) — all JWT.
+### Analytics — /api/analytics/* (4 paths / 4 ops, Bearer)
+GET dashboard · skill-growth · path-progress/{path_id} · learning-history
 
-### ~~Problems — /api/problems/* (2: list with filters, detail) — all JWT.~~ **REMOVED**
+### Admin — /api/admin/* (19 paths / 30 ops, require_admin + admin limiter 60/min)
+| Resource | Operations |
+|----------|-----------|
+| users | GET list · POST · PUT {id} · DELETE {id} |
+| skills | GET · POST · PUT {id} · DELETE {id} (?force=true bypasses 409 census) |
+| categories | GET · POST · PUT {id} · DELETE {id} (?force=true) |
+| resources | GET · POST · PUT {id} · DELETE {id} |
+| job-roles | GET · POST · PUT {id} · DELETE {id} (?force=true) |
+| assessments | GET list · DELETE {id} |
+| paths | GET (admin view) |
+| events | GET feed (activity_log) |
+| backups | GET list · POST create |
+| db-inspector | GET table/row browser |
+| feature-flags | GET configuration view |
+| reports | GET aggregated · GET system-health |
 
-### Learning Engine — /api/learning/* (7: graph, path/generate, analysis, recommendations, progress, time-estimate, skill-gaps) — all JWT except graph.
+Restricted deletes (skills/categories/job-roles): dependents present → **409 + census** unless `?force=true` (ADR-014).
 
-### Real-time — /api/realtime/* (3 REST + 1 WebSocket: events SSE, notify, broadcast, /ws) — SSE: JWT token, others: admin.
+### Realtime — /api/realtime/* (2 paths / 2 ops, token auth)
+GET events (user SSE stream) · GET admin/events (admin SSE channel, ?category= filter)
 
-### Admin — /api/admin/* (35 endpoints, all admin-only)
-Reports: user-activity, content-engagement, system-health, most-active-users, most-requested-skills, aggregated. CRUD: /users, /roles, /skills, /categories, /resources, /job-roles. System: /paths, /audit-log, /events, /events/stream (admin SSE), /analytics/overview.
-
-### System (3, in main.py): GET / (public), GET /api/auth/csrf (public), GET /api/events (SSE JWT).
+### Root app routes (main.py, 4 ops)
+GET / (health banner) · GET /api/public/stats (public, 30s inline cache) · GET /api/auth/csrf (prod CSRF handshake) · GET /api/events (SSE alias of /api/realtime/events)
 
 ## Request/Response Examples
 ```
-POST /api/auth/token
-  Body: grant_type=password&username=email&password=***
-  Response: {access_token: "...", token_type: "bearer", expires_in: 1440}
+POST /api/auth/token        Body: grant_type=password&username=<email>&password=***
+→ 200 {"access_token": "...", "token_type": "bearer"}
 
-GET /api/paths/
-  Header: Authorization: Bearer <token>
-  Response: [{id: 1, title: "Python Dev", steps: [...], skills: [...]}]
+POST /api/generate-path/    Header: Authorization: Bearer <jwt>
+→ 200 PathDetailOut {id, title, steps:[...]}
 
-POST /api/steps/{id}/complete
-  Header: Authorization: Bearer <token>
-  Response: {id: 1, profile_id: 1, step_id: 5, completed_at: "..."}
+DELETE /api/admin/skills/12 → 409 {"detail": {"census": [...]}}   # dependents exist
+DELETE /api/admin/skills/12?force=true → 200                      # cascading removal
 ```
 
 ## Rules
-1. All protected endpoints require Bearer JWT token
-2. Auth tokens expire in 24h, refresh tokens in 30 days
-3. Admin endpoints require admin JWT + is_admin=True
-4. Rate limits: register 5/min, login 10/min, forgot-password 3/min, global 100/min
-5. All responses are JSON — validation errors serialized safely
+1. All protected endpoints require `Authorization: Bearer <access JWT>`; access tokens live 24h (`ACCESS_TOKEN_EXPIRE_MINUTES = 60*24`) and renewal is re-authentication
+2. Admin endpoints additionally require `users.is_admin` (require_admin dependency)
+3. Rate limits: global 100/min · auth 10/min · register 5/min · forgot/reset 3/min · admin 60/min
+4. Error codes: 400 validation/FK-miss/cycles · 401 unauthenticated · 403 non-admin · 404 missing · 409 conflicts (rename uniqueness on updates, restricted deletes, IntegrityError) · 422 malformed payload · 429 rate-limited
+5. All responses JSON except SSE streams (text/event-stream)
 
 ## Failure Cases
-- Invalid token → 401
-- Rate limit exceeded → 429
-- Validation error → 422
-- Internal error → 500
+- Expired/invalid token → 401
+- Duplicate rename differing only by case on PUT → 409
+- Missing FK reference in payload → 400 before persistence
 
 ## Recovery Procedures
-1. Check /docs for schema
-2. Verify backend on :8000
-3. Check network tab for error responses
+1. Consult /docs for the live schema
+2. Confirm backend reachability on :8000; inspect the failing response body for detail

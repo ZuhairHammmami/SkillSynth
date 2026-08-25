@@ -1,95 +1,84 @@
 # SS-EDS: Accessibility
 
 ## Purpose
-Document the accessibility strategy for SkillSynth, covering WCAG 2.1 AA compliance, RTL screen reader support, keyboard navigation, color contrast, and touch targets.
+Document the accessibility strategy for SkillSynth: WCAG 2.1 AA targets on the current light-theme token system, RTL screen-reader support, keyboard navigation, color contrast (computed from globals.css tokens), and touch targets.
 
 ## Responsibilities
-- Ensure WCAG 2.1 AA compliance across all pages
-- Maintain proper ARIA attributes and roles
-- Implement keyboard navigation for all interactive elements
-- Ensure sufficient color contrast ratios
-- Provide touch-accessible interaction patterns
+- Keep all interactive elements keyboard accessible with visible focus rings
+- Maintain semantic HTML + ARIA alignment
+- Enforce contrast ratios from the HSL tokens in `src/frontend/src/app/globals.css`
+- Standardize touch-target sizing
 
 ## Inputs
 - WCAG 2.1 AA guidelines
-- RTL accessibility research
-- Color contrast analysis
+- Design tokens (20-ui-system)
+- RTL typography behavior (Tajawal)
 
 ## Outputs
-- Accessibility audit reports
-- Keyboard navigation specification
-- ARIA label inventory
-- Touch target size definitions
+- Contrast matrix (this document, computed from tokens)
+- ARIA/label conventions for forms and icon buttons
 
 ## Dependencies
-- 20-ui-system (design tokens, component states)
+- 20-ui-system (token values)
 - 08-frontend (component implementation)
 - 00-principles (RTL-first commitment)
 
 ## Sequence: Accessibility Audit Flow
 ```
-Page Load → Automated Scan (Lighthouse) → Manual ARIA Review → Keyboard Navigation Test → Screen Reader Test → Report → Fix Issues
+Page → Lighthouse a11y scan → manual keyboard pass → screen-reader spot check → fix → re-scan
 ```
 
-## State Diagram: Accessibility Compliance
+## State Diagram: Compliance
 ```
-[Not Compliant] → [Partial] → [WCAG AA Compliant] → [WCAG AAA (Future)]
+[Not Compliant] → [Partial] → [WCAG AA] → [AAA (future goal)]
 ```
 
-## Color Contrast (Key Pairs)
-| Foreground | Background | Contrast Ratio | WCAG AA |
-|------------|------------|----------------|---------|
-| --text-primary (#F5F0E7) | --surface (#16161A) | 13.5:1 | ✅ AAA |
-| --text-muted (#8A8882) | --surface (#16161A) | 5.2:1 | ✅ AA |
-| --brass (#D4A843) | --surface (#16161A) | 5.8:1 | ✅ AA |
-| --danger (#C8553D) | --surface (#16161A) | 4.2:1 | ✅ AA (large text) |
+## Color Contrast (computed from current tokens; background = white `--background`)
+| Foreground | Token | Ratio vs white | WCAG |
+|------------|-------|----------------|------|
+| Primary text | `--foreground` (240 10% 3.9%) | 20.0:1 | AA + AAA |
+| Secondary text | `--muted-foreground` (215.4 16.3% 46.9%) | 4.8:1 | AA (normal text) |
+| Brand/actions | `--primary` (221 83% 53%) | 5.2:1 | AA (normal text) |
+| Text on primary | `--primary-foreground` on `--primary` | 5.0:1 | AA (normal text) |
+| Error text/large UI | `--destructive` (0 84.2% 60.2%) | 3.8:1 | AA large text / UI components |
+
+Focus indication uses `--ring` (= `--primary`) via the standard `ring-2 ring-ring` pattern.
 
 ## Keyboard Navigation
-| Shortcut | Action |
-|----------|--------|
-| 1-4 | Switch sections |
-| Escape | Close drawer / cancel drag |
-| Tab | Cycle focus through rail items |
-| Enter/Space | Activate button, confirm patch |
-| Arrow keys (on knob) | Adjust parameter |
+| Input | Action |
+|-------|--------|
+| Tab / Shift+Tab | Cycle focus through interactive elements in DOM order |
+| Enter / Space | Activate buttons, links, form controls |
+| Escape | Close dialogs and popovers (shadcn/ui default) |
+| Arrow keys | Navigate menus, radio groups, and the category tree |
 
 ## ERD References
-- No accessibility-specific database tables
+- None — accessibility has no dedicated persistence
 
 ## Rules
-1. All interactive elements must be keyboard accessible
-2. All images must have alt text
-3. All form inputs must have associated labels
-4. Color must not be the only differentiator (use icons + text)
-5. Touch targets minimum 44×44px (48×48px preferred)
-6. Focus indicators must be visible (2px solid --brass outline)
-7. ARIA roles must match semantic HTML elements
+1. Every interactive element is reachable and operable by keyboard
+2. Every image carries alt text; every input has an associated `<label>`
+3. Color never encodes meaning alone — pair icons/text with state colors
+4. Touch/click targets ≥44×44px (48px preferred)
+5. Focus rings are always visible (`ring-2 ring-ring`); never removed without replacement
+6. RTL: logical properties (`ms-/me-/ps-/pe-`) so mirroring never breaks hit areas
 
 ## Examples
-- Login form: `<label htmlFor="email">{t('auth.email')}</label>` + `<input id="email" aria-required="true">`
-- Knob: `<button class="knob" role="tab" aria-selected="false" aria-label="Library section" tabindex="0">`
-- Cable: 20px transparent hit area for pointer events
+- Login form: `<label htmlFor="email">{t('auth.email')}</label>` bound to the input
+- Icon-only button: `aria-label={t('common.close')}` with visible focus ring
 
 ## Edge Cases
-- Screen reader handling of synth metaphor terminology ("knob", "cable", "jack")
-- RTL screen readers (Arabic JAWS/NVDA behavior)
-- Custom components with non-standard ARIA roles
-- Colorblind users distinguishing teal/brass/success/danger
+- Mixed RTL/LTR content (code snippets in Arabic UI) — isolate directionality per block
+- Chart/diagram content needs text alternatives or accessible summaries
 
 ## Failure Cases
-- Missing aria-label on icon-only buttons
-- Insufficient color contrast on text-muted (#8A8882) for small text
-- Keyboard trap in user drawer when open
-- Touch target smaller than 44×44px
+- Missing aria-label on icon-only button → audit failure
+- New token pairing under 4.5:1 for body text → rejected at review
 
 ## Recovery Procedures
-1. Run Lighthouse accessibility audit
-2. Verify keyboard navigation through all interactive elements
-3. Check ARIA labels with screen reader
-4. Fix color contrast issues in design tokens
+1. Run Lighthouse accessibility category; address flagged items
+2. Re-verify computed ratios after any token change (see table above)
 
 ## Refactoring Strategy
-- Add automated a11y checks to CI (axe-core)
-- Create accessibility testing checklist
-- Document screen reader behavior for all components
-- Plan for WCAG AAA compliance
+- Add automated axe-core checks to CI
+- Dark mode would invert tokens — recompute this matrix before shipping it

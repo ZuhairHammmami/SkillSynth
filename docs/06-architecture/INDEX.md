@@ -1,143 +1,117 @@
 # SS-EDS: Architecture
 
 ## Purpose
-Document the complete system architecture for SkillSynth: 20-layer Clean Architecture (FastAPI), request lifecycle, dependency flow, and deployment topology.
+Document the SkillSynth system architecture: Clean Architecture backend (8 layer directories, 7 routers), two Next.js frontends, a strict-3NF 15-table database, request lifecycle, and deployment topology.
 
 ## Responsibilities
-- Maintain architectural decision records and layer boundaries
-- Define dependency flow (Router → Service → Repository → Entity)
-- Document communication patterns (HTTP, SSE, WebSocket)
-- Track architectural debt and migration plans
+- Maintain layer boundaries and dependency direction
+- Define communication patterns (HTTP + SSE; no other transports)
+- Track architectural decisions (docs/41-decision-records/)
 
 ## Inputs
-- Phase roadmap decisions
-- Performance requirements (TTFB <100ms, LCP <1.5s)
-- Security constraints (OWASP Top 10)
+- Performance requirements (04-non-functional-requirements)
+- Security constraints (14-security, OWASP Top 10)
+- Schema truth (src/migrations/003_reduced_schema.sql)
 
 ## Outputs
 - Architecture diagrams (docs/40-diagrams/)
-- ADRs (docs/41-decision-records/)
-- Module boundary definitions (docs/49-module-boundaries/)
+- ADRs (docs/41-decision-records/, incl. ADR-013 schema reduction, ADR-014 restricted deletes)
 
 ## Dependencies
-- 07-backend (implements architecture)
-- 08-frontend (implements architecture)
-- 10-database (32-table 3NF persistence)
+- 07-backend (implements the backend layers)
+- 08-frontend / 09-admin (implement the clients)
+- 10-database (15-table persistence)
 
 ## System Design
 ```
-┌──────────────────────────────────────────────────────────┐
-│                    Browser (RTL/Arabic UI)                 │
-└──────────────────┬───────────────┬───────────────────────┘
-                   │               │
-          ┌────────┴────┐   ┌──────┴────────┐
-          │  Next.js    │   │  React Query  │
-          │  (SSR/ISR)  │   │  + API Client │
-          └──────┬──────┘   └──────┬─────────┘
-                 │                 │
-          ┌──────┴─────────────────┴──────────┐
-          │        FastAPI Backend :8000        │
-          │  ┌─────────────────────────────┐   │
-          │  │  Middleware (CORS, Security, │   │
-          │  │  Compression, CSRF)         │   │
-          │  ├─────────────────────────────┤   │
-          │  │  Routers (10 routers, ~85   │   │
-          │  │  endpoints → services/      │   │
-          │  ├─────────────────────────────┤   │
-          │  │  Services (13 services)     │   │
-          │  │  → business logic, no SQL   │   │
-          │  ├─────────────────────────────┤   │
-          │  │  Repositories (9 repos)     │   │
-          │  │  → data access, SQLAlchemy  │   │
-          │  ├─────────────────────────────┤   │
-          │  │  Entities (11 models)       │   │
-          │  │  → SQLAlchemy ORM models    │   │
-          │  └─────────────────────────────┘   │
-          │  20 layers, 91 Python files        │
-          └──────────────┬──────────────────────┘
-                         │
-             ┌───────────┴────────────┐
-             │  SQLite (dev)          │
-             │  PostgreSQL (prod)     │
-             │  Connection pool:      │
-             │  pool_size=10,         │
-             │  max_overflow=20       │
-             └────────────────────────┘
+┌────────────────────────────┐   ┌────────────────────────────┐
+│  Student Frontend :3000    │   │  Admin App :3001           │
+│  Next.js 14, ar/en, RTL    │   │  Next.js, English-only     │
+└─────────────┬──────────────┘   └─────────────┬──────────────┘
+              │        HTTP + SSE (Bearer JWT) │
+              └──────────────┬─────────────────┘
+                             ▼
+              FastAPI Backend :8000 (run.py → uvicorn)
+              ┌─────────────────────────────────────┐
+              │ Middlewares: CORS, Compression(1KB),│
+              │ SecurityHeaders, CSRF (prod only)   │
+              ├─────────────────────────────────────┤
+              │ Routers (7): auth · learning · paths│
+              │ · assessments · analytics · admin ×2│
+              │ · realtime          49 paths / 63 op│
+              ├─────────────────────────────────────┤
+              │ Services (8): business logic        │
+              │ Repositories (6): SQLAlchemy only   │
+              │ Entities (5 modules): 15 ORM tables │
+              └──────────────┬──────────────────────┘
+                             ▼
+                 SQLite (dev) / PostgreSQL (prod)
 ```
 
 ## Dependency Flow
 ```
-Router (thin handler, no logic)
-  → Service (business logic, no SQL)
-    → Repository (data access, SQLAlchemy only)
-      → Entity (ORM model)
+Router (thin handler) → Service (business logic) → Repository (data access) → Entity (ORM model)
 ```
 
 ## Sequence: Request Lifecycle
 ```
-Client → Nginx → FastAPI → Middleware stack:
-  1. CORSMiddleware (allow origins)
-  2. CompressionMiddleware (gzip >1KB)
+Client → FastAPI middleware stack:
+  1. CORSMiddleware
+  2. CompressionMiddleware (gzip for bodies ≥1KB)
   3. SecurityHeadersMiddleware (CSP, HSTS, XFO)
   4. CSRFMiddleware (prod only, double-submit)
-  → Rate Limiter (global 100/min, auth 10/min, admin 60/min)
-  → Router match
-  → Auth Policy check (get_current_user / require_permission)
-  → Pydantic validation (DTO layer)
-  → Service call
-  → Repository call
-  → DB query (SQLAlchemy, pooled connection)
-  → Response (JSON via mapper)
+→ Rate limiter (slowapi: global 100/min, auth 10/min, admin 60/min)
+→ Router match → auth policy (get_current_user / require_admin)
+→ Pydantic DTO validation → Service → Repository → DB
+→ JSON response (SSE text/event-stream on stream endpoints)
 ```
 
 ## State Diagram: Backend Startup
 ```
-[Start] → Load .env → Init DB Engine (pool_size=10, max_overflow=20)
-  → Create all tables (Base.metadata.create_all)
-  → Auto-create admin (ADMIN_EMAIL/ADMIN_PASSWORD)
-  → Attach middleware stack
-  → Mount 10 routers
-  → Attach exception handlers (429, 422, 401, 500)
-  → [Ready on :8000]
+[Start] → load_dotenv → build engine (MODE selects SQLite/PostgreSQL)
+  → lifespan: create_all (15 tables) + auto-create admin if ADMIN_PASSWORD set
+  → attach middlewares → mount 7 routers → [Ready on :8000]
 ```
 
-## Layer Directory (20 layers)
+## Layer Directory (`src/backend/`)
 ```
-routers/      services/   repositories/  entities/     dto/
-validators/   policies/   middlewares/    events/       commands/
-queries/      cache/      config/         mappers/      infrastructure/
-scheduler/    metrics/    telemetry/      exceptions/   tests/
+routers/       9 files  — 8 router modules (+ error_mapping.py); admin split across admin.py + catalog_admin.py
+services/      8 files  — auth · catalog · catalog_integrity · learning · assess · wizard · analytics · admin
+repositories/  6 files  — identity · catalog · learning · assess · engagement · integrity
+entities/      6 files  — base.py + 5 consolidated model modules (15 tables)
+dto/           4 files  — auth · catalog · learning · admin (Pydantic schemas)
+policies/      1 file   — get_current_user, require_admin (is_admin gate)
+middlewares/   3 files  — security · csrf · compression
+events/        1 file   — in-memory SSE pub/sub (publisher.py)
+config/        1 file   — app_settings.py (env, CORS, token lifetime)
++ main.py, database.py, limiter.py
 ```
+Removed layers (ADR-013 and earlier cleanups): mappers/, validators/, commands/, queries/, cache/, infrastructure/ — deleted as dead code or dissolved with their features.
 
 ## Rules
-1. No business logic in routers — thin handlers only
-2. No SQL in services — repositories own all queries
-3. All imports: `from backend.xxx import yyy` (run.py injects src/ into PYTHONPATH)
-4. Every service must have a fallback — never throw
-5. SSE for real-time, WebSocket for bidirectional
-6. No file >300 lines, no function >40 lines
+1. No business logic in routers; no SQL in services; repositories own all queries
+2. Imports use `from backend.xxx import yyy` (run.py injects src/)
+3. SSE is the only push channel — no second transport exists
+4. Authorization is binary `users.is_admin` — no role/permission tables or per-permission dependencies exist
+5. No file >300 lines, no function >40 lines
+6. Schema changes must update the canonical DDL and pass tools/verify_schema.py
 
 ## Examples
-- Routers call services, services call repositories, repositories use entities
-- Cache layer (`@cached` decorator) wraps service calls with Redis/SQLite fallback
-- Learning engine uses CQRS: commands/ + queries/ for path generation
+- POST /api/generate-path/ → paths.py → learning_service.generate_path → learning_repository persist
+- GET /api/admin/skills → catalog_admin.py (require_admin) → catalog_service → catalog_repository
 
 ## Edge Cases
-- Both backends down → graceful degradation
-- Database unreachable → read-only mode from cache
-- SSE connection lost → React Query refetch
+- MODE=prod without DATABASE_URL → startup refuses to run
+- SSE client disappears → queue cleaned up by the generator's finally block
 
 ## Failure Cases
-- Service returns error → fallback absorbs it, logs warning
-- Kahn's algorithm detects cycle → skipped edges, warning
-- Connection pool exhausted → queued, retry with backoff
+- Repository raises IntegrityError → centralized handler maps it to 409
+- FK reference missing at DTO level → validated to 400 before persistence
 
 ## Recovery Procedures
-1. Check FastAPI logs for stack trace
-2. Verify database connectivity and connection pool
-3. Check middleware and rate limiter state
+1. Check uvicorn logs for the traceback
+2. Verify DB connectivity and MODE/DATABASE_URL values
 
 ## Refactoring Strategy
-- Extract more services from monolithic routers
-- Add event sourcing for critical domain events
-- Migrate to full Redis-backed rate limiting in prod
+- Keep layer count fixed; new capability = new service module, not a new layer
+- Any layer removal requires an ADR documenting what replaced it

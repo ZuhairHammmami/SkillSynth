@@ -1,99 +1,80 @@
 # SS-EDS: Performance
 
 ## Purpose
-Document performance targets (TTFB <100ms, LCP <1.5s), current benchmark measurements, caching strategy, bundle size budgets, and optimization patterns for SkillSynth.
+Document performance targets, current dev-mode benchmarks, the response-compression and inline-cache strategy, bundle discipline, and N+1 prevention for SkillSynth.
 
 ## Responsibilities
-- Maintain sub-100ms API response times for critical endpoints
-- Enforce N+1 prevention pattern (batch-fetch + in-memory dict)
-- Monitor and optimize bundle sizes (shared JS <150KB per route)
-- Manage React Query caching strategy (staleTime, gcTime)
-- Implement code splitting and lazy loading for heavy components
-- Track and optimize Lighthouse scores
+- Keep critical endpoints within their latency budgets
+- Enforce the N+1 prevention pattern (batch-fetch + dict lookup)
+- Serve gzip-compressed responses (bodies ≥1KB)
+- Maintain React Query client caching defaults
+- Track Lighthouse scores on UI changes
 
 ## Inputs
-- Profiling data from development benchmarks
-- Database query execution plans
-- Lighthouse audit results
-- Bundle analysis (webpack/next-bundle-analyzer)
+- Dev-mode request timings
+- Query plans from services/repositories
+- Lighthouse audits
 
 ## Outputs
-- Performance budget document
-- Index optimization recommendations
-- Bundle analysis reports
-- Caching configuration
+- Benchmark table (this document, refreshed per release)
+- Index recommendations feeding 10-database
 
 ## Dependencies
-- 10-database (indexes, query optimization)
-- 07-backend (CRUD optimization, response compression)
-- 08-frontend (dynamic imports, code splitting)
-- 24-caching (Redis/SQLite cache decorators)
+- 10-database (26 indexes, query patterns)
+- 07-backend (compression middleware, inline stats cache)
+- 24-caching (cache policy)
 
 ## Sequence: Performance Optimization Flow
 ```
-Profile (request timing) → Identify Bottleneck → Design Fix → Implement → Verify → Ship
-    ↑                                                                          ↓
-    └─────────────────────── Regression check ─────────────────────────────────┘
+Profile → Identify bottleneck → Fix (index / batch / cache) → Verify (pytest + manual timing) → Merge
 ```
 
-## Current Benchmarks (Dev Mode, Authenticated)
+## Current Benchmarks (Dev Mode)
 | Endpoint | Time | Target |
 |----------|------|--------|
 | /api/auth/me | 3.5ms | <10ms |
 | /api/paths/ | 17.7ms | <30ms |
-| /api/learning/graph | ~15ms | <30ms |
-| /api/analytics/dashboard | ~25ms | <50ms |
 | /api/admin/users | 9.4ms | <30ms |
-| /api/admin/paths | 16.0ms | <30ms |
-| /api/admin/categories | 5.0ms | <20ms |
+| /api/analytics/dashboard | ~25ms | <50ms |
 
 ## State Diagram: Budget Status
 ```
-[Green (<60%)] → [Warning (60-80%)] → [Critical (80-95%)] → [Violation (>95%)]
+[Green (<60%)] → [Warning (60–80%)] → [Critical (80–95%)] → [Violation (>95%)]
 ```
 
-## Bundle Size Targets
-| Chunk | Current | Target |
-|-------|---------|--------|
-| Shared JS (all routes) | 234KB | <150KB gzipped |
-| Main entry | ~120KB | <100KB |
-| Admin routes | ~80KB | <60KB (lazy) |
-| Analytics dashboard | ~60KB | dynamic import |
+## Server-Side Levers (current reality)
+| Lever | Implementation | Config |
+|-------|----------------|--------|
+| Inline TTL cache | `_stats_cache` dict in main.py for GET /api/public/stats only | 30s TTL (`_STATS_TTL = 30`) |
+| Response compression | CompressionMiddleware | gzip when client accepts and body ≥1024 bytes |
+| Connection pooling | database.py engine (prod) | DB_POOL_SIZE=10, DB_MAX_OVERFLOW=20, pool_pre_ping |
+| SQLite pragmas (dev) | database.py | foreign_keys=ON, WAL journal |
+
+There is no decorator-based application cache — the former cache layer was removed together with its features (see 06-architecture).
 
 ## Rules
-1. No N+1 queries — batch-fetch all related data in single query
-2. React Query: staleTime=30s, gcTime=5min, refetchOnWindowFocus=true
-3. Dynamic import all heavy components (charts, admin, knowledge graph)
-4. Bundle: keep shared JS under 150KB gzipped per route
-5. Images: WebP format with next/Image optimization
-6. Cache: immutable assets with hash-based filenames
-7. API responses compressed via GzipMiddleware
+1. No N+1 queries — batch-fetch related rows once, index into a dict
+2. React Query: staleTime 30s, gcTime 5min; SSE events trigger targeted invalidation
+3. Heavy UI components load via dynamic import
+4. New expensive public reads may add an inline TTL dict following the public/stats pattern — nothing more
+5. API responses >1KB ship gzipped when the client accepts gzip
 
 ## Examples
-- N+1 fix: fetch all skill_categories in one query → dict mapping → O(1) lookup per profile
-- Dynamic import: `dynamic(() => import('./AnalyticsDashboard'), { ssr: false })`
-- Caching: `@cached(ttl=300)` decorator on expensive queries
+- GET /api/public/stats hits `_stats_cache` for 30s between DB aggregations
+- Graph endpoint builds nodes/edges from two batched queries, not per-skill lookups
 
 ## Edge Cases
-- Cold database start on first request (SQLite warmup)
-- SSE connections consuming server memory (per-user queue)
-- Rate limiting causing perceived slowness under load
-- Large knowledge graph response size
+- Cold SQLite on first request → first hit slower, subsequent hits warm
+- Many concurrent SSE streams consume per-user queues → bounded queues drop rather than block
 
 ## Failure Cases
-- N+1 query introduced → blocked in PR review
-- Bundle exceeds budget → build warning in CI
-- Memory leak from SSE connection pools → periodic cleanup
-- Slow query under load → missing index identified
+- N+1 introduced → blocked in review (rule 1)
+- Latency budget exceeded after a change → fix before merge
 
 ## Recovery Procedures
-1. Run query profiling to identify slow queries
-2. Add missing index or rewrite query with batch JOIN
-3. Split large bundle with dynamic import boundaries
-4. Monitor SSE connection count and queue sizes
+1. Re-run timing against the affected endpoints after any schema/index change
+2. Add a missing index via DDL + entities update (verify with verify_schema.py)
 
 ## Refactoring Strategy
-- Monthly Lighthouse audit on all routes
-- Quarterly database query plan review
-- Implement Redis caching layer for hot endpoints
-- Add performance regression tests in CI pipeline
+- Refresh benchmarks each release
+- Revisit caching scope only if measured need appears; changes require an ADR

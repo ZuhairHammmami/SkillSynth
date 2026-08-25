@@ -1,106 +1,79 @@
 # SS-EDS: Realtime
 
 ## Purpose
-Document the real-time event infrastructure using SSE (Server-Sent Events) and WebSocket, connection manager with per-user broadcasting, heartbeat (30s), event type catalog, and React Query integration for live updates.
+Document the realtime infrastructure: unidirectional SSE (Server-Sent Events) streams for authenticated users and an admin channel, backed by an in-memory pub/sub bus (`src/backend/events/publisher.py`). SSE is the only push transport in the system.
 
 ## Responsibilities
-- Stream real-time events to authenticated clients via SSE at GET /api/realtime/events
-- Manage WebSocket connections at /ws with subscribe/unsubscribe protocol
-- Maintain per-user connection pools with queue-based broadcasting
-- Handle connection lifecycle (connect, keepalive, reconnect, disconnect)
-- Broadcast 12 event types to users and admin channels
-- Provide admin notification endpoint at POST /api/realtime/notify
+- Stream events to a user at GET /api/realtime/events and the alias GET /api/events
+- Stream admin-channel frames at GET /api/realtime/admin/events (optional category filter)
+- Keep connections alive with 30s pings; drop queues on disconnect
+- Expose `send_event(profile_id, event_type, data)` as the single publish API
 
 ## Inputs
-- Step completion events from progress_router.py
-- Path generation events from paths_router.py
-- Assessment completion events from assessments_router.py
-- XP events from service layer
-- System alerts from admin
+- Path generation success → emits path_generated (routers/paths.py)
+- Assessment submission success → emits assessment_completed (routers/assessments.py)
+- Connection lifecycle of each client
 
 ## Outputs
-- SSE stream at GET /api/realtime/events (text/event-stream)
-- WebSocket connection at /ws (JSON message protocol)
-- Real-time UI updates via React Query cache invalidation
-- Admin broadcast via POST /api/realtime/broadcast
+- text/event-stream responses with JSON `data:` frames
+- React Query invalidation on the client via shared/hooks/useSSE.ts
 
 ## Dependencies
-- 07-backend (SSEService, publisher.py, realtime_router.py)
-- 08-frontend (EventSource consumer in React Query hooks)
-- 10-database (events table for audit trail)
+- 07-backend (publisher.py, routers/realtime.py)
+- 08-frontend (useSSE consumer)
 
 ## Sequence: SSE Connection Lifecycle
 ```
-Client → GET /api/realtime/events (JWT auth via Bearer/cookie/query)
-  → Server validates token → extracts profile_id
-  → Creates per-user asyncio.Queue → appends to event_clients[profile_id]
-  → Emits {"type": "connected"} confirmation
-  → On user event: Server puts message on queue → client receives
-  → Every 30s idle: Server sends {"type": "ping"} keepalive
-  → On disconnect: Queue removed from event_clients → cleanup
+Client → POST /api/auth/sse-token (5-min SSE JWT, type=sse)
+  → GET /api/realtime/events?token=<sse_token>
+  → Server validates token, resolves profile_id
+  → Registers per-user asyncio.Queue in event_clients[profile_id]
+  → Yields {"type": "connected"}
+  → On publish: send_event() puts frame on queue → yielded to client
+  → Idle 30s: yields {"type": "ping"}
+  → Disconnect: finally-block removes the queue
 ```
 
 ## State Diagram: Connection States
 ```
-[Connecting] → [Connected] → [Receiving] → [Disconnected]
-       ↓           ↓              ↓               ↓
-[Auth Failed]  [Heartbeat]  [Queue Full]    [Reconnect (backoff)]
+[Connecting] → [Connected] → [Receiving] ─┬─→ [Disconnected] → [Reconnect (new token)]
+                 │              ↓          │
+              [Auth Failed (401)]     [Ping keepalive every 30s idle]
 ```
 
-## Sequence: WebSocket Protocol
-```
-Client → /ws (handshake)
-  → Server accepts → awaits auth JSON {token: "..."}
-  → Validates → sends {"type":"connection_status","status":"connected"}
-  → Client sends {"type":"ping"} → Server responds {"type":"pong"}
-  → Client sends {"type":"subscribe","channels":[...]} → Server acknowledges
-  → Client sends {"type":"unsubscribe","channels":[...]} → Server acknowledges
-  → On disconnect → cleanup active_websockets[profile_id]
-```
+## Emitted Event Types (complete list — verified in code)
+| Event | Source | Payload |
+|-------|--------|---------|
+| connected | publisher.py generators | none (connection confirmation) |
+| ping | publisher.py keepalive | none (30s idle heartbeat) |
+| path_generated | routers/paths.py:32 | {"path_id": <id>} |
+| assessment_completed | routers/assessments.py:87 | {"assessment_id", "score", "total_questions"} |
 
-## Event Types
-| Event | Trigger | Payload |
-|-------|---------|---------|
-| progress_update | Step complete/revert | path_id, completed_steps, total_steps, percentage |
-| ~~xp_update~~ | ~~XP earned~~ | ~~xp_earned, total_xp, level, xp_for_next~~ | **REMOVED** |
-| notification | System or admin push | title, message, type |
-| analytics_refresh | Analytics update | {} (trigger refetch) |
-| system_alert | System event | level, message |
-| step_completed | Step completion | profile_id, step_id, path_id |
-| step_reverted | Step undo | profile_id, step_id, path_id |
-| path_generated | Path generation | path_id |
-| skill_progress_updated | Skill progress | skill_id, new_level |
-| ~~achievement_unlocked~~ | ~~Achievement~~ | ~~achievement_type, title~~ | **REMOVED** |
-| assessment_completed | Assessment | assessment_id, score |
-| connection_status | Connection lifecycle | status, profile_id |
+The admin channel (/api/realtime/admin/events) forwards activity_log-shaped frames and supports `?category=` filtering.
 
 ## Rules
-1. Auth supports: Bearer token, query param token, or authToken cookie
-2. Keepalive: 30s ping interval via asyncio.wait_for(timeout=30)
-3. SSE uses queue-per-client with QueueFull dropping (logged warning)
-4. WebSocket uses JSON protocol with typed messages (ping/pong/subscribe)
-5. Admin events broadcast to all admin_event_clients
+1. Token auth accepts Bearer header or `token` query parameter (5-min SSE token recommended)
+2. One asyncio.Queue per connected user per stream; multiple tabs = independent queues
+3. Events are fire-and-forget — no persistence, replay, or delivery guarantee
+4. Queue overflow drops the event (warning logged); clients recover by refetching
+5. Heartbeat ping after any 30s idle window keeps proxies/NAT from closing the stream
 
 ## Examples
-- User completes step → SSEService.send_progress_update → SSE event → React Query invalidates path query → UI updates
-- Multiple browser tabs → each has own SSE connection → independent queue
+- Wizard completes → send_event(user_id, "path_generated", {"path_id": 42}) → frontend invalidates path queries
+- Assessment submit → assessment_completed frame with score payload → analytics queries refresh
 
 ## Edge Cases
-- Event queue overflow → message dropped with warning, client refetches on reconnect
-- Network interruption → EventSource auto-reconnects, React Query refetches full state
-- Server restart → all connections drop, clients reconnect with backoff
+- SSE token expires mid-stream → existing stream continues; new connections need a fresh token
+- Server restart → all in-memory queues vanish; clients auto-reconnect via EventSource
 
 ## Failure Cases
-- Queue full for user → event dropped to prevent memory leak
-- Invalid token on SSE → 401 HTTP response, client must re-auth
-- WebSocket auth failure → {"type":"error"} message + close
+- Invalid/expired token on connect → HTTP 401 before streaming starts
+- Slow consumer → bounded queue drops frames rather than blocking publishers
 
 ## Recovery Procedures
-1. Client-side: EventSource auto-reconnect with exponential backoff
-2. After reconnect: React Query invalidates all active queries for full state sync
-3. Server-side: stale connections cleaned on keepalive timeout (queue.get timeout)
+1. Client: EventSource auto-reconnects; fetch a new sse-token if 401 persists
+2. After reconnect, React Query refetches active queries for full state sync
 
 ## Refactoring Strategy
-- Migrate from per-queue to Redis pub/sub for horizontal scaling
-- Add event persistence with dead-letter queue for guaranteed delivery
-- Implement channel-based authorization for admin SSE filtering
+- Multi-process deployments would require extracting the bus (Redis pub/sub) — needs an ADR first
+- New event types must be added here and to 23-events together

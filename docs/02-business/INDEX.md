@@ -1,75 +1,64 @@
 # SS-EDS: Business
 
 ## Purpose
-Document the business model, monetization strategy, market positioning, and operational constraints for SkillSynth. Covers deployment models (self-hosted vs. SaaS), pricing tiers, and revenue drivers.
+Document the operational model for SkillSynth: self-hosted deployment topology (FastAPI + Next.js on SQLite/PostgreSQL), cost drivers, and licensing posture. No managed-cloud dependency is assumed.
 
 ## Responsibilities
-- Define business model (open-core + premium)
-- Track operational costs (LLM API, SendGrid, hosting)
-- Document licensing (AGPL? Custom?)
-- Manage deployment targets (Render, Vercel, Supabase)
+- Define the deployment model (self-hosted Docker Compose; single VPS or equivalent)
+- Track operational cost drivers (hosting, optional LLM keys)
+- Document data ownership and export expectations
 
 ## Inputs
-- Market analysis
-- Infrastructure cost reports
-- Competitive pricing data
+- Infrastructure constraints (17-deployment)
+- Hosting cost reports
+- Licensing decisions (docs/41-decision-records/)
 
 ## Outputs
-- Pricing tier definitions
-- Cost-per-user estimates
-- Deployment cost projections
+- Deployment topology description
+- Cost-driver inventory
 
 ## Dependencies
-- 17-deployment (infrastructure costs)
-- 01-product (features determine tiers)
+- 17-deployment (build/run commands, Docker files)
+- 01-product (feature scope determines cost surface)
 - 14-security (compliance requirements)
 
-## Sequence: User Onboarding to Revenue
+## Sequence: User Onboarding Flow
 ```
-Sign Up → Free Tier → Usage → Engagement → Upgrade Prompt → Paid Tier
-                                          ↓
-                                    Feature Gate
-                                          ↓
-                                Premium Feature Unlock
+Visit landing → Register → Assessment → Wizard → Generated Path → Step Completion → Analytics
 ```
 
-## State Diagram: Subscription Lifecycle
+## State Diagram: Environment Lifecycle
 ```
-[Trial] → [Active] → [Past Due] → [Cancelled] → [Churned]
-    ↓          ↓           ↓
-[Expired] [Renewed]  [Grace Period]
+[dev: SQLite + uvicorn :8000] → [staging/prod: PostgreSQL via DATABASE_URL]
+        ↑                              ↓
+        └──────── re-seed (seed_v3.py) ┘
 ```
 
 ## ERD References
-- profiles table ~~(role_id FK → roles)~~ for RBAC-based gating (role_id removed)
-- events table for billing analytics
+- users — account records; activity_log — audit trail (billing analytics not implemented)
 
 ## Rules
-- Core learning engine is always free
-- Premium features: advanced analytics, LLM-powered explanations, admin reports
-- No vendor lock-in — full data export available
-- Educational institution discounts available
+1. Core learning engine is free of external service dependencies — FastAPI + SQLite runs offline
+2. Production requires only `MODE=prod`, `SECRET_KEY`, and `DATABASE_URL` (PostgreSQL)
+3. No vendor lock-in: schema truth is portable SQL DDL (`src/migrations/003_reduced_schema.sql`); backups via POST /api/admin/backups
+4. Optional integrations (LLM keys in .env.example) are not consumed by current backend code
 
 ## Examples
-- Free tier: 3 paths, basic analytics, community resources
-- Premium: unlimited paths, LLM assistant, priority support
+- Full stack on one machine: `docker compose up -d` starts backend :8000, student frontend :3000, admin app :3001
+- Minimal dev setup: `python run.py` with SQLite + `seed_v3.py` (~1,100 rows)
 
 ## Edge Cases
-- Nonprofit / educational institution pricing
-- Enterprise self-hosted vs. cloud SaaS
-- Usage-based billing for LLM API calls
+- MODE=prod without DATABASE_URL → startup error (by design)
+- SQLite file locked by another process → connection failure; restart the process
 
 ## Failure Cases
-- LLM API costs exceed revenue (mitigation: hybrid local-first strategy)
-- SendGrid delivery failures impact password reset flow
-- Supabase overage costs from unoptimized queries
+- Hosting budget overrun → scale down to single-node Docker; no per-service cloud bills exist
+- Disk exhaustion from backups → prune the backup directory served by GET /api/admin/backups
 
 ## Recovery Procedures
-1. Switch LLM from fallback to local-only mode to cut costs
-2. Implement rate limiting on expensive endpoints
-3. Review infra costs weekly against budget
+1. Restore from a backup artifact produced by POST /api/admin/backups
+2. Re-run seed_v3.py against a fresh database if no backup exists
 
 ## Refactoring Strategy
-- Open-core model allows community contributions to core engine
-- Premium features are flag-based and testable in dev
-- Regular cost audit every sprint
+- Keep the operational footprint at one compose file; add services only when code consumes them
+- Review .env.example each release and delete variables no code reads

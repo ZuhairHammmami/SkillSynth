@@ -1,132 +1,83 @@
 # SS-EDS: Caching
 
 ## Purpose
-Document the multi-layer caching strategy — Redis-backed with SQLite/in-memory fallback, decorator-based API caching, and React Query client-side cache invalidation.
+Document the caching reality of SkillSynth: one server-side inline TTL cache (GET /api/public/stats, 30s), gzip response compression, HTTP-level asset caching, and the React Query client cache. No decorator-based or Redis application cache exists — that layer was removed.
 
 ## Responsibilities
-- Provide `@cached` decorator for server-side function result caching
-- Provide `@invalidate_cache` decorator for cache busting on mutations
-- Manage Redis connection with automatic SQLite/in-memory fallback
-- Configure React Query client-side cache (staleTime, gcTime)
-- Handle cache invalidation on SSE-triggered data mutations
+- Serve public stats from the in-process `_stats_cache` dict with a 30s TTL
+- Compress JSON responses ≥1KB via CompressionMiddleware
+- Define React Query defaults (staleTime/gcTime) and invalidation triggers
+- Keep pooled DB connections healthy (pool_pre_ping) instead of caching query results
 
 ## Inputs
-- API response patterns and TTL requirements
-- Data mutation frequency
-- Performance targets (TTFB <100ms)
+- Request frequency for public stats
+- SSE events signaling data mutations
 
 ## Outputs
-- Cache configuration (TTL=300s, pool_size=10)
-- Cache invalidation rules
-- Redis → InMemory fallback chain
+- Fast repeated reads of GET /api/public/stats (one aggregation per 30s window)
+- gzipped responses for capable clients
 
 ## Dependencies
-- 07-backend (cache/cache_service.py)
-- 08-frontend (React Query)
+- 07-backend (main.py inline cache, middlewares/compression.py)
+- 08-frontend (React Query provider)
 - 10-database (connection pooling)
 
-## Sequence: Cache Read Flow
+## Sequence: Public Stats Cache Flow
 ```
-Service call wrapped in @cached(ttl=300)
-  → Generate cache key: module:function:hash(args)
-  → Try Redis GET (if connected)
-  → Hit? → Return cached value
-  → Miss? → Try SQLite in-memory dict
-  → Hit? → Return cached value
-  → Miss? → Execute function → SET result → Return
-```
-
-## Sequence: Cache Invalidation Flow
-```
-Mutation endpoint wrapped in @invalidate_cache("pattern:*")
-  → Execute mutation (DB write)
-  → Delete all keys matching pattern from Redis
-  → Delete all matching keys from in-memory cache
-  → Return mutation result
+GET /api/public/stats
+  → lock _stats_cache
+  → fresh (age ≤ 30s)? → return cached value
+  → stale/empty?       → run aggregations → store {value, ts} → return
 ```
 
 ## State Diagram: Cache Entry Lifecycle
 ```
-[Empty] → [Function Executes] → [Cached (ttl=300s)] → [Expired]
-                                ↓                        ↓
-                          [Cache Hit]           [Cache Miss → Recompute]
-                                ↓
-                    [Cache Invalidation at Mutation]
+[Empty] → [First request computes + stores] → [Hits for 30s] → [Expired]
+                  ↑                                            ↓
+                  └────────── next request recomputes ─────────┘
 ```
 
-## Caching Layers
+## Caching Layers (current)
 | Layer | Technology | Config |
 |-------|------------|--------|
-| Server-side API | Redis / InMemory | @cached(ttl=300) |
-| Server-side busting | Redis / InMemory | @invalidate_cache(pattern) |
-| Client-side (React Query) | Browser memory | staleTime=30s, gcTime=5min |
-| Asset cache | Browser/CDN | next.config.js headers |
+| Server inline | dict in main.py (`_stats_cache`, `_STATS_TTL = 30`) | GET /api/public/stats only |
+| Response compression | CompressionMiddleware | gzip when Accept-Encoding allows and body ≥1024B |
+| Client queries | React Query | staleTime 30s · gcTime 5min · retry 2 |
+| Static assets | Next.js build pipeline | content-hashed filenames |
 
-## Cache Key Format
-```
-{module}:{function_name}:{hash(kwargs)}:{hash(args[1:])}
-Example: backend.services.analytics_service:get_dashboard:12345:67890
-```
+Removed (do not reintroduce without an ADR): decorator-based function-result caching, its invalidation decorators, and their backing services — deleted with the features they served; docs/06-architecture lists cache/ among removed layers.
 
-## Connection Pooling (database.py)
+## Invalidation Model
+- Server side: the stats entry simply expires after 30s; no busting API exists
+- Client side: mutations invalidate query keys in their hooks' onSuccess; SSE frames (`path_generated`, `assessment_completed`) trigger targeted refetches via useSSE
+
+## Connection Pooling (database.py, prod)
 ```python
-DB_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "10"))        # default: 10
-DB_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "20"))  # default: 20
-DB_POOL_TIMEOUT = int(os.getenv("DB_POOL_TIMEOUT", "30"))  # default: 30s
-pool_pre_ping=True  # verify connections before use
-```
-
-## SQLite WAL Performance (dev mode)
-```python
-PRAGMA foreign_keys=ON
-PRAGMA journal_mode=WAL
-PRAGMA synchronous=NORMAL
-PRAGMA cache_size=-8000   # 8MB cache
-PRAGMA temp_store=MEMORY
-```
-
-## Server-side Cache Decorators
-```python
-@cached(ttl=300)           # Cache result for 5 minutes
-def get_dashboard(db, user):
-    return compute_dashboard(db, user)
-
-@invalidate_cache("dashboard:*")  # Bust dashboard cache on mutation
-def update_profile(db, user_id, data):
-    return repository.update(db, user_id, data)
-```
-
-## React Query Configuration
-```typescript
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30 * 1000,      // 30s until stale
-      gcTime: 5 * 60 * 1000,     // 5min garbage collection
-      retry: 2,                   // retry failed requests twice
-    },
-  },
-});
+create_engine(DATABASE_URL,
+    pool_size=DB_POOL_SIZE,          # default 10
+    max_overflow=DB_MAX_OVERFLOW,    # default 20
+    pool_timeout=DB_POOL_TIMEOUT,    # default 30s
+    pool_pre_ping=True)
 ```
 
 ## Rules
-1. Cache TTL defaults to 300s (5 minutes), configurable per @cached
-2. Auth queries never cached (user profile, permissions)
-3. SSE events trigger targeted React Query invalidation
-4. Connection pool: pool_size=10, max_overflow=20
-5. Fallback chain: Redis → InMemory dict → Compute
+1. The inline-cache pattern is reserved for cheap-to-stale public reads; auth and per-user data are never cached server-side
+2. React Query is the only client cache; do not add ad-hoc memoization layers for API data
+3. Any new server cache requires an ADR (the previous layer was removed deliberately)
+4. Compression skips responses that already carry Content-Encoding or are <1KB
+
+## Examples
+- Landing page polls /api/public/stats → at most one DB aggregation per 30s across all visitors
+- Step completion → mutation hook invalidates ['progress'] keys → dashboard refetches
 
 ## Edge Cases
-- Redis unavailable → silent fallback to in-memory dict
-- Cache stampede on expiry → mitigated by short TTL + fallback compute
-- Race condition on invalidation → stale data served for at most one request
+- Cache stampede is bounded by the single lock around recompute
+- Redis absence has no effect — nothing depends on it (only prod rate-limit storage optionally uses it)
 
 ## Failure Cases
-- Redis connection leak → max_overflow exhausted, queued
-- In-memory cache OOM → periodic cleanup (expired keys pruned on access)
-- Cache key collision → hash-based keys prevent collisions
+- Stale stats up to 30s — accepted by design for a public counter
+- Memory growth of the one-entry dict is impossible (single key)
 
 ## Recovery Procedures
-1. Restart with cleared cache: delete redis keys or restart server
-2. Bump CACHE_TTL env var for slower-changing data
-3. Clear React Query cache: queryClient.clear()
+1. Restart clears the in-memory stats cache automatically
+2. Clear client state with `queryClient.clear()` when debugging UI staleness
