@@ -10,7 +10,6 @@ export interface Profile {
 
 export interface ProfileUpdate {
   full_name?: string;
-  skill_profile?: Record<string, unknown>;
 }
 
 export interface PasswordChange {
@@ -217,7 +216,7 @@ export interface AdminDashboard {
 }
 
 export interface WizardOptions {
-  job_roles: { title: string; career_field: string }[];
-  categories: Category[];
-  resource_types: string[];
+  job_roles: { title: string; description?: string; career_field: string }[];
+  career_fields: Record<string, { title: string; description?: string; career_field: string }[]>;
+  preferences: { formats: string[]; languages: string[] };
 }

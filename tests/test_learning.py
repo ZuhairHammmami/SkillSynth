@@ -144,3 +144,28 @@ class TestStepProgress:
             "total_paths", "total_steps", "completed_steps",
             "completion_percentage", "remaining_hours", "total_hours",
         }
+
+
+class TestWizardScoringNoDowngrade:
+
+    def test_empty_answers_do_not_downgrade_proficiency(
+            self, api_client, user_token, db_session):
+        """Regression: regenerating a path with no wizard answers must not
+        zero existing user_skills (final-review Critical finding)."""
+        from backend.entities.catalog import Skill
+        from backend.repositories import assess_repository as arepo
+
+        assessment = arepo.get_all_assessments(db_session)[0]
+        skill = db_session.query(Skill).get(assessment.skill_id)
+        assert skill is not None
+        arepo.upsert_user_skill(db_session, 4, skill.id, 5)  # veteran id=4
+        db_session.commit()
+
+        response = api_client.post("/api/generate-path/", json={
+            "goal": "Frontend Developer", "weekly_hours": 10,
+            "preferences": {}, "answers": {},
+        }, headers={"Authorization": f"Bearer {user_token}"})
+        assert response.status_code == 200, response.text
+
+        level = arepo.get_skill_profile(db_session, 4).get(skill.name)
+        assert level == 5, f"proficiency was downgraded to {level}"

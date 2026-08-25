@@ -73,7 +73,9 @@ def _score_answers(db, skill_rows: list, answers: dict[str, int],
     """Proficiency per skill from wizard answers (upserts user_skills).
 
     Graded against assessment_questions.correct_index using ids built
-    by assess_service.normalize_key; quiz-less skills keep old level.
+    by assess_service.normalize_key. A skill keeps its existing level
+    when the user gave no answers for it (empty answers must never
+    downgrade mastery); answered skills take the computed level.
     """
     ids = [s.id for s in skill_rows]
     assessments = assess_repository.get_assessments_for_skills(db, ids)
@@ -83,11 +85,15 @@ def _score_answers(db, skill_rows: list, answers: dict[str, int],
         assessment = assessments.get(skill.id)
         questions = (assess_repository.get_questions(db, assessment.id)
                      if assessment else [])
-        if questions:
+        answered = {
+            i: answers[f"{normalize_key(skill.name).lower()}_q{i}"]
+            for i in range(len(questions))
+            if f"{normalize_key(skill.name).lower()}_q{i}" in answers
+        }
+        if questions and answered:
             correct = sum(
                 1 for i, q in enumerate(questions)
-                if answers.get(
-                    f"{normalize_key(skill.name).lower()}_q{i}") == q.correct_index)
+                if i in answered and answered[i] == q.correct_index)
             level = max(0, min(5, round(correct / len(questions) * 5)))
         else:
             level = current.get(skill.name, 0)

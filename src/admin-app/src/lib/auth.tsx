@@ -9,7 +9,6 @@ interface Profile {
   email: string;
   full_name?: string;
   is_admin: boolean;
-  role_id?: number;
 }
 
 interface AuthContextType {

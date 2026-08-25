@@ -3,7 +3,6 @@ export interface Profile {
   email: string;
   full_name?: string;
   is_admin: boolean;
-  role_id?: number;
   created_at?: string;
 }
 
@@ -88,7 +87,7 @@ export interface Event {
   data?: Record<string, unknown>;
   ip_address?: string;
   created_at?: string;
-  user?: { full_name?: string; email?: string; role_name?: string; is_admin?: boolean };
+  user?: { full_name?: string; email?: string; is_admin?: boolean };
 }
 
 export interface AdminDashboard {

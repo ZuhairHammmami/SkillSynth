@@ -283,7 +283,13 @@
     "generateButton": "Generate My Path",
     "generating": "Generating your path...",
     "back": "Back",
-    "next": "Next"
+    "next": "Next",
+    "assessmentLoading": "Loading questions...",
+    "assessmentNone": "No assessment questions available for this goal. You can continue without assessment.",
+    "assessmentProgress": "{answered}/{total} answered",
+    "continueWithoutAssessment": "Continue without assessment",
+    "continueWithAssessment": "Continue with assessment",
+    "questionLabel": "Question {n}"
   },
   "paths": {
     "title": "My Learning Paths",
@@ -608,7 +614,9 @@
     "sendReset": "Send reset link",
     "backToSignIn": "Back to sign in",
     "checkEmailTitle": "Check your email",
-    "checkEmailDesc": "If an account with that email exists, we've sent a password reset link."
+    "checkEmailDesc": "If an account with that email exists, we've sent a password reset link.",
+    "devResetNote": "Dev mode: no email is sent. Use this link to reset your password (valid 30 min):",
+    "devResetLink": "Open reset link"
   },
   "resetPasswordPage": {
     "title": "Set new password",

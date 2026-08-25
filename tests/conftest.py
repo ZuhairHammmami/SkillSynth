@@ -80,6 +80,17 @@ def api_client():
 
 
 @pytest.fixture
+def db_session():
+    """One direct session into the isolated test DB (for assertions that
+    must inspect persisted state, e.g. user_skills after regeneration)."""
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@pytest.fixture
 def user_token():
     response = client.post(
         "/api/auth/token",

@@ -64,6 +64,18 @@ def get_assessment_questions(skill_id: int, db: Session = Depends(get_db),
     return _questions_for_skill_id(db, skill_id)
 
 
+@router.get("/assessments/role/{job_role_title}")
+def get_role_questions(job_role_title: str, db: Session = Depends(get_db),
+                       current_user=Depends(get_current_user)):
+    """Return question payloads for every quiz-covered skill of a job role.
+
+    Delegates to assess_service.questions_for_skill, whose ids
+    ("<normalized_skill>_q<i>") match the wizard answer keys consumed by
+    learning_service._score_answers; called by PathWizard's assessment
+    step after goal selection."""
+    return assess_service.questions_for_skill(db, job_role_title)
+
+
 @router.post("/assessments/submit")
 def submit_assessment(data: AssessmentSubmitInput, db: Session = Depends(get_db),
                       current_user=Depends(get_current_user)):
