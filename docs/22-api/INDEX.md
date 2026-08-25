@@ -60,7 +60,7 @@ GET dashboard · skill-growth · path-progress/{path_id} · learning-history
 | Resource | Operations |
 |----------|-----------|
 | users | GET list · POST · PUT {id} · DELETE {id} |
-| skills | GET · POST · PUT {id} · DELETE {id} (?force=true bypasses 409 census) |
+| skills | GET · POST · PUT {id} · DELETE {id} (?force=true bypasses the 409 dependents census) |
 | categories | GET · POST · PUT {id} · DELETE {id} (?force=true) |
 | resources | GET · POST · PUT {id} · DELETE {id} |
 | job-roles | GET · POST · PUT {id} · DELETE {id} (?force=true) |
@@ -88,7 +88,7 @@ POST /api/auth/token        Body: grant_type=password&username=<email>&password=
 POST /api/generate-path/    Header: Authorization: Bearer <jwt>
 → 200 PathDetailOut {id, title, steps:[...]}
 
-DELETE /api/admin/skills/12 → 409 {"detail": {"census": [...]}}   # dependents exist
+DELETE /api/admin/skills/12 → 409 {"detail": {"message": "...", "dependents": {...}}}  # per-table counts
 DELETE /api/admin/skills/12?force=true → 200                      # cascading removal
 ```
 
