@@ -15,7 +15,7 @@ src/admin-app/   Admin app :3001 — English-only, CRUD dialogs + force-delete f
 docs/            SS-EDS documentation (50 numbered sections, each with INDEX.md)
 seed_v3.py       15-table seed (~1109 rows, FK-gated, idempotent)
 tools/           verify_schema.py and other repo tooling
-tests/           pytest suite (142 tests, isolated temp DB per run)
+tests/           pytest suite (143 tests, isolated temp DB per run)
 ```
 
 ## Quick Start
@@ -37,7 +37,7 @@ PYTHONPATH=src python seed_v3.py
 ## Tests & Verification
 
 ```bash
-PYTHONPATH=src python -m pytest tests/ -q        # 142 passed; isolated temp DB, dev DB untouched
+PYTHONPATH=src python -m pytest tests/ -q        # 143 passed; isolated temp DB, dev DB untouched
 PYTHONPATH=src python tools/verify_schema.py     # prints SCHEMA MATCH on success
 cd src/frontend && pnpm type-check && pnpm lint && pnpm build
 cd src/admin-app && pnpm type-check && pnpm build

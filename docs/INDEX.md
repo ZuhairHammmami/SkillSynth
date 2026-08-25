@@ -96,7 +96,7 @@ cd src/admin-app && pnpm dev
 
 ## Quick Reference
 - **Seed**: `PYTHONPATH=src python seed_v3.py` (~1109 rows, FK-gated, idempotent)
-- **Tests**: `PYTHONPATH=src python -m pytest tests/ -q` — 142 passed, isolated temp DB per run
+- **Tests**: `PYTHONPATH=src python -m pytest tests/ -q` — 143 passed, isolated temp DB per run
 - **Schema**: `PYTHONPATH=src python tools/verify_schema.py` → SCHEMA MATCH (15 tables)
 - **API**: 7 routers · 49 paths · 63 operations; OpenAPI UI at `http://localhost:8000/docs`
 - **Integrity**: restricted deletes → 409 census + `?force=true`; cycles and bad refs rejected at write time ([ADR-014](41-decision-records/adr-014.md))
