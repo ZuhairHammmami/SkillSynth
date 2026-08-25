@@ -164,31 +164,6 @@ def generate_path(db, user, data) -> tuple[dict | None, str | None]:
     return format_path_detail(db, path, user.id), None
 
 
-def generate_personalized_path(db, user_id: int, goal_skills: list[str],
-                               weekly_hours: int = 10,
-                               preferences: dict | None = None) -> dict:
-    """Skill-name generation for GET /learning/path/generate returning
-    the historical summary {path_id,title,steps_count,total_hours,...}."""
-    all_by_name = {s.name.lower(): s for s in catalog_repository.get_all_skills(db)}
-    skill_rows = [all_by_name[g.lower()] for g in goal_skills if g.lower() in all_by_name]
-    profile = assess_repository.get_skill_profile(db, user_id)
-    for skill in skill_rows:
-        assess_repository.upsert_user_skill(
-            db, user_id, skill.id, profile.get(skill.name, 0))
-    levels = {s.id: profile.get(s.name, 0) for s in skill_rows}
-    plan = _order_by_prereqs(db, [s for s in skill_rows
-                                  if levels[s.id] < MASTERY_LEVEL])
-    prefs = dict(preferences or {})
-    prefs["weekly_hours"] = weekly_hours
-    path = _persist_plan(
-        db, user_id, f"Personalized Path: {', '.join(goal_skills[:3])}",
-        f"Personalized path to master {', '.join(goal_skills)}.", None,
-        plan, levels, prefs)
-    return {"path_id": path.id, "title": path.title, "steps_count": len(plan),
-            "total_hours": path.total_estimated_hours,
-            "total_weeks": path.total_estimated_weeks}
-
-
 def _serialize_step(db, step, completed_ids: set[int]) -> dict:
     """One steps[] entry; content mirrors description and is_completed
     comes from the completed-step id set."""

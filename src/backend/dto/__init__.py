@@ -20,8 +20,7 @@ from backend.dto.learning import (
     DetailedPreferences, GeneratePathIn, StepResource, StepOut,
     PathOut, PathDetailOut, ProgressPathOut, ProgressDashboardOut,
     StepCompletionResponse, GraphNode, GraphEdge, GraphCategory,
-    GraphOut, GapPrerequisite, GapItem, GapsOut, RecommendationItem,
-    RecommendationsOut, GeneratedPathSummary, PathSkillsUpdate, PathUpdate,
+    GraphOut, GapPrerequisite, GapItem, GapsOut, PathUpdate,
 )
 from backend.dto.admin import (
     AdminCreateUser, AdminUserUpdate, AdminUserOut,
@@ -41,9 +40,7 @@ __all__ = [
     "DetailedPreferences", "GeneratePathIn", "StepResource", "StepOut",
     "PathOut", "PathDetailOut", "ProgressPathOut", "ProgressDashboardOut",
     "StepCompletionResponse", "GraphNode", "GraphEdge", "GraphCategory",
-    "GraphOut", "GapPrerequisite", "GapItem", "GapsOut",
-    "RecommendationItem", "RecommendationsOut", "GeneratedPathSummary",
-    "PathSkillsUpdate", "PathUpdate",
+    "GraphOut", "GapPrerequisite", "GapItem", "GapsOut", "PathUpdate",
     "AdminCreateUser", "AdminUserUpdate", "AdminUserOut",
     "UserActivityReport", "ContentEngagementReport", "SystemHealthReport",
     "PathAdminView", "EventUserInfo", "ActivityItemOut",

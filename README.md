@@ -1,58 +1,49 @@
-# اسم المشروع (SkillSynth)
+# SkillSynth
 
-أهلاً بك في مشروعنا! هذا الدليل سيساعدك على فهم المشروع وتشغيله على جهازك بسهولة.
+SkillSynth is an **Adaptive Learning OS**: a FastAPI + Next.js platform that builds personalized, skill-based learning paths from a prerequisite graph, with assessments, analytics, real-time updates, and a separate admin console. Arabic-first (RTL) UI for learners; documentation follows the SS-EDS system in [`docs/`](docs/INDEX.md).
 
-## نظرة عامة
-هذا المشروع عبارة عن تطبيق ويب يتكون من جزأين رئيسيين:
-- **Frontend**: واجهة المستخدم (المجلد `frontend`).
-- **Backend**: الخادم وقواعد البيانات (المجلد `backend`).
-- **data**:  الذكاء و توليد المسارات (المجلد `data`).
+## Architecture
 
-## المتطلبات الأساسية (Prerequisites)
-قبل البدء، تأكد من تثبيت البرامج التالية على جهازك:
-- [Node.js](https://nodejs.org/) (الإصدار LTS)
-- [Git](https://git-scm.com/)
+| Component | Tech | Location | Port |
+|-----------|------|----------|------|
+| Backend API | FastAPI + SQLAlchemy (Clean Architecture) | `src/backend/` | 8000 |
+| Student frontend | Next.js 14 + React 18 + Tailwind (bilingual ar/en) | `src/frontend/` | 3000 |
+| Admin app | Separate Next.js app (English-only) | `src/admin-app/` | 3001 |
+| Database | SQLite (dev) / PostgreSQL (prod), 15 domain tables, strict 3NF | `skillsynth.db`, DDL in `src/migrations/003_reduced_schema.sql` | — |
 
----
+## Quick Start
 
-## دليل التشغيل المحلي (Local Setup)
-
-اتبع هذه الخطوات لتشغيل المشروع على جهازك:
-
-### 1. استنساخ المشروع (Clone)
-افتح الطرفية (Terminal) ونفذ الأمر التالي لتحميل المشروع:
+**Backend (port 8000)**
 ```bash
-git clone https://github.com/zuhairpro/SkillSynth
-cd SkillSynth
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+PYTHONPATH=src python seed_v3.py    # seed 1109 rows into all 15 tables (FK-gated, idempotent)
+python run.py                       # http://localhost:8000 (docs at /docs)
+```
 
----
+**Student frontend (port 3000)**
+```bash
+export PATH="$PATH:/home/zuhair/.npm-global/bin"   # if pnpm is not on PATH
+cd src/frontend && pnpm install && pnpm dev        # http://localhost:3000
+```
 
-## 🚀 دليل النشر اليدوي (Deployment)
+**Admin app (port 3001)**
+```bash
+cd src/admin-app && pnpm install && pnpm dev       # http://localhost:3001
+```
 
-هذه الخطوات تشرح كيفية نشر الجزء الخلفي (Backend) من المشروع على الإنترنت باستخدام خدمة Render المجانية.
+**Tests**
+```bash
+PYTHONPATH=src python -m pytest tests/ -q           # 79 tests against an isolated temp DB
+```
 
-### ما هي متغيرات البيئة (Environment Variables)؟
+## Verification
 
-هي "الأسرار" التي يحتاجها مشروعنا ليعمل، مثل كلمات مرور قاعدة البيانات أو مفاتيح سرية. نحن لا نكتبها مباشرة في الكود، بل نضعها في لوحة تحكم موقع النشر للحفاظ على أمانها.
+```bash
+cd src/frontend && pnpm type-check && pnpm lint && pnpm build
+cd src/admin-app && pnpm type-check && pnpm build
+PYTHONPATH=src python -m pytest tests/ -q
+PYTHONPATH=src python tools/verify_schema.py       # prints SCHEMA MATCH on success
+```
 
-**المتغيرات المطلوبة لهذا المشروع:**
-- `DATABASE_URL`: رابط الاتصال بقاعدة البيانات.
-- `JWT_SECRET_KEY`: مفتاح سري لتأمين المستخدمين.
-- `PORT`: رقم المنفذ الذي سيعمل عليه الخادم (Render يوفره تلقائياً).
-
-### خطوات النشر على Render
-
-1.  اذهب إلى موقع [Render.com](https://render.com) وقم بإنشاء حساب مجاني (يمكنك استخدام حساب GitHub).
-2.  في لوحة التحكم، اضغط على **"New"** ثم اختر **"Web Service"**.
-3.  اربط حساب GitHub الخاص بك واختر هذا المستودع (`SkillSynth`).
-4.  املأ الإعدادات التالية:
-    - **Name**: اختر اسماً لمشروعك (مثلاً `skillsynth-backend`).
-    - **Root Directory**: اكتب `backend` (هذا يخبر Render أن الكود موجود داخل مجلد الـ backend).
-    - **Environment**: اختر `Python 3`.
-    - **Build Command**: `pip install -r requirements.txt` (هذا الأمر لتثبيت المكتبات).
-    - **Start Command**: `python main.py` (هذا الأمر لتشغيل الخادم).
-5.  اضغط على **"Advanced Settings"**.
-6.  اضغط على **"Add Environment Variable"** وأضف "الأسرار" التي ذكرناها أعلاه واحداً تلو الآخر.
-7.  اضغط على **"Create Web Service"**.
-
-انتظر بضع دقائق، وسيقوم Render ببناء ونشر مشروعك. سيعطيك رابطاً عاماً يمكنك استخدامه للوصول إلى الـ Backend الخاص بك من أي مكان.
+Seed credentials and repo conventions live in [AGENTS.md](AGENTS.md). See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.

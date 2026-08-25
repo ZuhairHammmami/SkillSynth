@@ -156,18 +156,6 @@ def get_all_paths_admin(db, skip: int = 0, limit: int = 100) -> list[PathAdminVi
     return views
 
 
-def get_admin_analytics(db) -> dict:
-    """GET /admin/analytics/overview — trailing 7-day counters."""
-    since = datetime.now(UTC) - timedelta(days=7)
-    return {
-        "new_users_7d": irepo.count_created_since(db, since),
-        "new_paths_7d": lrepo.count_paths_since(db, since),
-        "completions_7d": lrepo.count_completions(db, since=since),
-        "active_users_7d": lrepo.active_user_count_since(db, since),
-        "period": "7d",
-    }
-
-
 # ── Activity feed ─────────────────────────────────────────────────────
 
 def activity_feed(db, offset: int = 0, limit: int = 50,

@@ -201,42 +201,6 @@ class GapsOut(BaseModel):
     gaps: list[GapItem]
 
 
-class RecommendationItem(BaseModel):
-    """One recommended resource in RecommendationsOut.recommendations."""
-
-    id: int
-    title: str
-    url: str
-    type: str
-    is_free: bool
-    is_official: bool
-    author_or_platform: Optional[str] = None
-    language: Optional[str] = None
-
-
-class RecommendationsOut(BaseModel):
-    """POST /learning/recommendations response."""
-
-    skill: str
-    recommendations: list[RecommendationItem]
-
-
-class GeneratedPathSummary(BaseModel):
-    """Summary emitted after POST /learning/path/generate."""
-
-    path_id: int
-    title: str
-    steps_count: int
-    total_hours: Optional[int] = None
-    total_weeks: Optional[int] = None
-
-
-class PathSkillsUpdate(BaseModel):
-    """PUT /paths/{id}/skills body (skill links replaced wholesale)."""
-
-    skill_ids: list[int]
-
-
 class PathUpdate(BaseModel):
     """PUT /paths/{id} body; only provided fields are applied."""
 

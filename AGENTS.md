@@ -1,67 +1,119 @@
-# SkillSynth — Agent Guide
+**SkillSynth — Agent Guide (15-Table Core)**  
+*Adaptive Learning OS — SS-EDS documented, Clean Architecture, 15-table strict-3NF database.*
 
-## Architecture (Two Backends)
+**Quick Start**  
+```
+# Backend (port 8000)
+source .venv/bin/activate && pip install -r requirements.txt && python run.py
 
-- **FastAPI (primary backend)**: `src/backend/` — Python, port 8000. Run via `python run.py`. Imports use `from backend import X` (path is `src/`, injected by `run.py`).
-- **Next.js API routes**: `src/frontend/src/app/api/` — thin wrappers for LLM calls and search. Not a replacement for FastAPI.
-- **Frontend**: `src/frontend/` — Next.js 14 + React 18. **pnpm** (not npm). Package mismatches between root `package.json` and `src/frontend/package.json` — work in `src/frontend/`.
+# Frontend (port 3000)
+export PATH="$PATH:/home/zuhair/.npm-global/bin"   # if pnpm is not on PATH
+cd src/frontend && pnpm dev
 
-## Database
+# Admin app (port 3001)
+cd src/admin-app && pnpm dev
 
-- `MODE=dev` (default) → SQLite at `skillsynth.db` (repo root).
-- `MODE=prod` → PostgreSQL via `DATABASE_URL` env var (Supabase).
-- SQLAlchemy auto-creates tables on startup (`main.py` startup event).
-- Supabase migrations are `.sql` files in `src/migrations/` — apply via Supabase SQL editor, not code.
+# Seed database
+PYTHONPATH=src python seed_v3.py    # 15-table seed (~1109 rows, FK-gated, idempotent)
 
-## Developer Commands
-
-```bash
-# Backend
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-python run.py                              # dev: --reload auto-enabled when MODE=dev
-
-# Frontend
-cd src/frontend && pnpm install && pnpm dev   # :3000
-
-# Verification
-python verify-db-setup.py                    # checks DB mode + tables
-bash verify-aeis-setup.sh                    # checks AEIS schema files
-bash verify-phase2-neural-operation.sh       # checks Phase 2 components
-
-# Type-checking
-cd src/frontend && pnpm type-check           # tsc --noEmit
-
-# Linting
-cd src/frontend && pnpm lint                 # next lint
-
-# Admin user creation
-python src/backend/create_admin.py
-
-# Seed Supabase concepts table
-node seed-database.js                        # reads .env manually (no dotenv)
+# Tests
+PYTHONPATH=src python -m pytest tests/ -q    # 79 tests, isolated temp DB
 ```
 
-## Key Quirks
+**Verification**  
+```
+cd src/frontend && pnpm type-check   # tsc --noEmit
+cd src/frontend && pnpm lint         # next lint (zero warnings)
+cd src/frontend && pnpm build        # type-check + next build
+cd src/admin-app && pnpm type-check && pnpm build
+PYTHONPATH=src python -m pytest tests/ -q
+PYTHONPATH=src python tools/verify_schema.py   # prints SCHEMA MATCH on success
+```
 
-- **Imports in backend** assume `src/` is on `PYTHONPATH` — use `from backend import models`, not `from src.backend import models`.
-- **API client** in frontend (`src/frontend/src/shared/lib/api.ts`) uses Axios; the target is `http://127.0.0.1:8000` (from `NEXT_PUBLIC_API_BASE_URL`).
-- **Auth middleware** checks `authToken` cookie (not Supabase session). Routes protected: `/dashboard`, `/wizard`, `/paths`. Auth routes: `/login`, `/register`.
-- **Frontend is RTL/Arabic-first**: `layout.tsx` sets `<html lang="ar" dir="rtl">` with Tajawal font. No LTR toggle exists.
-- **HybridLLMProvider** (`src/services/HybridLLMProvider.ts`) is **outside** the frontend src directory — it's its own module under `src/services/`. Import as `@/services/...` via tsconfig paths (aliased to `src/frontend/src/*` only — verify resolution works).
-- **LLM requires Ollama** running at `localhost:11434` for local mode. Without it, `LLM_PROVIDER=hybrid` falls back to OpenAI (needs `OPENAI_API_KEY`).
-- **No test framework** is configured. `run_test.py` is a manual integration test (Python backend), no Jest/Vitest config exists.
-- **Supabase integration is partial**: `@supabase/ssr` installed, `supabase.ts` client exists, but most API routes still have `TODO` comments and use mock data.
-- **Conventional commits** expected per `CONTRIBUTING.md`: `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`.
+**Architecture Overview**  
+| Layer | Tech | Location |
+|-------|------|----------|
+| **Backend** | FastAPI + SQLAlchemy (Clean Architecture) | `src/backend/` — 8 layers; 55 operations across 45 paths (7 routers) |
+| **Frontend (student)** | Next.js 14 + React 18 + Tailwind + shadcn/ui | `src/frontend/` :3000 — Feature-Sliced Design, bilingual ar/en |
+| **Admin** | Separate Next.js app (English-only) | `src/admin-app/` :3001 — own layout, nav, state |
+| **Database** | SQLite (dev) / PostgreSQL (prod) | `skillsynth.db` — 15 domain tables, strict 3NF (one documented JSON exception); canonical DDL at `src/migrations/003_reduced_schema.sql` |
+| **Documentation** | SS-EDS (51 directories) | `docs/` — 50 sections + root index |
 
-## Environment Files
+**Current System State**  
+| Component | Status | Evidence |
+|-----------|--------|----------|
+| **SS-EDS Documentation** | ✅ 51 dirs with INDEX.md | 00-principles through 50-anti-patterns |
+| **Backend Clean Architecture** | ✅ All files <300 lines | 8 layers, 7 routers, 0 circular imports; commands/queries/cache/infrastructure/ removed with the features they served (ADR-013) |
+| **Database 15-table 3NF** | ✅ Canonical DDL + verifier | `src/migrations/003_reduced_schema.sql`, `tools/verify_schema.py` → SCHEMA MATCH (compares tables/columns/PKs/FKs/ON DELETE/uniques) |
+| **Frontend Redesign** | ✅ Linear/Notion style, no gradients/neon | Bilingual ar/en RTL-first, 575 i18n leaf keys parity, error boundaries (`app/error.tsx`, `global-error.tsx`) |
+| **Admin Application** | ✅ Separate app at `src/admin-app` :3001 | Full CRUD dialogs (users/skills/resources), change-password functional, System Configuration page (read-only); RBAC roles UI removed |
+| **Localization** | ✅ 100% bilingual AR/EN | 0 hardcoded strings, dynamic RTL/LTR |
+| **Learning Engine** | ✅ Deterministic, topological sort | Prerequisites graph (skill_prerequisites), gap analysis, wizard scoring → user_skills |
+| **Real-time** | ✅ SSE | `/api/realtime/events` + `/api/events` alias, token-auth streams |
+| **Performance** | ✅ Cache, compression | 30s TTL inline cache on `/api/public/stats`; compression middleware |
+| **Security** | ✅ OWASP Top 10 | Rate limiting, CSRF, CSP, HSTS, activity_log audit trail |
+| **QA** | ✅ 79/79 tests passed ×2 | Isolated temp SQLite DB per run; dev DB never touched |
 
-- Root `.env` — backend config (DB, LLM, API keys). **Contains live credentials**.
-- `src/frontend/.env.local` — frontend vars (`NEXT_PUBLIC_*`). **Also contains live Supabase keys**.
-- `seed-database.js` parses `.env` manually (regex — not `dotenv`).
+**Backend Layer Structure (`src/backend/`)**  
+```
+routers/       → 7 thin handlers + realtime SSE (auth · learning · paths · assessments · analytics · admin · realtime)
+services/      → 6 business-logic modules (auth · catalog · learning · assess · analytics · admin)
+repositories/  → 5 data-access modules (identity · catalog · learning · assess · engagement)
+entities/      → 5 consolidated model modules (identity · catalog · learning · assessment · engagement) — 15 tables
+dto/           → 4 Pydantic schema modules (auth · catalog · learning · admin)
+policies/      → get_current_user + require_admin (is_admin gate)
+middlewares/   → Security headers, CSRF (prod-only), compression
+events/        → In-memory SSE pub/sub (publisher.py)
+```
+Note: `mappers/`, `validators/`, `commands/`, `queries/`, `cache/`, `infrastructure/` layers were removed as dead code or dissolved with the features they served (see ADR-013). Alembic is removed — schema truth is DDL + ORM + seed.
 
-## Build & Deploy
+**Critical Conventions**  
+| Rule | Detail |
+|------|--------|
+| **Python imports** | `from backend import X` — `run.py` injects `src/` into PYTHONPATH |
+| **Package manager** | **pnpm** for frontend and admin app (not npm) |
+| **Frontend working dir** | Always `cd src/frontend` first (admin: `cd src/admin-app`) |
+| **RTL-first** | `<html lang="ar" dir="rtl">` — Tajawal font |
+| **Auth** | JWT Bearer token (stateless; no sessions table), account lockout (5 attempts), `is_admin` binary RBAC |
+| **Design system** | No neon, gradients, glassmorphism. Linear/Notion/Stripe style |
+| **Function style** | No function > 40 lines; **every function carries a docstring stating its single purpose and its caller/callee relationships** (user-mandated) |
+| **File size limit** | No file > 300 lines (seed_v3.py is the documented exception — data module) |
+| **Database** | 15 domain tables, strict 3NF; JSON columns limited to the 4 documented exceptions (assessment_questions.options, path_steps.resource_ids/assessment_ids, activity_log.data) |
 
-- Frontend build: `cd src/frontend && pnpm build` (runs `tsc --noEmit && next build`).
-- Backend deploy (Render): root dir = `backend`, build = `pip install -r requirements.txt`, start = `python main.py`.
-- No CI/CD workflows found in `.github/`.
+**Seed Credentials**  
+| User | Email | Password |
+|------|-------|----------|
+| Admin | admin@skillsynth.io | Admin@123456 |
+| Demo | demo@demo.com | demo123 |
+| Editor | editor@skillsynth.io | Editor@123456 |
+| Veteran | veteran@skillsynth.io | Veteran@123456 |
+| Student2 | student2@skillsynth.io | Student@123456 |
+
+**API Surface (dev mode)**  
+| Endpoint | Notes |
+|----------|-------|
+| *(total)* | 55 OpenAPI operations across 45 paths (7 routers) |
+| `/api/auth/*` | register, token, me (GET/PUT), change-password, forgot/reset (stateless signed token), sse-token, csrf |
+| `/api/generate-path/` + `/api/learning/*` | Path generation (wizard scoring), graph, gaps; `/api/learning/generate` alias |
+| `/api/paths/` + `/api/steps/*` | Path CRUD, step complete/undo, progress dashboard |
+| `/api/assessments/*` | Questions (from assessment_questions), submit → results + user_skills |
+| `/api/analytics/*` | dashboard (incl. mastered_skills, learning_velocity), skill-growth, path-progress, learning-history |
+| `/api/admin/*` | Users/skills/categories/resources/assessments/paths CRUD + events feed + reports/aggregated + backups + db-inspector + system config + system-health |
+| `/api/realtime/events` + `/api/events` | SSE streaming (token-auth) |
+| `/api/public/stats` | Public stats, 30s TTL inline cache |
+| `/api/wizard-options` | Job roles + preference literals for the wizard |
+
+**Documentation**  
+- SS-EDS at `docs/` — 51 directories with INDEX.md files  
+- Root `docs/INDEX.md` — master table of contents  
+- Backend docs: `docs/07-backend/`  
+- Frontend docs: `docs/08-frontend/`  
+- Database docs: `docs/10-database/` + `docs/40-diagrams/ERD.md`  
+- Schema-reduction rationale + table→API matrix: `docs/41-decision-records/adr-013.md`
+
+**Agentic Workflow**  
+Tasks with 3+ steps MUST be distributed across sub-agents. Scale: 3-5 steps → 4-6 agents, 6-10 steps → 7-10 agents, 11+ → 13+ agents. Each sub-agent gets exact files to edit, edit patterns, and verification commands. Primary agent coordinates, merges, and verifies.
+
+**Environment Files**  
+- `.env` — Backend config (DB, LLM, API keys). **Live credentials — needs rotation**.  
+- `src/frontend/.env.local` — Frontend vars. **Live credentials — needs rotation**.
