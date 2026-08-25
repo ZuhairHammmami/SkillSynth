@@ -12,7 +12,6 @@
     "settings": "Settings",
     "search": "Search...",
     "searchShortcut": "K",
-    "notifications": "Notifications",
     "library": "Library",
     "tests": "Tests",
     "stats": "Stats"
@@ -187,9 +186,7 @@
     "greetingAfternoon": "Good afternoon",
     "greetingEvening": "Good evening",
     "subtitle": "Continue your learning journey and reach your goals",
-    "xp": "Learning Hours",
     "level": "Level",
-    "streak": "Days Active",
     "days": "days",
     "best": "Best",
     "skillsMastered": "Skills Mastered",
@@ -208,8 +205,7 @@
     "emptyDesc": "You haven't created any learning paths yet. Use the AI Wizard to generate a personalized path for your dream career.",
     "emptyCta": "Create Your First Path",
     "errorTitle": "Failed to load data",
-    "errorDesc": "Something went wrong while loading your dashboard. Please try refreshing the page.",
-    "achievements": "Milestones"
+    "errorDesc": "Something went wrong while loading your dashboard. Please try refreshing the page."
   },
   "wizard": {
     "title": "Learning Path Wizard",
@@ -378,7 +374,6 @@
     "title": "Profile",
     "tabs": {
       "profile": "Profile",
-      "achievements": "Milestones",
       "skills": "Skills",
       "security": "Security"
     },
@@ -413,32 +408,12 @@
     "unnamedUser": "Unnamed User",
     "joined": "Joined",
     "subtitle": "Your learning identity and progress overview.",
-    "emptyState": "Complete an assessment to generate personalized learning paths",
-    "achievements": {
-      "firstStep": "First Step",
-      "firstStepDesc": "Completed first lesson",
-      "tenSteps": "Ten Steps",
-      "tenStepsDesc": "Completed 10 lessons",
-      "fiftySteps": "Fifty Steps",
-      "fiftyStepsDesc": "Completed 50 lessons",
-      "hundredSteps": "Hundred Steps",
-      "hundredStepsDesc": "Completed 100 lessons",
-      "streak3": "3 Days",
-      "streak3Desc": "3 consecutive days",
-      "streak7": "Week",
-      "streak7Desc": "7 consecutive days",
-      "streak14": "Two Weeks",
-      "streak14Desc": "14 consecutive days",
-      "streak30": "Month",
-      "streak30Desc": "30 consecutive days"
-    }
+    "emptyState": "Complete an assessment to generate personalized learning paths"
   },
   "analytics": {
     "title": "Learning Analytics",
     "subtitle": "Track your skill growth, learning velocity, and progress",
-    "xp": "Total Points",
     "level": "Level",
-    "streak": "Active Days",
     "completion": "Completion",
     "best": "Best",
     "learningVelocity": "Learning Velocity",

@@ -187,10 +187,8 @@
     "recentActivity": "النشاط الأخير",
     "remainingHours": "الساعات المتبقية",
     "stepsLabel": "إجمالي الخطوات",
-    "streak": "أيام النشاط",
     "subtitle": "تتبع نمو مهاراتك وسرعة تعلمك وتقدمك",
     "title": "تحليلات التعلم",
-    "xp": "إجمالي النقاط",
     "skillsMastered": "مهارات مُتقنة"
   },
   "error": {
@@ -296,7 +294,6 @@
     "passwordMin": "يجب أن تكون كلمة المرور 8 أحرف على الأقل"
   },
   "dashboard": {
-    "achievements": "الإنجازات",
     "best": "الأفضل",
     "complete": "مكتمل",
     "continueLearning": "مواصلة التعلم",
@@ -316,12 +313,10 @@
     "newPath": "مسار جديد",
     "skillsMastered": "المهارات المتقنة",
     "stepsCompleted": "خطوات مكتملة",
-    "streak": "أيام النشاط",
     "subtitle": "واصل رحلتك التعليمية وحقق أهدافك",
     "thisWeek": "هذا الأسبوع",
     "weeklyActivity": "النشاط الأسبوعي",
     "weeklyProgress": "التقدم الأسبوعي",
-    "xp": "ساعات التعلم",
     "yourPaths": "مساراتك المحفوظة"
   },
   "forgotPassword": {
@@ -370,7 +365,6 @@
     "library": "المكتبة",
     "logout": "تسجيل الخروج",
     "masteryPath": "مسار الإتقان",
-    "notifications": "الإشعارات",
     "profile": "الملف الشخصي",
     "search": "بحث...",
     "searchShortcut": "K",
@@ -475,24 +469,6 @@
     "title": "مسارات التعلم"
   },
   "profile": {
-    "achievements": {
-      "fiftySteps": "خمسون خطوة",
-      "fiftyStepsDesc": "أكمل 50 درساً",
-      "firstStep": "الخطوة الأولى",
-      "firstStepDesc": "أكمل أول درس",
-      "hundredSteps": "مئة خطوة",
-      "hundredStepsDesc": "أكمل 100 درس",
-      "streak14": "أسبوعان",
-      "streak14Desc": "14 يوماً متتالياً",
-      "streak3": "3 أيام",
-      "streak30": "شهر",
-      "streak30Desc": "30 يوماً متتالياً",
-      "streak3Desc": "3 أيام متتالية",
-      "streak7": "أسبوع",
-      "streak7Desc": "7 أيام متتالية",
-      "tenSteps": "عشر خطوات",
-      "tenStepsDesc": "أكمل 10 دروس"
-    },
     "analytics": {
       "completedSteps": "الخطوات المكتملة",
       "completionRate": "معدل الإكمال",
@@ -525,7 +501,6 @@
     },
     "subtitle": "هويتك التعليمية ونظرة عامة على تقدمك.",
     "tabs": {
-      "achievements": "الإنجازات",
       "profile": "الملف الشخصي",
       "security": "الأمان",
       "skills": "المهارات"

@@ -1,1 +1,1 @@
-from backend.middlewares.security import SecurityHeadersMiddleware
+"""Middlewares package — security headers, CSRF, compression."""

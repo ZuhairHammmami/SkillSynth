@@ -16,8 +16,8 @@ admin_event_clients: list = []
 async def admin_event_generator(category: str | None = None) -> AsyncGenerator[str, None]:
     """Stream admin-channel SSE frames, optionally filtered by category.
 
-    Consumed by GET /admin/events/stream; publishes arrive through
-    send_admin_event. Emits `connected` then pings every 30s.
+    Consumed by GET /admin/events/stream via routers/realtime.
+    Emits `connected` then pings every 30s.
     """
     queue: asyncio.Queue = asyncio.Queue()
     admin_event_clients.append(queue)
@@ -36,20 +36,6 @@ async def admin_event_generator(category: str | None = None) -> AsyncGenerator[s
     finally:
         if queue in admin_event_clients:
             admin_event_clients.remove(queue)
-
-
-def send_admin_event(event_data: dict):
-    """Fan one payload out to every connected admin stream.
-
-    Called by admin activity logging to mirror persisted rows into
-    open /admin/events/stream connections; silently drops on full
-    queues so slow clients never block writers.
-    """
-    for queue in admin_event_clients:
-        try:
-            queue.put_nowait(event_data)
-        except asyncio.QueueFull:
-            pass
 
 
 async def event_generator(profile_id: int) -> AsyncGenerator[str, None]:

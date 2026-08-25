@@ -35,7 +35,6 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY src/backend /app/src/backend
 COPY src/migrations /app/src/migrations
 COPY src/migrations_alembic /app/src/migrations_alembic
-COPY src/seed /app/src/seed
 COPY run.py alembic.ini ./
 COPY skillsynth.db /app/skynth.db
 

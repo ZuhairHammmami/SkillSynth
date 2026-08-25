@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useQueryClient, type QueryKey } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import Cookies from 'js-cookie';
 import { queryKeys } from '@/shared/api/query-keys';
 
@@ -17,84 +16,17 @@ interface EventMap {
   [eventType: string]: EventHandler;
 }
 
+// Only event types the backend actually emits (events/publisher.py +
+// send_event call sites): connected, ping, path_generated, assessment_completed.
 const DEFAULT_HANDLERS: EventMap = {
-  progress_update: () => {},
-  notification: (event) => {
-    const title = event.title as string;
-    const message = event.message as string;
-    const type = (event.type as string) || 'info';
-    const notifType = event.notification_type as string || type;
-    if (notifType === 'success' || notifType === 'achievement') {
-      toast.success(title, { description: message, duration: 4000 });
-    } else if (notifType === 'warning' || notifType === 'error') {
-      toast.error(title, { description: message, duration: 5000 });
-    } else {
-      toast.info(title, { description: message, duration: 3000 });
-    }
-  },
-  system_alert: (event) => {
-    const level = event.level as string;
-    const message = event.message as string;
-    if (level === 'error' || level === 'critical') {
-      toast.error(message, { duration: 6000 });
-    } else if (level === 'warning') {
-      toast.warning(message, { duration: 5000 });
-    } else {
-      toast.info(message, { duration: 4000 });
-    }
-  },
-  path_completed: (event) => {
-    const title = event.path_title as string;
-    toast.success('Path Completed!', {
-      description: `You completed "${title}"`,
-      duration: 5000,
-    });
-  },
-  assessment_result: (event) => {
-    const passed = event.passed as boolean;
-    const percentage = event.percentage as number;
-    if (passed) {
-      toast.success('Assessment Passed!', {
-        description: `Score: ${percentage}%`,
-        duration: 4000,
-      });
-    } else {
-      toast.warning('Assessment Needs Review', {
-        description: `Score: ${percentage}%`,
-        duration: 5000,
-      });
-    }
-  },
-  admin_alert: (event) => {
-    const level = event.level as string;
-    const message = event.message as string;
-    if (level === 'critical') {
-      toast.error(`Admin Alert: ${message}`, { duration: 8000 });
-    } else {
-      toast.warning(`Admin: ${message}`, { duration: 5000 });
-    }
-  },
   connected: () => {},
   ping: () => {},
 };
 
 function buildQueryInvalidations(eventType: string): readonly QueryKey[] {
   switch (eventType) {
-    case 'progress_update':
-    case 'step_completed':
-      return [queryKeys.paths.all, queryKeys.compat.pathAll(), queryKeys.compat.dashboard()];
-    case 'step_reverted':
-      return [queryKeys.compat.pathAll(), queryKeys.compat.dashboard()];
-    case 'analytics_refresh':
-      return [
-        queryKeys.compat.analyticsDashboard(),
-        queryKeys.analytics.all,
-        queryKeys.compat.skillGrowth(),
-      ];
-    case 'path_completed':
     case 'path_generated':
       return [queryKeys.paths.all, queryKeys.compat.dashboard()];
-    case 'assessment_result':
     case 'assessment_completed':
       return [queryKeys.assessments.all, queryKeys.compat.analyticsDashboard()];
     default:
