@@ -1,12 +1,18 @@
 """Assessment service — question payloads and scored submissions.
 
-Called by the assessments routers (Task 3). Questions come from the
-normalized assessment_questions table; submissions grade against
-correct_index, persist an AssessmentResult and upsert user_skills.
+Called by the assessments routers (Task 3) and routers/ai.py (explain).
+Questions come from the normalized assessment_questions table;
+submissions grade against correct_index, persist an AssessmentResult,
+upsert user_skills and — when SS-AI is enabled and the engine is ready —
+spawn a bounded proficiency-review thread (review_level seam).
 """
+import threading
 
+from backend.config import app_settings as settings
 from backend.repositories import assess_repository as arepo
 from backend.repositories import catalog_repository
+from backend.repositories import engagement_repository
+from backend.services import llm_pipeline
 
 MASTERY_SCALE = 5
 
@@ -90,8 +96,9 @@ def submit_result(db, user, input_data) -> tuple[dict | None, str | None, int]:
     """Grade POST /assessment-results; persists result + proficiency.
 
     passed = score >= pass_score; proficiency = round(correct/total*5)
-    clamped to 0..5 with last_assessed_at stamped. Returns
-    (payload|None, error|None, http_status).
+    clamped to 0..5 with last_assessed_at stamped. When the skill is set
+    and AI is enabled + engine ready, queues a bounded review via
+    _queue_review. Returns (payload|None, error|None, http_status).
     """
     assessment = arepo.get_assessment(db, input_data.assessment_id)
     if not assessment:
@@ -108,7 +115,91 @@ def submit_result(db, user, input_data) -> tuple[dict | None, str | None, int]:
                            round(correct / total * MASTERY_SCALE)))
         arepo.upsert_user_skill(db, user.id, assessment.skill_id, level)
         db.commit()
+        if settings.AI_ENABLED and _engine_ready():
+            skill = catalog_repository.get_skill(db, assessment.skill_id)
+            _queue_review(user.id, assessment.skill_id, correct, total,
+                          result.id, skill.difficulty_level or 1,
+                          attempt_no=len(arepo.results_for_user(db, user.id)))
     return _serialize_result(result, total, responses), None, 200
+
+
+def review_level(correct, total, difficulty, attempt_no, current_level):
+    """Thin delegate to llm_pipeline.review_level (seam for tests).
+
+    Called by _review_and_adjust inside the reviewer thread; tests
+    monkeypatch this name on assess_service to bypass the model.
+    """
+    return llm_pipeline.review_level(correct, total, difficulty,
+                                     attempt_no, current_level)
+
+
+def _spawn_review(fn):
+    """Run the reviewer on a daemon thread (seam; tests run inline).
+
+    Called by _queue_review only.
+    """
+    threading.Thread(target=fn, daemon=True).start()
+
+
+def _engine_ready() -> bool:
+    """Guard indirection for llm_engine.available (tests monkeypatch).
+
+    Called by submit_result beside settings.AI_ENABLED; imports the
+    engine lazily so non-AI installs never load inference dependencies.
+    """
+    from backend.services import llm_engine
+    return llm_engine.available()
+
+
+def _queue_review(user_id, skill_id, correct, total, result_id,
+                  difficulty, attempt_no):
+    """Spawn the bounded post-submit review off the request path.
+
+    Callee of submit_result after its commit; recomputes the formula
+    level and hands _review_and_adjust to _spawn_review.
+    """
+    level_now = max(0, min(MASTERY_SCALE,
+                           round(correct / total * MASTERY_SCALE)))
+    _spawn_review(lambda: _review_and_adjust(
+        user_id, skill_id, correct, total, result_id, difficulty,
+        attempt_no, level_now))
+
+
+def _review_and_adjust(user_id, skill_id, correct, total, result_id,
+                       difficulty, attempt_no, level_now):
+    """Own-session reviewer: adjust level, audit, notify.
+
+    Spawned by _queue_review; delegates the verdict to review_level and,
+    on applied verdicts only, upserts user_skills in its own session,
+    writes the ai_proficiency_review activity row and emits
+    proficiency_adjusted SSE; otherwise returns silently.
+    """
+    from backend.database import SessionLocal
+    from backend.events.publisher import send_event
+    verdict = review_level(correct, total, difficulty, attempt_no,
+                           level_now)
+    if not verdict["applied"]:
+        return
+    db = SessionLocal()
+    try:
+        arepo.upsert_user_skill(db, user_id, skill_id,
+                                verdict["final_level"])
+        db.commit()
+        engagement_repository.write(
+            db, "audit", "ai_proficiency_review", user_id=user_id,
+            entity_type="skill", entity_id=skill_id,
+            data={"delta": verdict["delta"],
+                  "rationale": verdict["rationale"],
+                  "result_id": result_id,
+                  "final_level": verdict["final_level"]})
+        skill = catalog_repository.get_skill(db, skill_id)
+        send_event(user_id, "proficiency_adjusted",
+                   {"skill_id": skill_id,
+                    "skill_name": skill.name if skill else None,
+                    "delta": verdict["delta"],
+                    "rationale": verdict["rationale"]})
+    finally:
+        db.close()
 
 
 def get_assessment_by_id(db, assessment_id: int):

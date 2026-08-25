@@ -1,14 +1,17 @@
-"""AI router — async quiz/test generation over the local LLM (SS-AI).
+"""AI router — async quiz/test generation + sync explain over the local
+LLM (SS-AI).
 
-Wires /api/ai/* to services/llm_pipeline.py with background jobs whose
-results reach the caller through the SSE pub/sub bus; every endpoint
-degrades to 503 when AI_ENABLED is false and to SSE *_failed events on
-model errors. Mounted by main.py; consumes catalog_repository,
-assess_repository, llm_pipeline and events.publisher.
+Wires /api/ai/* to services/llm_pipeline.py: generation runs as
+background jobs whose results reach the caller through the SSE pub/sub
+bus, while /ai/explain answers synchronously with a static fallback;
+every endpoint degrades to 503 when AI_ENABLED is false. Mounted by
+main.py; consumes catalog_repository, assess_repository,
+assess_service, llm_pipeline and events.publisher.
 """
 import logging
 import threading
 import uuid
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -20,6 +23,7 @@ from backend.events import publisher
 from backend.policies.auth_policy import get_current_user
 from backend.repositories import assess_repository as arepo
 from backend.repositories import catalog_repository
+from backend.services import assess_service
 from backend.services import llm_pipeline as pipe
 from backend.services.assess_service import normalize_key
 
@@ -176,3 +180,38 @@ def _practice_job(user_id: int, job_id: str, meta: dict) -> None:
                              {"job_id": job_id, "error": str(exc)[:200]})
     finally:
         db.close()
+
+
+class ExplainIn(BaseModel):
+    """POST /api/ai/explain body — answers re-supplied because the
+    reduced schema stores scores, not selected indices."""
+    assessment_id: int
+    answers: List[int] = []
+
+
+@router.post("/ai/explain")
+def explain_result(data: ExplainIn, db: Session = Depends(get_db),
+                   current_user=Depends(get_current_user)):
+    """Sync per-question explanations + advice (static fallback).
+
+    Called by POST /api/ai/explain; gates 503 via _gate, validates the
+    assessment (404) and its questions (400), grades read-only through
+    assess_service._grade then pipe.explain_result; zero persistence.
+    """
+    _gate()
+    assessment = arepo.get_assessment(db, data.assessment_id)
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+    questions = arepo.get_questions(db, assessment.id)
+    if not questions:
+        raise HTTPException(status_code=400, detail="No questions")
+    _, _, responses = assess_service._grade(questions, data.answers)
+    narrative = pipe.explain_result(responses)
+    if narrative:
+        return {**narrative, "narrative_available": True}
+    return {
+        "explanations": [{"question_index": r["question_index"],
+                          "why": f"Correct answer: "
+                                 f"{r['correct_answer']}"}
+                         for r in responses],
+        "advice": "", "narrative_available": False}
