@@ -37,7 +37,7 @@ from backend.middlewares.csrf import CSRFMiddleware
 from backend.middlewares.security import SecurityHeadersMiddleware
 from backend.repositories import identity_repository
 from backend.routers import admin, analytics, assessments, auth, catalog_admin
-from backend.routers import learning, paths, realtime
+from backend.routers import ai, learning, paths, realtime
 from backend.services.auth_service import decode_token, hash_password
 
 logging.basicConfig(level=logging.INFO,
@@ -103,6 +103,7 @@ app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"]
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(catalog_admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(realtime.router, prefix="/api/realtime", tags=["Real-time"])
+app.include_router(ai.router, prefix="/api", tags=["AI"])
 
 
 @app.exception_handler(RateLimitExceeded)
