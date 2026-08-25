@@ -35,7 +35,7 @@ Identify Decision → Draft ADR → Review → Accept/Reject → Implement → S
 | ADR-010 | Local-first LLM provider chain → static fallback | Accepted | not digitized |
 | ADR-011 | Post-rebuild consolidation (dead layers removed, isolated tests, canonical DDL v2, separate admin app) | **Superseded by ADR-013** (schema specifics; operational points stand) | adr-011.md |
 | ADR-013 | Feature reduction to the 15-table core (admin CRUD completion, integrity layer, removal of gamification/notifications/sessions/granular roles) — see [adr-013.md](adr-013.md) | Accepted | adr-013.md |
-| ADR-014 | Referential-Integrity Policy (restricted deletes, census payloads, ?force=true semantics) | Proposed — document in progress | (being written) |
+| ADR-014 | Referential-Integrity Policy (FK validation → 400, rename-uniqueness → 409, cycle guards → 400, restricted deletes with census payloads + ?force=true semantics) — see [adr-014.md](adr-014.md) | Accepted | adr-014.md |
 
 ## Template
 ```markdown

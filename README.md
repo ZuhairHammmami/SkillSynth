@@ -1,49 +1,50 @@
 # SkillSynth
 
-SkillSynth is an **Adaptive Learning OS**: a FastAPI + Next.js platform that builds personalized, skill-based learning paths from a prerequisite graph, with assessments, analytics, real-time updates, and a separate admin console. Arabic-first (RTL) UI for learners; documentation follows the SS-EDS system in [`docs/`](docs/INDEX.md).
+SkillSynth is an **adaptive learning platform**: a FastAPI + Next.js system that builds personalized, skill-based learning paths from a prerequisite DAG — with assessments, gap analysis, analytics, SSE real-time updates, and a separate admin console with full CRUD and referential-integrity guards. Arabic-first (RTL) UI for learners. Documentation follows the SS-EDS system in [`docs/INDEX.md`](docs/INDEX.md).
 
-## Architecture
+**Stack**: FastAPI + SQLAlchemy (Clean Architecture) · Next.js 14 + React 18 + Tailwind (pnpm) · SQLite (dev) / PostgreSQL (prod), strict-3NF 15 tables.
 
-| Component | Tech | Location | Port |
-|-----------|------|----------|------|
-| Backend API | FastAPI + SQLAlchemy (Clean Architecture) | `src/backend/` | 8000 |
-| Student frontend | Next.js 14 + React 18 + Tailwind (bilingual ar/en) | `src/frontend/` | 3000 |
-| Admin app | Separate Next.js app (English-only) | `src/admin-app/` | 3001 |
-| Database | SQLite (dev) / PostgreSQL (prod), 15 domain tables, strict 3NF | `skillsynth.db`, DDL in `src/migrations/003_reduced_schema.sql` | — |
+## Project Structure
+
+```
+src/backend/     FastAPI API — routers/ services/ repositories/ entities/ dto/
+                 policies/ middlewares/ events/ + database.py, main.py, config/
+src/frontend/    Student app :3000 — src/{app,shared,i18n,types} + middleware.ts,
+                 bilingual ar/en, RTL-first
+src/admin-app/   Admin app :3001 — English-only, CRUD dialogs + force-delete flow
+docs/            SS-EDS documentation (50 numbered sections, each with INDEX.md)
+seed_v3.py       15-table seed (~1109 rows, FK-gated, idempotent)
+tools/           verify_schema.py and other repo tooling
+tests/           pytest suite (142 tests, isolated temp DB per run)
+```
 
 ## Quick Start
 
-**Backend (port 8000)**
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-PYTHONPATH=src python seed_v3.py    # seed 1109 rows into all 15 tables (FK-gated, idempotent)
-python run.py                       # http://localhost:8000 (docs at /docs)
+# Backend (:8000) — OpenAPI UI at /docs
+source .venv/bin/activate && pip install -r requirements.txt && PYTHONPATH=src python run.py
+
+# Student frontend (:3000)
+cd src/frontend && pnpm dev
+
+# Admin app (:3001)
+cd src/admin-app && pnpm dev
+
+# Seed database (idempotent; safe to re-run)
+PYTHONPATH=src python seed_v3.py
 ```
 
-**Student frontend (port 3000)**
-```bash
-export PATH="$PATH:/home/zuhair/.npm-global/bin"   # if pnpm is not on PATH
-cd src/frontend && pnpm install && pnpm dev        # http://localhost:3000
-```
-
-**Admin app (port 3001)**
-```bash
-cd src/admin-app && pnpm install && pnpm dev       # http://localhost:3001
-```
-
-**Tests**
-```bash
-PYTHONPATH=src python -m pytest tests/ -q           # 79 tests against an isolated temp DB
-```
-
-## Verification
+## Tests & Verification
 
 ```bash
+PYTHONPATH=src python -m pytest tests/ -q        # 142 passed; isolated temp DB, dev DB untouched
+PYTHONPATH=src python tools/verify_schema.py     # prints SCHEMA MATCH on success
 cd src/frontend && pnpm type-check && pnpm lint && pnpm build
 cd src/admin-app && pnpm type-check && pnpm build
-PYTHONPATH=src python -m pytest tests/ -q
-PYTHONPATH=src python tools/verify_schema.py       # prints SCHEMA MATCH on success
 ```
+
+## API Surface
+
+7 routers (`auth`, `learning`, `paths`, `assessments`, `analytics`, `admin`, `realtime`) exposing **63 operations across 49 paths**. Writes are integrity-guarded: unknown references and cycles → 400, rename collisions → 409, restricted deletes → 409 census unless `?force=true` (see [ADR-014](docs/41-decision-records/adr-014.md)).
 
 Seed credentials and repo conventions live in [AGENTS.md](AGENTS.md). See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
