@@ -130,3 +130,26 @@ def upsert_user_skill(db: Session, user_id: int, skill_id: int,
         db.add(row)
     row.proficiency_level = proficiency_level
     row.last_assessed_at = datetime.now(UTC)
+
+
+def create_assessment_with_questions(db: Session, skill_id: int | None,
+                                     title: str, description: str,
+                                     pass_score: int,
+                                     questions: list[dict]) -> Assessment:
+    """Persist one assessment plus positional questions; commits.
+
+    Sole producer of AI-generated quizzes (routers/ai.py Task 6);
+    reuses AssessmentQuestion so grading/_grade works unchanged.
+    """
+    assessment = Assessment(skill_id=skill_id, title=title,
+                            description=description,
+                            pass_score=pass_score)
+    db.add(assessment)
+    db.flush()
+    for pos, q in enumerate(questions, start=1):
+        db.add(AssessmentQuestion(
+            assessment_id=assessment.id, position=pos, prompt=q["text"],
+            options=q["options"], correct_index=q["correct_index"]))
+    db.commit()
+    db.refresh(assessment)
+    return assessment
