@@ -1,0 +1,1 @@
+from backend.middlewares.security import SecurityHeadersMiddleware
