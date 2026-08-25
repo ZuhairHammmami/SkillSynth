@@ -74,7 +74,7 @@ Complete documentation for SkillSynth, an adaptive learning platform: **FastAPI 
 | 41 | [Decision Records](41-decision-records/INDEX.md) | ADR index incl. supersessions; integrity policy in adr-014.md |
 | 42 | [Runbooks](42-runbooks/INDEX.md) | Verified operational commands |
 | 43 | [Checklists](43-checklists/INDEX.md) | Pre-commit, review gates |
-| 44 | [Test Scenarios](44-test-scenarios/INDEX.md) | Suite map: 142 tests / 14 files |
+| 44 | [Test Scenarios](44-test-scenarios/INDEX.md) | Suite map: 143 tests / 11 files |
 | 45 | [Release Notes](45-release-notes/INDEX.md) | Changelog, newest first |
 | 46 | [Glossary](46-glossary/INDEX.md) | Current terminology only |
 | 47 | [Contributing](47-contributing/INDEX.md) | PR process |

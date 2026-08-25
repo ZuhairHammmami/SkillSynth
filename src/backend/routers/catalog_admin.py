@@ -90,8 +90,10 @@ def delete_skill(skill_id: int, force: bool = False,
 
 @router.get("/categories")
 def list_categories(db: Session = Depends(get_db)):
-    """List all categories. Reads the catalog repository; admin dialog."""
-    return [{"id": c.id, "name": c.name}
+    """List all categories serialized via _category_out; the admin
+    Categories page renders Description/Parent columns and prefills
+    its edit dialog from this payload."""
+    return [_category_out(c)
             for c in catalog_repository.get_all_categories(db)]
 
 
@@ -177,7 +179,8 @@ def list_job_roles(db: Session = Depends(get_db)):
 
 @router.post("/job-roles")
 def create_job_role(data: JobRoleCreate, db: Session = Depends(get_db)):
-    """Create a job role; duplicate titles 409, unknown skills 400."""
+    """Create a job role; duplicate titles 400 (legacy wire-compat
+    through _fail_create), unknown skills 400."""
     result, error = catalog_service.create_job_role(db, data)
     if error:
         _fail_create(error)

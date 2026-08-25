@@ -57,6 +57,7 @@ export function JobRoleDialog({ role, open, onOpenChange }: {
     onSuccess: () => {
       toast.success(role ? 'Job role updated' : 'Job role created');
       queryClient.invalidateQueries({ queryKey: ['jobRoles'] });
+      queryClient.invalidateQueries({ queryKey: ['wizardOptions'] });
       onOpenChange(false);
     },
     onError: (error) => toast.error(getApiErrorMessage(error)),

@@ -202,6 +202,38 @@ def test_category_matrix_leaf_ok_blocks_then_force_detaches(
                                              "categories": [child]})
 
 
+def test_admin_category_edit_roundtrip_preserves_parent(
+        api_client, admin_headers, db_session):
+    """GET /admin/categories must expose description/parent_id so the
+    admin edit dialog prefills them; an edit round-trip echoing
+    parent_id keeps the link while an explicit null detaches it.
+    Regression for routers/catalog_admin.list_categories; built via
+    integrity_support.mk_category + teardown like its siblings."""
+    parent = api_client.post("/api/admin/categories", json={
+        "name": fresh("Par"), "description": "parent desc"},
+        headers=admin_headers).json()
+    child = mk_category(api_client, admin_headers, parent_id=parent["id"])
+    try:
+        listed = {c["id"]: c for c in api_client.get(
+            "/api/admin/categories", headers=admin_headers).json()}
+        assert listed[child]["parent_id"] == parent["id"]
+        assert listed[parent["id"]]["description"] == "parent desc"
+        roundtrip = api_client.put(f"/api/admin/categories/{child}", json={
+            "name": fresh("Kid"), "description": None,
+            "parent_id": parent["id"]}, headers=admin_headers)
+        assert roundtrip.status_code == 200, roundtrip.text
+        db_session.expire_all()
+        assert db_session.get(Category, child).parent_id == parent["id"]
+        detached = api_client.put(f"/api/admin/categories/{child}", json={
+            "parent_id": None}, headers=admin_headers)
+        assert detached.status_code == 200, detached.text
+        db_session.expire_all()
+        assert db_session.get(Category, child).parent_id is None
+    finally:
+        teardown(api_client, admin_headers,
+                 {"categories": [child, parent["id"]]})
+
+
 def test_job_role_mappings_restrict_then_force_cascade(
         api_client, admin_headers, db_session):
     """ERD: job_roles are RESTRICT while job_role_skills map them (census

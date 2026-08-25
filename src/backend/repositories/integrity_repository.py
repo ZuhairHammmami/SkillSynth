@@ -17,9 +17,10 @@ from backend.entities.learning import PathStep, UserSkill
 def count_skill_dependents(db: Session, skill_id: int) -> dict[str, int]:
     """Non-zero dependent counts blocking DELETE /admin/skills.
 
-    Called by catalog_integrity.skill_delete_conflict; mapping/learner/
-    step rows cascade on force-delete, resources and assessments set
-    null, and both skill_prerequisites directions are reported
+    Called by catalog_integrity.skill_delete_conflict; mapping/learner
+    rows cascade on force-delete, path_steps.skill_id is set null
+    (steps survive detached), resources and assessments set null, and
+    both skill_prerequisites directions are reported
     separately (`requires` = this skill's own edges, `required_by` =
     edges where other skills list it as prerequisite).
     """
