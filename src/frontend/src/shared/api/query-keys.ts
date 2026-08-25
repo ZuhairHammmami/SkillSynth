@@ -54,44 +54,28 @@ export const queryKeys = {
       [...queryKeys.assessments.results(), pathId] as const,
   },
 
-  // ==================== Admin ====================
-  admin: {
-    all: ['admin'] as const,
-    stats: () => [...queryKeys.admin.all, 'stats'] as const,
-    users: {
-      all: ['admin', 'users'] as const,
-      list: (page?: number, pageSize?: number) =>
-        [...queryKeys.admin.users.all, 'list', page, pageSize] as const,
-      detail: (id: string) =>
-        [...queryKeys.admin.users.all, 'detail', id] as const,
-    },
-    paths: {
-      all: ['admin', 'paths'] as const,
-      list: (page?: number, pageSize?: number) =>
-        [...queryKeys.admin.paths.all, 'list', page, pageSize] as const,
-      detail: (id: string) =>
-        [...queryKeys.admin.paths.all, 'detail', id] as const,
-    },
-    resources: {
-      all: ['admin', 'resources'] as const,
-      list: () => [...queryKeys.admin.resources.all, 'list'] as const,
-      detail: (id: string) =>
-        [...queryKeys.admin.resources.all, 'detail', id] as const,
-    },
-    skills: {
-      all: ['admin', 'skills'] as const,
-      list: () => [...queryKeys.admin.skills.all, 'list'] as const,
-      detail: (id: string) =>
-        [...queryKeys.admin.skills.all, 'detail', id] as const,
-    },
-    categories: {
-      all: ['admin', 'categories'] as const,
-      list: () => [...queryKeys.admin.categories.all, 'list'] as const,
-    },
-    jobRoles: {
-      all: ['admin', 'jobRoles'] as const,
-      list: () => [...queryKeys.admin.jobRoles.all, 'list'] as const,
-    },
+  // ==================== Analytics ====================
+  analytics: {
+    all: ['analytics'] as const,
+    dashboard: () => [...queryKeys.analytics.all, 'dashboard'] as const,
+    skillGrowth: () => [...queryKeys.analytics.all, 'skill-growth'] as const,
+    pathProgress: () => [...queryKeys.analytics.all, 'path-progress'] as const,
+    pathProgressById: (pathId: number) =>
+      [...queryKeys.analytics.pathProgress(), pathId] as const,
+    learningVelocity: () => [...queryKeys.analytics.all, 'learning-velocity'] as const,
+  },
+
+  // ==================== Student Hooks & SSE Compat Keys ====================
+  // Emit the exact cache-key strings used by the student hooks and the
+  // SSE invalidation map so adoption never renames live cache entries.
+  compat: {
+    profile: () => ['profile'] as const,
+    dashboard: () => ['dashboard'] as const,
+    pathAll: () => ['path'] as const,
+    pathDetail: (id: number) => ['path', id] as const,
+    analyticsDashboard: () => ['analyticsDashboard'] as const,
+    skillGrowth: () => ['skillGrowth'] as const,
+    wizardOptions: () => ['wizardOptions'] as const,
   },
 } as const;
 
