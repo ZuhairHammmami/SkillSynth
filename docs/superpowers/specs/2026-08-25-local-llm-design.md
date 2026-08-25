@@ -48,7 +48,7 @@ New thin router `routers/ai.py`. Repositories/entities untouched. Background job
 | `POST /api/ai/wizard-quiz` `{goal}` | async → SSE `ai_quiz_ready` | Adaptive MCQs across goal-role skills keyed to the load-bearing `<skill>_q<i>` contract; ephemeral |
 | `POST /api/wizard/analysis` `{goal, answers}` | sync | Phase-1 report: per-skill score/level/gap, weaknesses flagged+explained, strengths, focus areas (LLM narrative when enabled). Pure recompute reusing `_score_answers`; **persists nothing** |
 | `POST /api/ai/tests/generate` `{skill_id}` | async → SSE `ai_test_ready {assessment_id}` | Weakness-targeting practice test persisted as `[AI] <Skill> — adaptive` assessment; graded by existing `_grade` |
-| `GET /api/ai/results/{result_id}/explanation` | sync | Per-question explanations + study advice from stored response detail |
+| `POST /api/ai/explain` `{assessment_id, answers}` | sync | Per-question explanations + study advice. **Amendment:** the originally sketched `GET /api/ai/results/{id}/explanation` is impossible without schema changes — `assessment_results` stores score/passed only, never the selected indices. Grading inputs are therefore re-supplied in-body and graded in-memory (zero writes). |
 
 Post-submit hook (internal, async): bounded level review → SSE `proficiency_adjusted {delta, rationale}`.
 
