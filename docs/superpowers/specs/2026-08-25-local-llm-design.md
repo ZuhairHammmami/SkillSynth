@@ -18,7 +18,7 @@ The deterministic engine remains the source of truth: scoring (`_grade`), the pr
 | Decision | Choice | Rationale |
 |---|---|---|
 | Serving | In-process `llama-cpp-python` | Consumes exact GGUF path; no extra service; simplest deployment |
-| Model | `unsloth/Llama-3.2-3B-Instruct-GGUF` **Q6_K** → `src/data/Llama-3.2-3B-Instruct.Q6_K.gguf`, 2,643,853,760 B, SHA256 `a48f9d72a278835e0b0c00c6c115a3edd1703f5f15713b5f3194bc8b392ea631` (pin file alongside) | Standard (non-uncensored) variant for thesis integrity; verified download (bartowski mirror taken down — 401) |
+| Model | **User-provided file** at `src/data/Llama-3.2-3B-Instruct-uncensored.Q6_K.gguf` (2,967,059,008 B; header metadata: `Meta Llama · Llama 3.2 3B Instruct`, no abliteration markers). **Ruling (user, session):** reuse this existing artifact instead of downloading a verified-standard copy — filename kept as-is for provenance honesty. | Standard-model behavior per embedded metadata; filename legacy documented |
 | Hardware | NVIDIA GTX 1650 Ti 4 GB → CUDA offload `AI_N_GPU_LAYERS=-1` | ~50–100 tok/s generation; sync analyses viable |
 | Timing | Generation endpoints async+SSE; analysis/explanations sync | Long outputs vs GPU-fast short outputs |
 | Persistence | Wizard AI quiz ephemeral (matches current wizard semantics); standalone practice tests persist as real `[AI] <Skill>` assessments | Fits existing single-skill `assessments` FK model; results/analytics/reports flow unchanged |

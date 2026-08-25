@@ -13,7 +13,8 @@ def test_ai_defaults_off(monkeypatch):
     import backend.config.app_settings as s
     m = importlib.reload(s)
     assert m.AI_ENABLED is False
-    assert m.AI_MODEL_PATH.endswith("Llama-3.2-3B-Instruct.Q6_K.gguf")
+    assert m.AI_MODEL_PATH.endswith(
+        "Llama-3.2-3B-Instruct-uncensored.Q6_K.gguf")
     assert m.AI_N_CTX == 4096 and m.AI_TEMPERATURE == 0.2
     assert isinstance(m.AI_MAX_NEW_TOKENS, int)
 
