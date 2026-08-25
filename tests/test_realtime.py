@@ -41,3 +41,15 @@ class TestSSE:
     def test_events_stream_requires_token(self, api_client):
         response = api_client.get("/api/realtime/events")
         assert response.status_code == 401
+
+    def test_admin_events_stream_requires_token(self, api_client):
+        """/realtime/admin/events shares the _extract_profile_id gate
+        (query/Bearer/cookie token) → 401 without any credentials."""
+        response = api_client.get("/api/realtime/admin/events")
+        assert response.status_code == 401
+
+    def test_events_alias_requires_token(self, api_client):
+        """The /api/events alias (main.py) mirrors the realtime gate and
+        raises 401 before streaming when no token is presented."""
+        response = api_client.get("/api/events")
+        assert response.status_code == 401

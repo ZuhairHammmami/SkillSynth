@@ -4,6 +4,8 @@ import uuid
 
 import pytest
 
+from tests.integrity_support import PASSWORD
+
 
 def _fresh_email(prefix):
     return f"{prefix}_{uuid.uuid4().hex[:8]}@test.com"
@@ -146,3 +148,32 @@ class TestAuth:
         response = api_client.get("/api/auth/csrf")
         assert response.status_code == 200
         assert "csrf_token" in response.json()
+
+
+class TestAccountLockout:
+    """Pins the implemented lockout semantics of services/auth_service.py
+    (MAX_LOGIN_ATTEMPTS=5, LOGIN_LOCKOUT_MINUTES=15, in-memory per-email
+    window): failures #1-#5 each still answer 401 — the 5th trips the
+    lock — then every further attempt inside the window maps to 429 via
+    routers/auth.py's "Account locked" prefix check, correct password
+    included, because authenticate() gates on check_login_allowed() before
+    verifying credentials. Uses a throwaway account so the shared
+    _login_attempts state never touches seeded logins."""
+
+    def test_lock_after_five_failures_then_429_even_with_correct_password(
+            self, api_client):
+        email = f"lockout_{uuid.uuid4().hex[:8]}@test.com"
+        created = api_client.post("/api/auth/register", json={
+            "email": email, "password": PASSWORD})
+        assert created.status_code == 200, created.text
+        for _ in range(5):
+            failed = api_client.post("/api/auth/token", data={
+                "username": email, "password": "TotallyWrong#999x"})
+            assert failed.status_code == 401
+        locked = api_client.post("/api/auth/token", data={
+            "username": email, "password": PASSWORD})
+        assert locked.status_code == 429, locked.text
+        assert locked.json()["detail"].startswith("Account locked")
+        still_locked = api_client.post("/api/auth/token", data={
+            "username": email, "password": "TotallyWrong#999x"})
+        assert still_locked.status_code == 429

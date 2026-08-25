@@ -93,7 +93,12 @@ class TestAdminReports:
 class TestAdminActivity:
 
     def test_events_feed(self, api_client, admin_headers):
-        response = api_client.get("/api/admin/events", headers=admin_headers)
+        """Reads the full window (limit=200, the route max) so the
+        breadth assertions stay stable as other tests append newer
+        activity_log rows past the default 50-row page."""
+        response = api_client.get("/api/admin/events",
+                                  params={"limit": 200},
+                                  headers=admin_headers)
         assert response.status_code == 200
         events = response.json()
         assert isinstance(events, list)
@@ -134,6 +139,39 @@ class TestAdminSystem:
         response = api_client.get("/api/admin/backups", headers=admin_headers)
         assert response.status_code == 200
         assert isinstance(response.json(), list)
+
+    def test_list_assessments_shape(self, api_client, admin_headers):
+        """Pins the /admin/assessments serializer (routers/admin.py
+        list_assessments): flat rows keyed exactly {id, skill_id, title,
+        assessment_type, passing_score} with an int passing_score."""
+        response = api_client.get("/api/admin/assessments",
+                                  headers=admin_headers)
+        assert response.status_code == 200
+        assessments = response.json()
+        assert isinstance(assessments, list) and assessments
+        assert set(assessments[0]) == {
+            "id", "skill_id", "title", "assessment_type", "passing_score"}
+        assert isinstance(assessments[0]["passing_score"], int)
+
+    def test_post_backup_writes_into_cwd_backups_dir(
+            self, api_client, admin_headers, tmp_path, monkeypatch):
+        """POST /admin/backups copies the CWD-resolved skillsynth.db into
+        ./backups/ (admin_service.backup_database); chdir'd to tmp_path with
+        a stub db so neither the dev database nor the repo tree is written,
+        then asserts success key + snapshot file + listing visibility."""
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "skillsynth.db").write_bytes(b"skillsynth-backup-stub")
+        response = api_client.post("/api/admin/backups",
+                                   headers=admin_headers)
+        assert response.status_code == 200, response.text
+        data = response.json()
+        assert data["success"] is True
+        snapshot = tmp_path / data["path"]
+        assert data["path"].startswith("backups")
+        assert snapshot.exists() and snapshot.stat().st_size > 0
+        listed = api_client.get("/api/admin/backups",
+                                headers=admin_headers).json()
+        assert any(entry["path"] == data["path"] for entry in listed)
 
 
 class TestAdminUserUpdates:
