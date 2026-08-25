@@ -5,12 +5,13 @@ Wires /api/learning to services/learning_service.py + analytics_service.py
 graph is public like the legacy endpoint.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
 from backend.dto.learning import GeneratePathIn, PathDetailOut
 from backend.policies.auth_policy import get_current_user
+from backend.routers.paths import generate_path as _generate_path
 from backend.services import analytics_service, learning_service
 
 router = APIRouter()
@@ -36,9 +37,7 @@ def get_skill_gaps(target_role: str | None = Query(default=None),
 @router.post("/generate", response_model=PathDetailOut)
 def generate_path_alias(data: GeneratePathIn, db: Session = Depends(get_db),
                         current_user=Depends(get_current_user)):
-    """Wizard path generation alias (same handler as /generate-path/).
-    Calls learning_service.generate_path; frontend primary URL is /generate-path/."""
-    result, error = learning_service.generate_path(db, current_user, data)
-    if error:
-        raise HTTPException(status_code=400, detail=error)
-    return result
+    """Wizard generation alias. Delegates to the canonical /api/generate-path/
+    handler (paths.generate_path) so both emit the same learning_service call
+    and path_generated SSE event; frontend primary URL is /generate-path/."""
+    return _generate_path(data, db, current_user)

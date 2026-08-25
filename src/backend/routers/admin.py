@@ -15,7 +15,7 @@ from backend.config.app_settings import (
 from backend.database import get_db
 from backend.dto.admin import AdminCreateUser, PathAdminView
 from backend.dto.catalog import ResourceCreate, SkillCreate
-from backend.policies.auth_policy import require_admin
+from backend.policies.auth_policy import get_current_user, require_admin
 from backend.repositories import assess_repository, catalog_repository
 from backend.services import admin_service, auth_service, catalog_service
 
@@ -61,9 +61,10 @@ def create_user(data: AdminCreateUser, db: Session = Depends(get_db)):
 
 @router.delete("/users/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db),
-                admin=Depends(require_admin)):
-    """Hard-delete a user (self-delete guarded). Calls admin_service.delete_user."""
-    ok, error = admin_service.delete_user(db, user_id, admin.id)
+                current_user=Depends(get_current_user)):
+    """Hard-delete a user (self-delete guarded). Calls admin_service.delete_user;
+    router-level require_admin already gates access."""
+    ok, error = admin_service.delete_user(db, user_id, current_user.id)
     if not ok:
         raise HTTPException(status_code=400 if "yourself" in (error or "") else 404,
                             detail=error)
