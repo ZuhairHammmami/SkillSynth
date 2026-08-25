@@ -206,3 +206,12 @@ class PathUpdate(BaseModel):
 
     title: Optional[str] = None
     description: Optional[str] = None
+
+
+class WizardAnalysisIn(BaseModel):
+    """POST /wizard/analysis body — same answer-key contract as
+    GeneratePathIn.answers; weekly_hours feeds the weeks estimate."""
+
+    goal: str
+    weekly_hours: int = 10
+    answers: dict[str, int] = Field(default_factory=dict)

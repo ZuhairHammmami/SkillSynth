@@ -69,13 +69,14 @@ def _order_by_prereqs(db, skill_rows: list) -> list:
 
 
 def _score_answers(db, skill_rows: list, answers: dict[str, int],
-                   user_id: int) -> dict[int, int]:
+                   user_id: int, persist: bool = True) -> dict[int, int]:
     """Proficiency per skill from wizard answers (upserts user_skills).
 
     Graded against assessment_questions.correct_index using ids built
     by assess_service.normalize_key. A skill keeps its existing level
     when the user gave no answers for it (empty answers must never
     downgrade mastery); answered skills take the computed level.
+    persist=False makes the pass read-only for /wizard/analysis.
     """
     ids = [s.id for s in skill_rows]
     assessments = assess_repository.get_assessments_for_skills(db, ids)
@@ -98,7 +99,8 @@ def _score_answers(db, skill_rows: list, answers: dict[str, int],
         else:
             level = current.get(skill.name, 0)
         levels[skill.id] = level
-        assess_repository.upsert_user_skill(db, user_id, skill.id, level)
+        if persist:
+            assess_repository.upsert_user_skill(db, user_id, skill.id, level)
     return levels
 
 
