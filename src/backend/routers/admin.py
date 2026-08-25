@@ -11,8 +11,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from backend.config.app_settings import (
-    ACCESS_TOKEN_EXPIRE_MINUTES, APP_MODE, CORS_ORIGINS, CSRF_ENABLED,
-    LOGIN_LOCKOUT_MINUTES, MAX_LOGIN_ATTEMPTS, PASSWORD_MIN_LENGTH,
+    ACCESS_TOKEN_EXPIRE_MINUTES, AI_ENABLED, AI_MODEL_PATH, APP_MODE,
+    CORS_ORIGINS, CSRF_ENABLED, LOGIN_LOCKOUT_MINUTES, MAX_LOGIN_ATTEMPTS,
+    PASSWORD_MIN_LENGTH,
 )
 from backend.database import get_db
 from backend.dto.admin import AdminCreateUser, AdminUserUpdate, PathAdminView
@@ -135,11 +136,13 @@ def db_inspector(db: Session = Depends(get_db)):
 @router.get("/feature-flags")
 def feature_flags():
     """Return the read-only system configuration object for the admin
-    feature-flags page (built from config/app_settings)."""
+    feature-flags page (built from config/app_settings); values now
+    reflect live configuration rather than hardcoded placeholders."""
     return {
         "app_mode": APP_MODE,
         "registration_enabled": True,
-        "ai_path_generation": True,
+        "ai_path_generation": AI_ENABLED,
+        "ai_local_model": AI_MODEL_PATH,
         "real_time_updates": True,
         "csrf_protection": CSRF_ENABLED,
         "rate_limiting": True,
