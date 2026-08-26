@@ -56,7 +56,7 @@ PYTHONPATH=src python seed_v3.py                # seed dev database (~1,100 rows
 | ADMIN_EMAIL / ADMIN_PASSWORD | No | admin@skillsynth.io / unset | main.py lifespan admin autoseed |
 | PASSWORD_PEPPER | No | empty | auth_service password hashing |
 | REDIS_URL | prod optional | in-memory | limiter.py rate-limit storage |
-| AI_ENABLED / AI_MODEL_PATH / AI_N_GPU_LAYERS / AI_N_CTX / AI_TEMPERATURE / AI_MAX_NEW_TOKENS | No | false / src/data/*.gguf / -1 / 4096 / 0.2 / 700 | llm_engine.py + routers/ai.py (ADR-015) |
+| AI_ENABLED / AI_MODEL_PATH / AI_N_GPU_LAYERS / AI_N_CTX / AI_TEMPERATURE / AI_MAX_NEW_TOKENS | No | false / src/data/Llama-3.2-3B-Instruct-uncensored.Q6_K.gguf / -1 / 4096 / 0.2 / 700 | llm_engine.py + routers/ai.py (ADR-015) |
 
 Frontends read `NEXT_PUBLIC_API_BASE_URL` (default `http://localhost:8000/api`) from their env files.
 

@@ -37,7 +37,7 @@ Track the current state of SkillSynth and the near-term work queue. Historical p
 ## Active Queue
 | Item | Focus | Status |
 |------|-------|--------|
-| ADR-014 | Referential-integrity policy write-up (restricted deletes, force flag) | In progress |
+| ADR-014 | Referential-integrity policy write-up (restricted deletes, force flag) | Accepted |
 | Docs truth pass | SS-EDS sections aligned to code reality; stale sections deleted | In progress |
 | Credential rotation | .env and src/frontend/.env.local hold live credentials | Planned |
 

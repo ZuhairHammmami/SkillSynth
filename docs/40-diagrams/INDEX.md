@@ -10,7 +10,7 @@ Index the authoritative diagrams for SkillSynth and host the architecture/reques
 
 ## Inputs
 - Canonical DDL src/migrations/003_reduced_schema.sql (15 tables)
-- Router layout src/backend/routers/ (7 routers)
+- Router layout src/backend/routers/ (8 routers)
 - SSE event set events/publisher.py
 
 ## Outputs

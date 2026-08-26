@@ -51,9 +51,9 @@ All gated by `AI_ENABLED` → **503** `{"detail":"AI features are disabled"}` wh
 | Event | Source | Payload |
 |-------|--------|---------|
 | ai_quiz_ready | routers/ai.py | {"job_id", "questions", ...} |
-| ai_quiz_failed | routers/ai.py | {"job_id"} |
+| ai_quiz_failed | routers/ai.py | {"job_id", "error"} |
 | ai_test_ready | routers/ai.py | {"job_id", "assessment_id", ...} |
-| ai_test_failed | routers/ai.py | {"job_id"} |
+| ai_test_failed | routers/ai.py | {"job_id", "error"} |
 | proficiency_adjusted | services/assess_service.py | {"skill_id", "delta", ...} |
 
 Existing `assessment_completed` / `path_generated` frames are unchanged.

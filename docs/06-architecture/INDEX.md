@@ -1,7 +1,7 @@
 # SS-EDS: Architecture
 
 ## Purpose
-Document the SkillSynth system architecture: Clean Architecture backend (8 layer directories, 7 routers), two Next.js frontends, a strict-3NF 15-table database, request lifecycle, and deployment topology.
+Document the SkillSynth system architecture: Clean Architecture backend (8 layer directories, 8 routers), two Next.js frontends, a strict-3NF 15-table database, request lifecycle, and deployment topology.
 
 ## Responsibilities
 - Maintain layer boundaries and dependency direction
@@ -70,7 +70,7 @@ Client → FastAPI middleware stack:
 ```
 [Start] → load_dotenv → build engine (MODE selects SQLite/PostgreSQL)
   → lifespan: create_all (15 tables) + auto-create admin if ADMIN_PASSWORD set
-  → attach middlewares → mount 7 routers → [Ready on :8000]
+  → attach middlewares → mount 8 routers → [Ready on :8000]
 ```
 
 ## Layer Directory (`src/backend/`)
