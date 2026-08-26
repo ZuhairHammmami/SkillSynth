@@ -4,7 +4,14 @@
 **Quick Start**  
 ```
 # Backend (port 8000)
-source .venv/bin/activate && pip install -r requirements.txt && PYTHONPATH=src python run.py
+source .venv/bin/activate && pip install -r requirements.txt && pip install -e . && PYTHONPATH=src python run.py
+
+# CLI (after pip install -e . — or use ./skillsynth shim without installing)
+skillsynth run            # serve :8000 (HOST/PORT/MODE env; --host/--port/--dev override)
+skillsynth seed           # seed dev db; skillsynth seed --db /tmp/x.db isolates target
+skillsynth test           # pytest wrapper (PYTHONPATH=src); e.g. skillsynth test -k auth
+skillsynth schema         # DDL ↔ ORM verifier → SCHEMA MATCH
+skillsynth doctor         # env health table (deps/AI/model/db); --strict to gate
 
 # Frontend (port 3000)
 export PATH="$PATH:/home/zuhair/.npm-global/bin"   # if pnpm is not on PATH
@@ -17,7 +24,7 @@ cd src/admin-app && pnpm dev
 PYTHONPATH=src python seed_v3.py    # 15-table seed (~1109 rows, FK-gated, idempotent)
 
 # Tests
-PYTHONPATH=src python -m pytest tests/ -q    # 190 tests, isolated temp DB
+PYTHONPATH=src python -m pytest tests/ -q    # 197 tests, isolated temp DB
 
 # Optional SS-AI (local LLM; off by default)
 # Model file: src/data/Llama-3.2-3B-Instruct-uncensored.Q6_K.gguf (provenance in ADR-015)

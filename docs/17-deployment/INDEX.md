@@ -24,10 +24,12 @@ Document how SkillSynth is built, configured, and run: `run.py`/uvicorn backend,
 
 ## Sequence: Local Full Stack
 ```
-python run.py                          # backend :8000 (reload when MODE=dev)
-cd src/frontend && pnpm dev            # student frontend :3000
-cd src/admin-app && pnpm dev           # admin app :3001
+pip install -e .                        # one-time: installs the skillsynth script
+skillsynth run                          # backend :8000 (reload when MODE=dev)
+cd src/frontend && pnpm dev             # student frontend :3000
+cd src/admin-app && pnpm dev            # admin app :3001
 ```
+The root `./skillsynth` bash shim resolves the repo dir and execs `.venv/bin/skillsynth`, falling back to `PYTHONPATH=src python -m backend.cli` when the package is not installed — so `./skillsynth run` works on a bare checkout. Legacy `python run.py` remains as a thin shim over the same code path.
 
 ## Sequence: Container Stack
 ```
@@ -39,17 +41,19 @@ docker compose down      # stop; named volumes persist data
 ## Build Commands
 ```bash
 pip install -r requirements.txt                 # backend deps (venv recommended)
+pip install -e .                                # installs the `skillsynth` console script
 cd src/frontend && pnpm build                   # tsc --noEmit + next build
 cd src/admin-app && pnpm build                  # same for admin
 bash start.sh                                   # venv + pnpm full-stack launcher
-PYTHONPATH=src python seed_v3.py                # seed dev database (~1,100 rows)
+skillsynth seed                                 # seed dev database (~1,109 rows)
+skillsynth doctor --strict                      # gate: deps/AI/model/db all OK
 ```
 
 ## Environment Variables Read by Code
 | Variable | Required | Default | Consumed by |
 |----------|----------|---------|-------------|
 | MODE | No | dev | database.py, config/, middlewares (dev=SQLite, prod=PostgreSQL + CSRF/HSTS-preload/CSP strict) |
-| HOST / PORT | No | 127.0.0.1 / 8000 | run.py |
+| HOST / PORT | No | 127.0.0.1 / 8000 | backend/cli.py `run` (+ legacy run.py); --host/--port flags override |
 | DATABASE_URL | prod | — | database.py (PostgreSQL) |
 | DB_POOL_SIZE / DB_MAX_OVERFLOW / DB_POOL_TIMEOUT | No | 10 / 20 / 30 | database.py |
 | SECRET_KEY | prod (mandatory) | dev fallback | config/app_settings.py (JWT signing) |
@@ -64,7 +68,7 @@ Note: `.env.example` also lists legacy keys (SENDGRID_API_KEY, GITHUB_TOKEN). Cu
 
 ## Rules
 1. pnpm is the only package manager for both frontends
-2. Backend always starts from repo root via `python run.py` (it injects src/ into PYTHONPATH)
+2. Backend always starts from repo root via `skillsynth run`, `./skillsynth`, or legacy `python run.py` (all inject src/ into PYTHONPATH)
 3. MODE=prod without SECRET_KEY or DATABASE_URL refuses to start
 4. Schema bootstrap is DDL (`src/migrations/003_reduced_schema.sql`) + create_all + seed_v3.py — no migration framework
 5. CORS origins are fixed per mode in config/app_settings.py (dev: localhost:3000)
