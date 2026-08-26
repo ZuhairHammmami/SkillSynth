@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -13,31 +13,44 @@ import {
 import { useGeneratePath } from '@/shared/hooks/usePathApi';
 import { useWizardOptions } from '@/shared/hooks/useSystemApi';
 import { useProfile } from '@/shared/hooks/useAuthApi';
-import { useRoleQuestions } from '@/shared/hooks/useAssessmentApi';
+import { useRoleQuestions, type WizardQuestion } from '@/shared/hooks/useAssessmentApi';
+import { useGenerateWizardQuiz, useWizardAnalysis } from '@/shared/hooks/useAiApi';
+import { sseBus } from '@/shared/lib/sseBus';
 import { GoalStep } from '@/shared/components/PathWizard/GoalStep';
 import { PreferencesStep } from '@/shared/components/PathWizard/PreferencesStep';
 import { AssessmentStep } from '@/shared/components/PathWizard/AssessmentStep';
+import { ResultsStep } from '@/shared/components/PathWizard/ResultsStep';
 import { SummaryStep } from '@/shared/components/PathWizard/SummaryStep';
 import { StepNavigation } from '@/shared/components/PathWizard/StepNavigation';
 import type { WizardState, Step } from '@/shared/components/PathWizard/types';
 import { INITIAL_STATE } from '@/shared/components/PathWizard/types';
 
-const STEP_COUNT = 4;
+const STEP_COUNT = 5;
 
+/** Learning-path wizard dialog (SS-AI two-phase): steps 1-3 collect
+ * goal/preferences/answers (optionally replacing role questions with an
+ * AI-generated quiz), step 4 shows the POST /wizard/analysis diagnostic
+ * report, step 5 summarizes before useGeneratePath creates the path.
+ * Consumes sseBus frames emitted by useSSE; rendered from dashboard/paths pages. */
 export function PathWizard() {
   const router = useRouter();
   const t = useTranslations('wizard');
+  const tAi = useTranslations('ai');
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<WizardState>(INITIAL_STATE);
+  const [aiQuestions, setAiQuestions] = useState<WizardQuestion[]>([]);
   const { data: options, isLoading: optionsLoading } = useWizardOptions();
   const { data: profile } = useProfile();
   const generatePath = useGeneratePath();
+  const generateQuiz = useGenerateWizardQuiz();
+  const analysis = useWizardAnalysis();
 
   const roles = options?.job_roles as { title: string; career_field: string }[] | undefined;
   const hasSkillProfile = profile?.skill_profile != null;
-  const { data: questions = [], isLoading: questionsLoading } = useRoleQuestions(
+  const { data: roleQuestions = [], isLoading: questionsLoading } = useRoleQuestions(
     state.selectedRole?.title ?? null
   );
+  const questions = aiQuestions.length > 0 ? aiQuestions : roleQuestions;
 
   const set = useCallback(<K extends keyof WizardState>(key: K, value: WizardState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -49,8 +62,57 @@ export function PathWizard() {
 
   const handleOpen = useCallback((o: boolean) => {
     setOpen(o);
-    if (!o) setState(INITIAL_STATE);
+    if (!o) {
+      setState(INITIAL_STATE);
+      setAiQuestions([]);
+    }
   }, []);
+
+  const handleGenerateQuiz = useCallback(async () => {
+    if (!state.selectedRole) return;
+    try {
+      const { job_id } = await generateQuiz.mutateAsync(state.selectedRole.title);
+      set('quizJobId', job_id);
+    } catch {
+      toast.error(tAi('quizFailed'));
+    }
+  }, [state.selectedRole, generateQuiz, set, tAi]);
+
+  const handleAssessmentContinue = useCallback((queued: boolean) => {
+    set('assessmentQueued', queued);
+    goTo(4);
+    if (!state.selectedRole) return;
+    analysis
+      .mutateAsync({
+        goal: state.selectedRole.title,
+        weekly_hours: state.weeklyHours,
+        answers: state.answers,
+      })
+      .then((report) => set('analysis', report))
+      .catch(() => toast.error(tAi('analysisFailed')));
+  }, [state, set, goTo, analysis, tAi]);
+
+  // SS-AI quiz delivery: the POST /ai/wizard-quiz job resolves over SSE.
+  useEffect(() => {
+    if (!state.quizJobId) return;
+    const offReady = sseBus.on('ai_quiz_ready', (frame) => {
+      const data = frame as unknown as { job_id: string; questions?: WizardQuestion[] };
+      if (data.job_id !== state.quizJobId || !Array.isArray(data.questions)) return;
+      setAiQuestions(data.questions);
+      toast.success(tAi('quizReady'));
+      goTo(3);
+    });
+    const offFailed = sseBus.on('ai_quiz_failed', (frame) => {
+      const data = frame as unknown as { job_id: string };
+      if (data.job_id !== state.quizJobId) return;
+      toast.error(tAi('quizFailed'));
+      set('quizJobId', undefined);
+    });
+    return () => {
+      offReady();
+      offFailed();
+    };
+  }, [state.quizJobId, goTo, set, tAi]);
 
   const handleGenerate = useCallback(async () => {
     if (!state.selectedRole) return;
@@ -83,18 +145,20 @@ export function PathWizard() {
       case 1: return t('goalTitle');
       case 2: return t('preferencesTitle');
       case 3: return t('assessmentTitle');
-      case 4: return t('summaryTitle');
+      case 4: return tAi('resultsTitle');
+      case 5: return t('summaryTitle');
     }
-  }, [state.step, t]);
+  }, [state.step, t, tAi]);
 
   const stepSubtitle = useCallback(() => {
     switch (state.step) {
       case 1: return t('goalSubtitle');
       case 2: return t('preferencesSubtitle');
       case 3: return t('assessmentSubtitle');
-      case 4: return t('summarySubtitle');
+      case 4: return tAi('resultsSubtitle');
+      case 5: return t('summarySubtitle');
     }
-  }, [state.step, t]);
+  }, [state.step, t, tAi]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
@@ -129,6 +193,8 @@ export function PathWizard() {
               selectedRole={state.selectedRole}
               onSelect={(role) => set('selectedRole', role)}
               onClearSearch={() => set('searchQuery', '')}
+              onGenerateQuiz={handleGenerateQuiz}
+              quizGenerating={generateQuiz.isPending}
             />
           )}
 
@@ -156,12 +222,21 @@ export function PathWizard() {
               onAnswer={(questionId, optionIndex) =>
                 set('answers', { ...state.answers, [questionId]: optionIndex })
               }
-              onSkip={() => { set('assessmentQueued', false); goTo(4) }}
-              onStart={() => { set('assessmentQueued', true); goTo(4) }}
+              onSkip={() => handleAssessmentContinue(false)}
+              onStart={() => handleAssessmentContinue(true)}
             />
           )}
 
           {state.step === 4 && (
+            <ResultsStep
+              analysis={state.analysis ?? null}
+              isPending={analysis.isPending}
+              isError={analysis.isError}
+              onContinue={() => goTo(5)}
+            />
+          )}
+
+          {state.step === 5 && (
             <SummaryStep
               state={state}
               isPending={generatePath.isPending}

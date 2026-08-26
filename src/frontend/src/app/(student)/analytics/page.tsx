@@ -1,20 +1,90 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Button } from '@/shared/ui/button';
 import { PageLoading } from '@/shared/components/Loading';
-import { useAnalyticsDashboard } from '@/shared/hooks/useAnalyticsApi';
+import { TakeQuizDialog } from '@/shared/components/TakeQuizDialog';
+import { useAnalyticsDashboard, useWeaknesses } from '@/shared/hooks/useAnalyticsApi';
+import { useGeneratePracticeTest } from '@/shared/hooks/useAiApi';
 import { useDashboard } from '@/shared/hooks/usePathApi';
 import { useSSE } from '@/shared/hooks/useSSE';
+import { sseBus } from '@/shared/lib/sseBus';
 import { formatDate } from '@/shared/lib/utils';
-import { TrendingUp, BarChart3, GraduationCap } from 'lucide-react';
+import type { WeaknessEntry } from '@/types/api';
+import { TrendingUp, BarChart3, GraduationCap, Target } from 'lucide-react';
 
+interface QuizDialogState {
+  open: boolean;
+  skillId: number;
+  skillName: string;
+  assessmentId: number | null;
+}
+
+const QUIZ_CLOSED: QuizDialogState = {
+  open: false,
+  skillId: 0,
+  skillName: '',
+  assessmentId: null,
+};
+
+/** Student analytics dashboard: stat cards, learning velocity, paths
+ * overview, recent activity and (SS-AI) a weaknesses panel that launches
+ * AI-generated practice tests into TakeQuizDialog via SSE ai_test_ready.
+ * Consumes useWeaknesses/useGeneratePracticeTest hooks and sseBus frames
+ * forwarded by useSSE. */
 export default function AnalyticsPage() {
   const t = useTranslations('analytics');
+  const tAi = useTranslations('ai');
   const locale = useLocale();
   const { data: analytics, isLoading } = useAnalyticsDashboard();
   const { data: dashboard } = useDashboard();
+  const { data: weaknessData } = useWeaknesses();
+  const generateTest = useGeneratePracticeTest();
+  const [quiz, setQuiz] = useState<QuizDialogState>(QUIZ_CLOSED);
+  const pendingJobRef = useRef<string | null>(null);
+  const awaitingSkillRef = useRef<{ skillId: number; skillName: string } | null>(null);
   useSSE();
+
+  // Open TakeQuizDialog when the generated practice test lands over SSE.
+  useEffect(() => {
+    const off = sseBus.on('ai_test_ready', (frame) => {
+      const data = frame as unknown as { job_id: string; assessment_id: number };
+      if (!pendingJobRef.current || data.job_id !== pendingJobRef.current) return;
+      pendingJobRef.current = null;
+      const skill = awaitingSkillRef.current;
+      awaitingSkillRef.current = null;
+      toast.success(tAi('testReady'));
+      if (!skill) return;
+      setQuiz({
+        open: true,
+        skillId: skill.skillId,
+        skillName: skill.skillName,
+        assessmentId: data.assessment_id,
+      });
+    });
+    return off;
+  }, [tAi]);
+
+  /** Request a 5-question AI practice test for one weak skill; the
+   * resulting assessment id arrives asynchronously over SSE. Called by
+   * the per-row practice-test buttons in the weaknesses panel. */
+  const handlePracticeTest = async (w: WeaknessEntry) => {
+    try {
+      const { job_id } = await generateTest.mutateAsync({
+        skill_id: w.skill_id,
+        n_questions: 5,
+      });
+      pendingJobRef.current = job_id;
+      awaitingSkillRef.current = { skillId: w.skill_id, skillName: w.skill_name };
+      toast(tAi('generatingTest'));
+    } catch (err) {
+      const status = (err as { response?: { status?: number } }).response?.status;
+      toast.error(status === 503 ? tAi('aiDisabled') : tAi('testFailed'));
+    }
+  };
 
   if (isLoading) return <PageLoading />;
 
@@ -49,6 +119,45 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              {tAi('weaknessesTitle')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(weaknessData?.weaknesses ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">{tAi('noWeaknesses')}</p>
+            ) : (
+              <div className="grid gap-x-8 sm:grid-cols-2">
+                {(weaknessData?.weaknesses ?? []).map((w) => (
+                  <div key={w.skill_id} className="flex items-center justify-between gap-3 py-2.5">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{w.skill_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {tAi('levelLabel', { level: w.current_level })}
+                        {w.gap != null && w.gap > 0
+                          ? ` · ${tAi('gapToMastery', { gap: w.gap })}`
+                          : ''}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="shrink-0"
+                      disabled={generateTest.isPending}
+                      onClick={() => handlePracticeTest(w)}
+                    >
+                      {tAi('practiceTest')}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -112,6 +221,14 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <TakeQuizDialog
+        open={quiz.open}
+        onOpenChange={(o) => setQuiz((prev) => ({ ...prev, open: o }))}
+        skillId={quiz.skillId}
+        skillName={quiz.skillName}
+        assessmentId={quiz.assessmentId}
+      />
     </div>
   );
 }

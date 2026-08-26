@@ -1,4 +1,6 @@
-export type Step = 1 | 2 | 3 | 4;
+import type { DiagnosticReport } from '@/types/api';
+
+export type Step = 1 | 2 | 3 | 4 | 5;
 
 export interface WizardState {
   step: Step;
@@ -11,6 +13,8 @@ export interface WizardState {
   freeContentOnly: boolean;
   assessmentQueued: boolean;
   answers: Record<string, number>;
+  quizJobId?: string;
+  analysis?: DiagnosticReport | null;
 }
 
 export const INITIAL_STATE: WizardState = {
@@ -24,6 +28,8 @@ export const INITIAL_STATE: WizardState = {
   freeContentOnly: true,
   assessmentQueued: false,
   answers: {},
+  quizJobId: undefined,
+  analysis: null,
 };
 
 export const ROLE_COLORS = [
