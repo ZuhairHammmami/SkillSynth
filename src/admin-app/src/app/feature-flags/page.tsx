@@ -19,6 +19,7 @@ interface FeatureFlagsData {
   app_mode: string;
   registration_enabled: boolean;
   ai_path_generation: boolean;
+  ai_local_model: string;
   real_time_updates: boolean;
   csrf_protection: boolean;
   rate_limiting: boolean;
@@ -81,6 +82,19 @@ export default function FeatureFlagsPage() {
           </Card>
         ))}
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>AI Local Model</CardTitle>
+          <CardDescription>Model path used for local AI path generation</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm font-mono">
+            <Key className="h-3.5 w-3.5 text-muted-foreground" />
+            {data?.ai_local_model || '—'}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
