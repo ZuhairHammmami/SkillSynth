@@ -220,3 +220,54 @@ export interface WizardOptions {
   career_fields: Record<string, { title: string; description?: string; career_field: string }[]>;
   preferences: { formats: string[]; languages: string[] };
 }
+
+export interface AiJob {
+  job_id: string;
+}
+
+export interface PerSkillResult {
+  skill: string;
+  skill_id: number;
+  correct: number;
+  total: number;
+  answered_count: number;
+  assessed_level: number;
+  previous_level: number;
+  gap_to_mastery: number;
+  weakness: boolean;
+}
+
+export interface WeaknessEntry {
+  skill_id: number;
+  skill_name: string;
+  current_level: number;
+  difficulty?: number;
+  gap?: number;
+}
+
+export interface DiagnosticReport {
+  per_skill: PerSkillResult[];
+  weaknesses: string[];
+  strengths: string[];
+  recommended_focus: string[];
+  estimated_weeks: number;
+  narrative: string | null;
+  narrative_available: boolean;
+}
+
+export interface LearningAnalysis {
+  weaknesses: WeaknessEntry[];
+  strengths: WeaknessEntry[];
+  weakness_count: number;
+  strength_count: number;
+  total_skills_assessed: number;
+  average_assessment_score: number;
+  total_assessments_taken: number;
+  recommended_focus: string[];
+}
+
+export interface ExplainPayload {
+  explanations: { question_index: number; why: string }[];
+  advice: string;
+  narrative_available: boolean;
+}

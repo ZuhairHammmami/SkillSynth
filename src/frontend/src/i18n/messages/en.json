@@ -632,5 +632,33 @@
   "adminDashboard": {
     "title": "Admin Dashboard",
     "subtitle": "Platform overview and analytics"
+  },
+  "ai": {
+    "generateQuiz": "Generate quiz",
+    "generatingQuiz": "Generating your quiz...",
+    "quizReady": "Your quiz is ready",
+    "quizFailed": "Quiz generation failed",
+    "analyzing": "Analyzing your results...",
+    "resultsTitle": "Diagnostic results",
+    "scoreLabel": "Score",
+    "levelLabel": "Level",
+    "gapLabel": "Gap to mastery",
+    "weaknessesTitle": "Areas to improve",
+    "strengthsTitle": "Strengths",
+    "focusTitle": "Recommended focus",
+    "narrativeTitle": "Coach notes",
+    "nextStepsTitle": "Next steps",
+    "continueToSummary": "Continue to summary",
+    "practiceTest": "Practice test",
+    "generatingTest": "Generating practice test...",
+    "testReady": "Practice test ready",
+    "takeQuiz": "Take quiz",
+    "submitQuiz": "Submit quiz",
+    "explainResults": "Explain my results",
+    "explanationsTitle": "Question explanations",
+    "adviceTitle": "Advice",
+    "levelAdjusted": "Skill level updated",
+    "aiDisabled": "AI features are currently unavailable",
+    "close": "Close"
   }
 }

@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '@/shared/lib/api';
 import { queryKeys } from '@/shared/api/query-keys';
-import type { AnalyticsDashboard } from '@/types/api';
+import type { AnalyticsDashboard, LearningAnalysis } from '@/types/api';
 
 export function useAnalyticsDashboard() {
   return useQuery({
@@ -23,6 +23,18 @@ export function useSkillGrowth() {
       const res = await apiClient.get('/analytics/skill-growth');
       return res.data;
     },
+    refetchInterval: 30000,
+  });
+}
+
+export function useWeaknesses(enabled: boolean = true) {
+  return useQuery({
+    queryKey: queryKeys.compat.learningAnalysis(),
+    queryFn: async () => {
+      const res = await apiClient.get<LearningAnalysis>('/learning/analysis');
+      return res.data;
+    },
+    enabled,
     refetchInterval: 30000,
   });
 }

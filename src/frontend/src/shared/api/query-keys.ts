@@ -76,6 +76,7 @@ export const queryKeys = {
     analyticsDashboard: () => ['analyticsDashboard'] as const,
     skillGrowth: () => ['skillGrowth'] as const,
     wizardOptions: () => ['wizardOptions'] as const,
+    learningAnalysis: () => ['learningAnalysis'] as const,
   },
 } as const;
 

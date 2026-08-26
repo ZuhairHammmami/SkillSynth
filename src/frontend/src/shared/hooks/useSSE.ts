@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import Cookies from 'js-cookie';
 import { queryKeys } from '@/shared/api/query-keys';
+import { sseBus } from '@/shared/lib/sseBus';
 
 interface SSEEvent {
   type: string;
@@ -58,6 +59,11 @@ export function useSSE(enabled: boolean = true, isAdmin: boolean = false) {
     es.addEventListener('message', (event) => {
       try {
         const data: SSEEvent = JSON.parse(event.data);
+
+        if (data.type !== 'connected' && data.type !== 'ping') {
+          sseBus.emit(data.type, data);
+        }
+
         const handlers = DEFAULT_HANDLERS;
 
         if (handlers[data.type]) {

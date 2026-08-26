@@ -632,5 +632,33 @@
     "continueWithoutAssessment": "المتابعة بدون تقييم",
     "continueWithAssessment": "المتابعة مع التقييم",
     "questionLabel": "سؤال {n}"
+  },
+  "ai": {
+    "generateQuiz": "توليد اختبار",
+    "generatingQuiz": "جارٍ توليد اختبارك...",
+    "quizReady": "اختبارك جاهز",
+    "quizFailed": "فشل توليد الاختبار",
+    "analyzing": "جارٍ تحليل نتائجك...",
+    "resultsTitle": "نتائج التشخيص",
+    "scoreLabel": "النتيجة",
+    "levelLabel": "المستوى",
+    "gapLabel": "الفجوة حتى الإتقان",
+    "weaknessesTitle": "نقاط تحتاج إلى تحسين",
+    "strengthsTitle": "نقاط القوة",
+    "focusTitle": "محاور التركيز المقترحة",
+    "narrativeTitle": "ملاحظات المرشد",
+    "nextStepsTitle": "الخطوات التالية",
+    "continueToSummary": "المتابعة إلى الملخص",
+    "practiceTest": "اختبار تدريبي",
+    "generatingTest": "جارٍ توليد الاختبار التدريبي...",
+    "testReady": "الاختبار التدريبي جاهز",
+    "takeQuiz": "ابدأ الاختبار",
+    "submitQuiz": "إرسال الاختبار",
+    "explainResults": "اشرح نتائجي",
+    "explanationsTitle": "شرح الأسئلة",
+    "adviceTitle": "نصائح",
+    "levelAdjusted": "تم تحديث مستوى المهارة",
+    "aiDisabled": "ميزات الذكاء الاصطناعي غير متاحة حالياً",
+    "close": "إغلاق"
   }
 }
