@@ -23,6 +23,7 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
+  "forceDelete": "Force delete",
     "edit": "Edit",
     "create": "Create",
     "refresh": "Refresh Page",
@@ -491,6 +492,7 @@
   "settingsPage": {
     "title": "Settings",
     "subtitle": "Manage your account settings.",
+    "language": "Language",
     "profileTitle": "Profile",
     "profileDesc": "Update your display name.",
     "passwordTitle": "Password",
@@ -669,5 +671,35 @@
     "noWeaknesses": "No weaknesses detected yet",
     "analysisFailed": "Analysis failed",
     "close": "Close"
+  },
+  "profilePage": {
+    "title": "Profile",
+    "subtitle": "Your learning identity and top skills.",
+    "name": "Full name",
+    "email": "Email",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "joinDate": "Joined",
+    "topSkills": "Top Skills",
+    "skill": "Skill",
+    "proficiency": "Proficiency",
+    "status": "Status",
+    "mastered": "Mastered",
+    "learning": "Learning",
+    "notStarted": "Not started",
+    "noSkills": "No skills tracked yet."
+  },
+  "analyticsPage": {
+    "title": "Analytics",
+    "subtitle": "Insights into your learning journey.",
+    "completion": "Completion Rate",
+    "masteredSkills": "Mastered Skills",
+    "weaknesses": "Areas to Improve",
+    "learningVelocity": "Learning Velocity",
+    "pathsOverview": "Paths Overview",
+    "practiceTest": "Practice Test",
+    "weaknessNote": "Skills with the lowest scores need the most attention."
   }
 }

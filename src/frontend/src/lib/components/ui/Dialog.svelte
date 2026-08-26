@@ -2,7 +2,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import Icon from '$lib/icons/Icon.svelte';
-  let { open = false, title = '', onclose, children, footer }: any = $props();
+  let { open = $bindable(false), title = '', onclose, children, footer }: any = $props();
 
   function onKey(e: KeyboardEvent) {
     if (e.key === 'Escape' && open) onclose?.();

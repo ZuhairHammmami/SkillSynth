@@ -68,7 +68,7 @@ export async function changePassword(current: string, next: string): Promise<voi
   await apiFetch('/auth/change-password', { method: 'POST', body: { current_password: current, new_password: next } });
 }
 
-export async function updateProfile(patch: { full_name?: string }): Promise<void> {
+export async function updateProfile(patch: { full_name?: string; email?: string }): Promise<void> {
   await apiFetch('/auth/me', { method: 'PUT', body: patch });
   await loadUser();
 }

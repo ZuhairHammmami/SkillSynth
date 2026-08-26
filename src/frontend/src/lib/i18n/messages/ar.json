@@ -6,6 +6,7 @@
     "save": "حفظ",
     "cancel": "إلغاء",
     "delete": "حذف",
+  "forceDelete": "حذف إجباري",
     "edit": "تعديل",
     "create": "إنشاء",
     "refresh": "تحديث الصفحة",
@@ -542,6 +543,7 @@
     "subscription": "نوع الحساب",
     "subtitle": "إدارة إعدادات حسابك.",
     "title": "الإعدادات",
+    "language": "اللغة",
     "updated": "تم التحديث!"
   },
   "updateProfile": {
@@ -669,5 +671,35 @@
     "noWeaknesses": "لا توجد نقاط ضعف مكتشفة بعد",
     "analysisFailed": "فشل التحليل",
     "close": "إغلاق"
+  },
+  "profilePage": {
+    "title": "الملف الشخصي",
+    "subtitle": "هويتك التعليمية ومهاراتك الأبرز.",
+    "name": "الاسم الكامل",
+    "email": "البريد الإلكتروني",
+    "changePassword": "تغيير كلمة المرور",
+    "currentPassword": "كلمة المرور الحالية",
+    "newPassword": "كلمة المرور الجديدة",
+    "confirmPassword": "تأكيد كلمة المرور الجديدة",
+    "joinDate": "انضم في",
+    "topSkills": "أبرز المهارات",
+    "skill": "المهارة",
+    "proficiency": "الإتقان",
+    "status": "الحالة",
+    "mastered": "متقن",
+    "learning": "قيد التعلّم",
+    "notStarted": "لم يبدأ",
+    "noSkills": "لا توجد مهارات متتبعة بعد."
+  },
+  "analyticsPage": {
+    "title": "التحليلات",
+    "subtitle": "رؤى حول رحلتك التعليمية.",
+    "completion": "معدل الإكمال",
+    "masteredSkills": "المهارات المتقنة",
+    "weaknesses": "مجالات تحتاج تحسينًا",
+    "learningVelocity": "سرعة التعلّم",
+    "pathsOverview": "نظرة عامة على المسارات",
+    "practiceTest": "اختبار تدريبي",
+    "weaknessNote": "المهارات الأقل درجة تحتاج اهتمامًا أكبر."
   }
 }
