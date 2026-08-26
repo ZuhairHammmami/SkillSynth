@@ -12,6 +12,7 @@
   import Icon from '$lib/icons/Icon.svelte';
   import ProgressMeter from '$lib/components/ProgressMeter.svelte';
   import { success, error as toastError, info } from '$lib/components/ui/toast';
+  import TakeQuizDialog from '$lib/components/TakeQuizDialog.svelte';
   import { t } from '$lib/i18n';
 
   const id = $derived($page.params.id ?? '');
@@ -20,6 +21,8 @@
   let busyStep = $state<number | null>(null);
   let showDelete = $state(false);
   let dependents = $state<Record<string, number> | null>(null);
+  let showQuiz = $state(false);
+  let skills = $derived((path?.steps ?? []).map((s: any) => s.skill).filter((s: any) => s && s.id).map((s: any) => ({ id: s.id, name: s.name })));
 
   async function load() {
     loading = true;
@@ -72,6 +75,7 @@
       <Badge tone="ochre">{path.goal}</Badge>
     </div>
     <Button variant="destructive" onclick={() => doDelete(false)}><Icon name="trash" size={16} />{t('pathDetailPage.deleteConfirm')}</Button>
+    <Button onclick={() => (showQuiz = true)}><Icon name="sparkles" size={16} />{t('wizard.assessmentTitle')}</Button>
   </div>
 
   <div class="stats">
@@ -109,6 +113,8 @@
     <Button variant="destructive" onclick={() => doDelete(true)}>{t('common.forceDelete')}</Button>
   {/snippet}
 </Dialog>
+
+<TakeQuizDialog bind:open={showQuiz} {skills} />
 
 <style>
   .center-spin { display: flex; justify-content: center; padding: 3rem; }
