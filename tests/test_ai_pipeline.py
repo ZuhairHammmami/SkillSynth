@@ -90,3 +90,47 @@ def test_analyze_fallback_none(fake):
     assert pipe.analyze_diagnostic(
         [{"skill": "X", "correct": 1, "total": 2, "assessed_level": 1,
           "gap": 2}]) is None
+
+
+def _one_question_obj(text="What is a list?"):
+    """Build a minimal contract-valid quiz payload for parser tests."""
+    return {"questions": [
+        {"text": text, "options": ["a", "b", "c", "d"],
+         "correct_index": 0}]}
+
+
+def test_extract_json_tolerates_trailing_chatter(fake):
+    """Trailing fence/prose after the object must not break parsing."""
+    obj = _one_question_obj()
+    eng = fake(json.dumps(obj) + "\n```\nNote: hope this helps!",
+               {"questions": []})
+    qs = pipe.generate_skill_quiz("SQL", 1, 1)
+    assert qs[0]["text"] == "What is a list?"
+    assert len(eng.calls) == 1
+
+
+def test_extract_json_tolerates_leading_prose(fake):
+    """Prose before the object ('Here is the JSON:') parses fine."""
+    obj = _one_question_obj("Leading prose Q")
+    eng = fake("Here is the JSON:\n" + json.dumps(obj), {"questions": []})
+    qs = pipe.generate_skill_quiz("SQL", 1, 1)
+    assert qs[0]["text"] == "Leading prose Q"
+    assert len(eng.calls) == 1
+
+
+def test_extract_json_first_object_wins(fake):
+    """Two back-to-back objects: FIRST wins, no Extra-data retry."""
+    obj = _one_question_obj("First object Q")
+    chatter = json.dumps(obj) + json.dumps({"note": "second"})
+    eng = fake(chatter, {"questions": []})
+    qs = pipe.generate_skill_quiz("SQL", 1, 1)
+    assert qs[0]["text"] == "First object Q"
+    assert len(eng.calls) == 1
+
+
+def test_garbage_without_braces_still_raises(fake):
+    """No braces anywhere → ValueError path intact → LLMOperationError."""
+    eng = fake("complete garbage, no braces at all", {"questions": []})
+    with pytest.raises(pipe.LLMOperationError):
+        pipe.generate_skill_quiz("SQL", 1, 1)
+    assert len(eng.calls) == 2 and "invalid" in eng.calls[1].lower()

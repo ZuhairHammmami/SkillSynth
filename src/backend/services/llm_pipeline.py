@@ -42,16 +42,19 @@ def _engine_factory():
 
 
 def _extract_json(text: str) -> dict:
-    """Parse the first {...} block from a raw completion string.
+    """Parse the FIRST JSON object in a completion, ignoring all chatter.
 
-    Called by _complete_json on each attempt; raises ValueError when no
-    object exists and json.JSONDecodeError on malformed content so the
-    caller records the error and retries.
+    Called by _complete_json on each attempt of every public op; scans
+    to the first "{" and decodes exactly one object via raw_decode, so
+    trailing code fences/prose or back-to-back objects cannot trigger
+    "Extra data" failures. Raises ValueError (incl. JSONDecodeError)
+    when no object parses so the caller records the error and retries.
     """
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if not match:
+    idx = text.find("{")
+    if idx == -1:
         raise ValueError("no JSON object found")
-    return json.loads(match.group(0))
+    obj, _ = json.JSONDecoder().raw_decode(text[idx:])
+    return obj
 
 
 def _complete_json(contract: dict, *, max_tokens: int) -> dict:
