@@ -14,7 +14,7 @@ import {
 import { Label } from '@/shared/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/shared/ui/radio-group';
 import type { WizardQuestion } from '@/shared/hooks/useAssessmentApi';
-import type { ExplainPayload } from '@/types/api';
+import { useExplainResult } from '@/shared/hooks/useAiApi';
 
 interface TakeQuizDialogProps {
   open: boolean;
@@ -45,13 +45,13 @@ export function TakeQuizDialog({
 }: TakeQuizDialogProps) {
   const t = useTranslations('ai');
   const tw = useTranslations('wizard');
+  const tErr = useTranslations('error');
   const [questions, setQuestions] = useState<WizardQuestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<QuizSubmitResult | null>(null);
-  const [explaining, setExplaining] = useState(false);
-  const [explain, setExplain] = useState<ExplainPayload | null>(null);
+  const explainMutation = useExplainResult();
   const [delta, setDelta] = useState<number | null>(null);
 
   useEffect(() => {
@@ -61,10 +61,9 @@ export function TakeQuizDialog({
     setAnswers({});
     setSubmitting(false);
     setResult(null);
-    setExplaining(false);
-    setExplain(null);
+    explainMutation.reset();
     setDelta(null);
-  }, [open]);
+  }, [open, explainMutation]);
 
   // Fetch this skill's frozen question payload on every open.
   useEffect(() => {
@@ -74,7 +73,10 @@ export function TakeQuizDialog({
     apiClient
       .get<WizardQuestion[]>(`/assessments/${skillId}/questions`)
       .then((res) => {
-        if (!cancelled) setQuestions(res.data.filter((q) => q.skill === skillName));
+        if (!cancelled) {
+          const wanted = skillName.toLowerCase();
+          setQuestions(res.data.filter((q) => q.skill.toLowerCase() === wanted));
+        }
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -117,19 +119,19 @@ export function TakeQuizDialog({
     }
   };
 
+  /** Ask POST /ai/explain (via useExplainResult) for per-question
+   * walkthrough; 503 maps to the AI-disabled notice, everything else to
+   * the generic error.title message. Called by the explain button. */
   const handleExplain = async () => {
-    if (!assessmentId || explaining) return;
-    setExplaining(true);
+    if (!assessmentId || explainMutation.isPending) return;
     try {
-      const res = await apiClient.post<ExplainPayload>('/ai/explain', {
+      await explainMutation.mutateAsync({
         assessment_id: assessmentId,
         answers: orderedAnswers(),
       });
-      setExplain(res.data);
-    } catch {
-      toast.error(t('aiDisabled'));
-    } finally {
-      setExplaining(false);
+    } catch (err) {
+      const status = (err as { response?: { status?: number } }).response?.status;
+      toast.error(status === 503 ? t('aiDisabled') : tErr('title'));
     }
   };
 
@@ -211,14 +213,14 @@ export function TakeQuizDialog({
               )}
             </div>
 
-            {!explain && (
+            {!explainMutation.data && (
               <Button
                 variant="outline"
                 className="w-full"
                 onClick={handleExplain}
-                disabled={explaining}
+                disabled={explainMutation.isPending}
               >
-                {explaining ? (
+                {explainMutation.isPending ? (
                   <Loader2 className="me-2 h-4 w-4 animate-spin" />
                 ) : (
                   <Sparkles className="me-2 h-4 w-4" />
@@ -227,10 +229,10 @@ export function TakeQuizDialog({
               </Button>
             )}
 
-            {explain && (
+            {explainMutation.data && (
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold">{t('explanationsTitle')}</h4>
-                {explain.explanations.map((e) => (
+                {explainMutation.data.explanations.map((e) => (
                   <div key={e.question_index} className="rounded-lg border bg-card p-3 space-y-1">
                     <p className="text-sm font-medium">
                       {questions[e.question_index]?.text ??
@@ -239,11 +241,11 @@ export function TakeQuizDialog({
                     <p className="text-xs text-muted-foreground leading-relaxed">{e.why}</p>
                   </div>
                 ))}
-                {explain.advice && (
+                {explainMutation.data.advice && (
                   <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-1">
                     <h4 className="text-sm font-semibold">{t('adviceTitle')}</h4>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      {explain.advice}
+                      {explainMutation.data.advice}
                     </p>
                   </div>
                 )}

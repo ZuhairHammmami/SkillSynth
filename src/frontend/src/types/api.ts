@@ -245,13 +245,21 @@ export interface WeaknessEntry {
   gap?: number;
 }
 
+export interface DiagnosticNarrative {
+  summary: string;
+  strengths: { skill: string; note: string }[];
+  weaknesses: { skill: string; reason: string; focus: string }[];
+  recommended_focus: string[];
+  next_steps: string;
+}
+
 export interface DiagnosticReport {
   per_skill: PerSkillResult[];
   weaknesses: string[];
   strengths: string[];
   recommended_focus: string[];
   estimated_weeks: number;
-  narrative: string | null;
+  narrative: DiagnosticNarrative | null;
   narrative_available: boolean;
 }
 

@@ -5,42 +5,15 @@ import { Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
-import type { DiagnosticReport, PerSkillResult } from '@/types/api';
+import type {
+  DiagnosticNarrative, DiagnosticReport, PerSkillResult,
+} from '@/types/api';
 
 interface ResultsStepProps {
   analysis: DiagnosticReport | null;
   isPending: boolean;
   isError: boolean;
   onContinue: () => void;
-}
-
-/** Shape llm_pipeline.analyze_diagnostic actually returns at runtime
- * (the shared DiagnosticReport type narrows narrative to string|null,
- * so this file coerces defensively instead of touching types). */
-interface NarrativeShape {
-  summary?: string;
-  strengths?: { skill?: string; note?: string }[];
-  weaknesses?: { skill?: string; reason?: string }[];
-  recommended_focus?: string[];
-  next_steps?: string;
-}
-
-/** Coerce the analysis narrative field into a renderable object.
- * Called by ResultsStep only; accepts object payloads from
- * /wizard/analysis, JSON strings, or falls back to plain-text summary. */
-function coerceNarrative(raw: string | null): NarrativeShape | null {
-  if (!raw) return null;
-  if (typeof raw === 'object') return raw as unknown as NarrativeShape;
-  if (typeof raw !== 'string') return null;
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (parsed && typeof parsed === 'object') {
-      return parsed as NarrativeShape;
-    }
-  } catch {
-    /* plain text */
-  }
-  return { summary: raw };
 }
 
 /** One per-skill diagnostic row. Rendered by ResultsStep; weakness rows
@@ -128,9 +101,9 @@ function ReportLists({ analysis }: { analysis: DiagnosticReport }) {
 }
 
 /** Optional LLM coach block (summary / next steps / focus chips).
- * Rendered by ResultsStep when narrative_available; tolerates both the
- * documented object payload and a plain-string fallback. */
-function NarrativeBlock({ narrative }: { narrative: NarrativeShape }) {
+ * Rendered by ResultsStep when narrative_available; the payload is the
+ * typed DiagnosticNarrative returned by POST /wizard/analysis. */
+function NarrativeBlock({ narrative }: { narrative: DiagnosticNarrative }) {
   const t = useTranslations('ai');
   return (
     <Card className="border-primary/20 bg-primary/5">
@@ -178,7 +151,7 @@ export function ResultsStep({ analysis, isPending, isError, onContinue }: Result
     );
   }
 
-  const narrative = analysis ? coerceNarrative(analysis.narrative) : null;
+  const narrative = analysis?.narrative ?? null;
 
   return (
     <div className="space-y-4 py-2">

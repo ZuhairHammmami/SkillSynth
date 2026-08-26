@@ -99,6 +99,7 @@ export function PathWizard() {
       const data = frame as unknown as { job_id: string; questions?: WizardQuestion[] };
       if (data.job_id !== state.quizJobId || !Array.isArray(data.questions)) return;
       setAiQuestions(data.questions);
+      set('quizJobId', undefined);
       toast.success(tAi('quizReady'));
       goTo(3);
     });
@@ -194,7 +195,7 @@ export function PathWizard() {
               onSelect={(role) => set('selectedRole', role)}
               onClearSearch={() => set('searchQuery', '')}
               onGenerateQuiz={handleGenerateQuiz}
-              quizGenerating={generateQuiz.isPending}
+              quizGenerating={generateQuiz.isPending || !!state.quizJobId}
             />
           )}
 
