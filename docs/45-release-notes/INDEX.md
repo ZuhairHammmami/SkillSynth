@@ -35,7 +35,7 @@ Record shipped changes with their breaking effects and migration steps. History 
 ```bash
 rm skillsynth.db && PYTHONPATH=src python seed_v3.py   # fresh 15-table DB (~1100 rows)
 PYTHONPATH=src python tools/verify_schema.py           # expect SCHEMA MATCH
-PYTHONPATH=src python -m pytest tests/ -q              # expect 178 passed
+PYTHONPATH=src python -m pytest tests/ -q              # expect 190 passed
 ```
 **Security follow-up**: .env and src/frontend/.env.local hold live credentials — rotation still pending.
 

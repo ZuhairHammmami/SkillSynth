@@ -74,7 +74,7 @@ Complete documentation for SkillSynth, an adaptive learning platform: **FastAPI 
 | 41 | [Decision Records](41-decision-records/INDEX.md) | ADR index incl. supersessions; integrity policy in adr-014.md |
 | 42 | [Runbooks](42-runbooks/INDEX.md) | Verified operational commands |
 | 43 | [Checklists](43-checklists/INDEX.md) | Pre-commit, review gates |
-| 44 | [Test Scenarios](44-test-scenarios/INDEX.md) | Suite map: 178 tests / 20 files |
+| 44 | [Test Scenarios](44-test-scenarios/INDEX.md) | Suite map: 190 tests / 21 files |
 | 45 | [Release Notes](45-release-notes/INDEX.md) | Changelog, newest first |
 | 46 | [Glossary](46-glossary/INDEX.md) | Current terminology only |
 | 47 | [Contributing](47-contributing/INDEX.md) | PR process |
@@ -97,7 +97,7 @@ cd src/admin-app && pnpm dev
 
 ## Quick Reference
 - **Seed**: `PYTHONPATH=src python seed_v3.py` (~1109 rows, FK-gated, idempotent)
-- **Tests**: `PYTHONPATH=src python -m pytest tests/ -q` — 178 passed, isolated temp DB per run
+- **Tests**: `PYTHONPATH=src python -m pytest tests/ -q` — 190 passed, isolated temp DB per run
 - **Schema**: `PYTHONPATH=src python tools/verify_schema.py` → SCHEMA MATCH (15 tables)
 - **API**: 8 routers · 54 paths · 68 operations; OpenAPI UI at `http://localhost:8000/docs`
 - **Integrity**: restricted deletes → 409 census + `?force=true`; cycles and bad refs rejected at write time ([ADR-014](41-decision-records/adr-014.md))

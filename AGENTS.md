@@ -17,7 +17,7 @@ cd src/admin-app && pnpm dev
 PYTHONPATH=src python seed_v3.py    # 15-table seed (~1109 rows, FK-gated, idempotent)
 
 # Tests
-PYTHONPATH=src python -m pytest tests/ -q    # 178 tests, isolated temp DB
+PYTHONPATH=src python -m pytest tests/ -q    # 190 tests, isolated temp DB
 
 # Optional SS-AI (local LLM; off by default)
 # Model file: src/data/Llama-3.2-3B-Instruct-uncensored.Q6_K.gguf (provenance in ADR-015)
@@ -58,7 +58,7 @@ PYTHONPATH=src python tools/verify_schema.py   # prints SCHEMA MATCH on success
 | **Performance** | ✅ Cache, compression | 30s TTL inline cache on `/api/public/stats`; compression middleware |
 | **Security** | ✅ OWASP Top 10 | Rate limiting, CSRF, CSP, HSTS, activity_log audit trail |
 | **Referential Integrity** | ✅ Write-time guards (ADR-014) | FK validation→400 naming bad ref; rename-uniqueness (case-insensitive)→409; category/prerequisite cycle guards→400; restricted deletes skills/categories/job_roles→409 `{"detail":{"message","dependents"}}` unless `?force=true`; IntegrityError→409 safety net in main.py |
-| **QA** | ✅ 178/178 tests passed ×2 | Isolated temp SQLite DB per run; dev DB never touched |
+| **QA** | ✅ 190/190 tests passed ×2 | Isolated temp SQLite DB per run; dev DB never touched |
 
 **Backend Layer Structure (`src/backend/`)**  
 ```
