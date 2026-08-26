@@ -83,3 +83,6 @@ session-ses_*.md
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# SS-AI model artifacts (3GB GGUF binaries stay local)
+src/data/*.gguf
