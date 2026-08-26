@@ -30,6 +30,20 @@ from backend.services.assess_service import normalize_key
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+AI_QUIZ_BANK: dict[str, dict[str, list[int]]] = {}
+"""Ephemeral answer keys for AI wizard quizzes: job_id →
+{normalized_skill_key.lower(): [correct_index per delivered question]}.
+
+Populated by _wizard_job on success (grouped per skill in delivery
+order); read by routers/paths.wizard_analysis when a request carries
+the matching quiz_job_id, so AI questions are graded against their own
+answer keys instead of the seeded assessment bank. Entries live until
+process end — wizard quizzes are SSE-delivered and never persisted by
+design (ADR-015); capped at 200 jobs, oldest dropped.
+"""
+
+_BANK_CAP = 200
+
 
 class WizardQuizIn(BaseModel):
     """POST /api/ai/wizard-quiz body."""
@@ -107,18 +121,25 @@ def _wizard_job(user_id: int, job_id: str, payload: dict,
 
     Spawned by generate_wizard_quiz; calls pipe.generate_role_quiz,
     rebuilds ids as normalize_key(skill).lower()_q<i> with per-skill
-    index restart, then publisher.send_event ai_quiz_ready/failed.
+    index restart, records each delivered question's correct_index in
+    AI_QUIZ_BANK[job_id] (ephemeral; oldest job dropped past
+    _BANK_CAP), then publisher.send_event ai_quiz_ready/failed.
     """
     try:
         raw = pipe.generate_role_quiz(payload["role"], payload["skills"],
                                       exclude_texts=exclude)
         questions, counters = [], {}
+        keys: dict[str, list[int]] = {}
         for q in raw:
             key = normalize_key(q["skill"]).lower()
             i = counters.get(key, 0)
             counters[key] = i + 1
             questions.append({"id": f"{key}_q{i}", "skill": q["skill"],
                               "text": q["text"], "options": q["options"]})
+            keys.setdefault(key, []).append(q["correct_index"])
+        AI_QUIZ_BANK[job_id] = keys
+        while len(AI_QUIZ_BANK) > _BANK_CAP:
+            AI_QUIZ_BANK.pop(next(iter(AI_QUIZ_BANK)))
         publisher.send_event(user_id, "ai_quiz_ready",
                              {"job_id": job_id, "questions": questions})
     except Exception as exc:  # noqa: BLE001 — reported over SSE

@@ -87,6 +87,7 @@ export function PathWizard() {
         goal: state.selectedRole.title,
         weekly_hours: state.weeklyHours,
         answers: state.answers,
+        quiz_job_id: state.aiQuizJobId ?? undefined,
       })
       .then((report) => set('analysis', report))
       .catch(() => toast.error(tAi('analysisFailed')));
@@ -99,6 +100,9 @@ export function PathWizard() {
       const data = frame as unknown as { job_id: string; questions?: WizardQuestion[] };
       if (data.job_id !== state.quizJobId || !Array.isArray(data.questions)) return;
       setAiQuestions(data.questions);
+      // Keep the delivered job id for /wizard/analysis grading before the
+      // transport field is cleared (quizJobId is reset once delivered).
+      set('aiQuizJobId', data.job_id);
       set('quizJobId', undefined);
       toast.success(tAi('quizReady'));
       goTo(3);

@@ -2,7 +2,12 @@
 
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '@/shared/lib/api';
-import type { AiJob, DiagnosticReport, ExplainPayload } from '@/types/api';
+import type {
+  AiJob,
+  DiagnosticReport,
+  ExplainPayload,
+  WizardAnalysisInput,
+} from '@/types/api';
 
 export function useGenerateWizardQuiz() {
   return useMutation({
@@ -15,11 +20,7 @@ export function useGenerateWizardQuiz() {
 
 export function useWizardAnalysis() {
   return useMutation({
-    mutationFn: async (input: {
-      goal: string;
-      weekly_hours: number;
-      answers: Record<string, number>;
-    }) => {
+    mutationFn: async (input: WizardAnalysisInput) => {
       const res = await apiClient.post<DiagnosticReport>(
         '/wizard/analysis',
         input

@@ -14,6 +14,7 @@ export interface WizardState {
   assessmentQueued: boolean;
   answers: Record<string, number>;
   quizJobId?: string;
+  aiQuizJobId?: string;
   analysis?: DiagnosticReport | null;
 }
 
@@ -29,6 +30,7 @@ export const INITIAL_STATE: WizardState = {
   assessmentQueued: false,
   answers: {},
   quizJobId: undefined,
+  aiQuizJobId: undefined,
   analysis: null,
 };
 

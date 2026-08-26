@@ -37,8 +37,13 @@ def test_ai_anti_degeneration_defaults(monkeypatch):
 def test_ai_enabled_toggle(monkeypatch):
     """AI_ENABLED parses 'true' case-insensitively.
 
-    Guards the env contract used by routers/ai.py gates.
+    Guards the env contract used by routers/ai.py gates. Reload mutates
+    the SHARED module object, so the off state is reloaded back before
+    returning — otherwise later suites inherit AI_ENABLED=True and the
+    real engine answers their requests.
     """
     monkeypatch.setenv("AI_ENABLED", "TRUE")
     import backend.config.app_settings as s
     assert importlib.reload(s).AI_ENABLED is True
+    monkeypatch.delenv("AI_ENABLED", raising=False)
+    assert importlib.reload(s).AI_ENABLED is False

@@ -119,15 +119,76 @@ def wizard_options(db: Session = Depends(get_db)):
     return wizard_service.wizard_options(db)
 
 
+def _quiz_bank(job_id: str | None) -> dict[str, list[int]] | None:
+    """Resolve an AI quiz answer-key bank entry, or None.
+
+    Helper of wizard_analysis; lazily imports routers.ai.AI_QUIZ_BANK
+    (populated by _wizard_job on ai_quiz_ready) to avoid a circular
+    import — routers.ai does not import this module.
+    """
+    if not job_id:
+        return None
+    from backend.routers.ai import AI_QUIZ_BANK
+    return AI_QUIZ_BANK.get(job_id)
+
+
+def _analysis_from_bank(skills, answers, bank, previous):
+    """Grade per-skill rows against the AI quiz answer-key bank (pure).
+
+    Helper of wizard_analysis for AI-delivered quizzes; mirrors
+    _build_report_rows' row shape and weakness/strength rules but reads
+    correct indices from bank[normalize_key(skill).lower()] in delivered
+    question order instead of seeded assessment questions. Skills with
+    no delivered questions keep total=0 and their previous level.
+    """
+    rows, weak, strong = [], [], []
+    for s in skills:
+        key = normalize_key(s.name).lower()
+        truth = bank.get(key, [])
+        keyed = [(i, answers[k])
+                 for i, _ in enumerate(truth)
+                 for k in [f"{key}_q{i}"]
+                 if k in answers]
+        correct = sum(1 for i, v in keyed if v == truth[i])
+        total, ans_n = len(truth), len(keyed)
+        prev = previous.get(s.name, 0)
+        lvl = max(0, min(5, round(correct / total * 5))) if total else prev
+        rows.append({"skill": s.name, "skill_id": s.id,
+                     "correct": correct if total else 0, "total": total,
+                     "answered_count": ans_n, "assessed_level": lvl,
+                     "previous_level": prev,
+                     "gap_to_mastery": max(0, MASTERY_LEVEL - lvl),
+                     "weakness": lvl < 2})
+        if total and lvl < 2:
+            weak.append(s.name)
+        if lvl >= MASTERY_LEVEL:
+            strong.append(s.name)
+    return rows, weak, strong
+
+
+def _attach_narrative(report: dict, per_skill: list) -> None:
+    """Enrich a results report with the AI narrative when allowed.
+
+    Callee of wizard_analysis; gated on settings.AI_ENABLED +
+    llm_pipeline._engine_available, calls analyze_diagnostic and flips
+    narrative_available only on success (mutates report in place).
+    """
+    if settings.AI_ENABLED and llm_pipeline._engine_available():
+        narrative = llm_pipeline.analyze_diagnostic(per_skill)
+        if narrative:
+            report.update(narrative=narrative, narrative_available=True)
+
+
 @router.post("/wizard/analysis")
 def wizard_analysis(data: WizardAnalysisIn, db: Session = Depends(get_db),
                     current_user=Depends(get_current_user)):
     """Phase-1 detailed results BEFORE path creation (SS-AI spec).
 
-    Calls learning_service._score_answers(persist=False) purely, then
-    _build_report_rows for rows/lists; optionally enriches with
-    llm_pipeline.analyze_diagnostic when settings.AI_ENABLED. Performs
-    ZERO writes. Consumed by PathWizard ResultsStep (frontend Task 10).
+    Grades via learning_service._score_answers(persist=False) +
+    _build_report_rows, or purely through _analysis_from_bank when
+    data.quiz_job_id resolves in routers.ai.AI_QUIZ_BANK; optionally
+    enriches via _attach_narrative. Performs ZERO writes. Consumed by
+    PathWizard ResultsStep (frontend Task 10).
     """
     role = catalog_repository.get_job_role_by_title(db, data.goal)
     if not role:
@@ -136,13 +197,20 @@ def wizard_analysis(data: WizardAnalysisIn, db: Session = Depends(get_db),
         db, catalog_repository.get_job_role_skill_ids(db, role.id))
     if not skills:
         raise HTTPException(status_code=404, detail="Role has no skills")
-    levels = learning_service._score_answers(
-        db, skills, data.answers or {}, current_user.id, persist=False)
     previous = arepo.get_skill_profile(db, current_user.id)
-    per_skill, weaknesses, strengths = _build_report_rows(
-        db, skills, data.answers or {}, levels, previous)
-    hours = sum((s.estimated_hours or 10) for s in skills
-                if levels[s.id] < MASTERY_LEVEL)
+    bank = _quiz_bank(data.quiz_job_id)
+    if bank is not None:
+        per_skill, weaknesses, strengths = _analysis_from_bank(
+            skills, data.answers or {}, bank, previous)
+        below = [s for s, row in zip(skills, per_skill)
+                 if row["assessed_level"] < MASTERY_LEVEL]
+    else:
+        levels = learning_service._score_answers(
+            db, skills, data.answers or {}, current_user.id, persist=False)
+        per_skill, weaknesses, strengths = _build_report_rows(
+            db, skills, data.answers or {}, levels, previous)
+        below = [s for s in skills if levels[s.id] < MASTERY_LEVEL]
+    hours = sum((s.estimated_hours or 10) for s in below)
     report = {
         "per_skill": per_skill, "weaknesses": weaknesses,
         "strengths": strengths,
@@ -150,10 +218,7 @@ def wizard_analysis(data: WizardAnalysisIn, db: Session = Depends(get_db),
         "estimated_weeks": max(1, round(hours / max(data.weekly_hours, 1))),
         "narrative": None, "narrative_available": False,
     }
-    if settings.AI_ENABLED and llm_pipeline._engine_available():
-        narrative = llm_pipeline.analyze_diagnostic(per_skill)
-        if narrative:
-            report.update(narrative=narrative, narrative_available=True)
+    _attach_narrative(report, per_skill)
     return report
 
 

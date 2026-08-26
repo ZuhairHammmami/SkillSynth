@@ -61,7 +61,7 @@ Existing `assessment_completed` / `path_generated` frames are unchanged.
 ## Rules
 1. **Ephemeral vs persisted**: wizard AI quizzes are EPHEMERAL (SSE-only); standalone practice tests PERSIST as assessments titled `[AI] <Skill> — adaptive`
 2. **Bounded autonomy**: review may adjust proficiency −1/0/+1 ONLY at confidence==high, clamped to 0..5; audited in activity_log + SSE; deterministic formula never overwritten
-3. Config vars: `AI_ENABLED(false)` · `AI_MODEL_PATH` · `AI_N_GPU_LAYERS(-1)` · `AI_N_CTX(4096)` · `AI_TEMPERATURE(0.2)` · `AI_MAX_NEW_TOKENS(700)`
+3. Config vars: `AI_ENABLED(false)` · `AI_MODEL_PATH` · `AI_N_GPU_LAYERS(-1)` · `AI_N_CTX(4096)` · `AI_TEMPERATURE(0.3)` · `AI_REPEAT_PENALTY(1.15)` · `AI_TOP_P(0.95)` · `AI_MAX_NEW_TOKENS(700)`
 4. Runtime: llama-cpp-python 0.3.x in-process; this machine runs the CPU build (nvcc absent); GPU offload needs the CUDA toolkit install below; `AI_N_GPU_LAYERS` is a safe no-op on CPU
    ```bash
    CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python --force-reinstall --no-cache-dir

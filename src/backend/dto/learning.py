@@ -210,8 +210,12 @@ class PathUpdate(BaseModel):
 
 class WizardAnalysisIn(BaseModel):
     """POST /wizard/analysis body — same answer-key contract as
-    GeneratePathIn.answers; weekly_hours feeds the weeks estimate."""
+    GeneratePathIn.answers; weekly_hours feeds the weeks estimate.
+    quiz_job_id, when it matches a routers.ai.AI_QUIZ_BANK entry,
+    grades answers against that AI-delivered quiz instead of the
+    seeded assessment bank."""
 
     goal: str
     weekly_hours: int = 10
     answers: dict[str, int] = Field(default_factory=dict)
+    quiz_job_id: Optional[str] = None

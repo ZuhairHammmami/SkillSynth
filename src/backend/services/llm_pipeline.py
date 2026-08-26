@@ -172,16 +172,21 @@ def generate_role_quiz(role_title: str, skills: list[dict],
 def analyze_diagnostic(per_skill: list[dict]) -> dict | None:
     """Narrative report for pre-path results; None ⇒ deterministic fallback.
 
-    Called by routers/ai.py wizard analysis; gates on _engine_available()
-    (return None), caps narrative fields to bounded sizes, and converts
-    any failure into None so callers render the numbers-only report.
+    Called by routers/paths.py wizard_analysis; gates on
+    _engine_available() (return None), normalizes each row's
+    gap_to_mastery to the gap key diagnostic_analysis_prompt reads
+    (pipeline-owned so wire rows stay untouched), caps narrative fields
+    to bounded sizes, and converts any failure into None so callers
+    render the numbers-only report.
     """
     if not _engine_available():
         logger.info("analyze_diagnostic skipped: AI unavailable")
         return None
     try:
+        rows = [{**r, "gap": r.get("gap", r.get("gap_to_mastery", 0))}
+                for r in per_skill]
         data = _complete_json(
-            prompts.diagnostic_analysis_prompt(per_skill), max_tokens=750)
+            prompts.diagnostic_analysis_prompt(rows), max_tokens=750)
         return {
             "summary": str(data.get("summary", ""))[:800],
             "strengths": data.get("strengths", [])[:8],

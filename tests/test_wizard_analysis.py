@@ -35,8 +35,10 @@ def _profile(db, uid):
     return {(r.skill_id, r.proficiency_level) for r in rows}
 
 
-def test_analysis_is_pure(api_client, db_session):
+def test_analysis_is_pure(api_client, db_session, monkeypatch):
     """Endpoint computes levels without touching user_skills."""
+    from backend.config import app_settings as settings
+    monkeypatch.setattr(settings, "AI_ENABLED", False)
     headers = _headers(api_client)
     uid = _auth_uid(api_client, headers)
     before = _profile(db_session, uid)
@@ -50,8 +52,10 @@ def test_analysis_is_pure(api_client, db_session):
     assert _profile(db_session, uid) == before
 
 
-def test_levels_match_formula(api_client, db_session):
+def test_levels_match_formula(api_client, db_session, monkeypatch):
     """Graded quiz (<skill>_q<i> keys) engages scoring; weeks estimate sane."""
+    from backend.config import app_settings as settings
+    monkeypatch.setattr(settings, "AI_ENABLED", False)
     qs = api_client.get("/api/assessments/role/Frontend Developer",
                         headers=_headers(api_client)).json()
     assert qs, "seed must provide Frontend Developer questions"

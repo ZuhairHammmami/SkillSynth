@@ -225,6 +225,13 @@ export interface AiJob {
   job_id: string;
 }
 
+export interface WizardAnalysisInput {
+  goal: string;
+  weekly_hours: number;
+  answers: Record<string, number>;
+  quiz_job_id?: string;
+}
+
 export interface PerSkillResult {
   skill: string;
   skill_id: number;
