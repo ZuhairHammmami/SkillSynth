@@ -29,7 +29,7 @@ skillsynth run                          # backend :8000 (reload when MODE=dev)
 cd src/frontend && pnpm dev             # student frontend :3000
 cd src/admin-app && pnpm dev            # admin app :3001
 ```
-The root `./skillsynth` bash shim resolves the repo dir and execs `.venv/bin/skillsynth`, falling back to `PYTHONPATH=src python -m backend.cli` when the package is not installed — so `./skillsynth run` works on a bare checkout. Legacy `python run.py` remains as a thin shim over the same code path.
+The root `./skillsynth` bash shim resolves the repo dir and execs `.venv/bin/skillsynth`, falling back to `PYTHONPATH=src python -m backend.cli` when the package is not installed — this fallback avoids only the `pip install -e .` step; backend dependencies (`pip install -r requirements.txt`) are still required on either path, so a bare checkout with no venv will not run. Legacy `python run.py` remains as a thin shim over the same code path.
 
 ## Sequence: Container Stack
 ```

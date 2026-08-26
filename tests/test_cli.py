@@ -40,7 +40,10 @@ def test_seed_db_target_creates_tables_without_touching_dev_db(tmp_path):
     """`skillsynth seed --db <tmp>` builds the 15 tables in the target file
     while the repo-root skillsynth.db stays byte-identical."""
     dev_db = os.path.join(REPO, "skillsynth.db")
-    before = _digest(dev_db) if os.path.exists(dev_db) else None
+    assert os.path.exists(dev_db), (
+        f"dev database absent at {dev_db} — seed isolation cannot be "
+        "verified silently; seed it first (seed_v3.py) and rerun")
+    before = _digest(dev_db)
     target = tmp_path / "seeded.db"
     assert cli.main(["seed", "--db", str(target)]) == 0
     con = sqlite3.connect(str(target))
@@ -48,8 +51,7 @@ def test_seed_db_target_creates_tables_without_touching_dev_db(tmp_path):
         "SELECT name FROM sqlite_master WHERE type='table'")}
     con.close()
     assert {"users", "skills", "categories", "paths", "user_skills"} <= tables
-    if before is not None:
-        assert _digest(dev_db) == before
+    assert _digest(dev_db) == before
 
 
 def test_test_command_builds_pytest_argv(monkeypatch, tmp_path):

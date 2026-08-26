@@ -60,8 +60,8 @@ def _build_parser():
     p_run.set_defaults(func=_cmd_run)
 
     p_seed = sub.add_parser("seed", help="run seed_v3 against --db")
-    p_seed.add_argument("--db", default="skillsynth.db",
-                        help="target SQLite file (default skillsynth.db)")
+    p_seed.add_argument("--db", default=os.path.join(BASE_DIR, "skillsynth.db"),
+                        help="target SQLite file (default <repo>/skillsynth.db)")
     p_seed.set_defaults(func=_cmd_seed)
 
     p_test = sub.add_parser("test", help="run pytest tests/ [args...]")
@@ -138,7 +138,12 @@ def _make_seed_engine(db_path):
 
     @event.listens_for(engine, "connect")
     def apply_pragmas(dbapi_connection, connection_record):
-        """Apply dev-mode SQLite pragmas on every new connection."""
+        """Apply dev-mode SQLite pragmas on every new connection.
+
+        Registered by _make_seed_engine via event.listens_for; executes
+        foreign_keys/WAL/synchronous exactly as backend.database does so
+        seeded rows carry the same integrity guarantees as the running app.
+        """
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.execute("PRAGMA journal_mode=WAL")
