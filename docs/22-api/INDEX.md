@@ -1,7 +1,7 @@
 # SS-EDS: API
 
 ## Purpose
-Document every FastAPI endpoint — 63 operations across 49 paths (verified from OpenAPI) — grouped by router, with auth requirements, rate limits, and token lifetimes. JWT access tokens only; there is no refresh endpoint.
+Document every FastAPI endpoint — 68 operations across 54 paths (verified from OpenAPI) — grouped by router, with auth requirements, rate limits, and token lifetimes. JWT access tokens only; there is no refresh endpoint.
 
 ## Responsibilities
 - Maintain the authoritative endpoint inventory
@@ -28,7 +28,7 @@ Client → middleware (CORS → compression → security headers → CSRF[prod])
 → service → repository → DB → JSON response
 ```
 
-## Endpoint Inventory (63 operations / 49 paths)
+## Endpoint Inventory (68 operations / 54 paths)
 
 ### Authentication — /api/auth/* (7 paths / 8 ops)
 | Method & Path | Auth | Notes |
@@ -41,17 +41,20 @@ Client → middleware (CORS → compression → security headers → CSRF[prod])
 | POST /api/auth/reset-password | public | 3/min; consumes reset token |
 | POST /api/auth/sse-token | Bearer | 5-min SSE stream token |
 
-### Learning Engine — /api/learning/* (3 paths / 3 ops, Bearer)
-GET graph (prereq DAG nodes+edges) · GET gaps (skill-gap analysis) · POST generate (path generation alias)
+### Learning Engine — /api/learning/* (4 paths / 4 ops, Bearer)
+GET graph (prereq DAG nodes+edges) · GET gaps (skill-gap analysis) · GET analysis (weaknesses/diagnostic feed) · POST generate (path generation alias)
 
-### Paths & Progress — /api/* via paths.py (7 paths / 9 ops, Bearer)
-POST /generate-path/ (wizard scoring → path) · GET /paths/ · GET|PUT|DELETE /paths/{path_id} (owner-scoped) · POST /steps/{step_id}/complete · POST /steps/{step_id}/undo-complete · GET /progress/dashboard
+### Paths & Progress — /api/* via paths.py (8 paths / 10 ops, Bearer)
+POST /generate-path/ (wizard scoring → path) · GET /paths/ · GET|PUT|DELETE /paths/{path_id} (owner-scoped) · POST /steps/{step_id}/complete · POST /steps/{step_id}/undo-complete · GET /progress/dashboard · POST /wizard/analysis (PURE two-phase pre-path analysis — zero writes, ADR-015)
 
 ### Wizard Options — GET /api/wizard-options (1 op, public)
 Job roles + preference literals for the wizard.
 
 ### Assessments — /api/assessments/* (3 paths / 3 ops, Bearer)
 GET /{skill_id}/questions · GET /role/{job_role_title} · POST /submit (scores → user_skills proficiency 0–5)
+
+### AI — /api/ai/* (3 paths / 3 ops, Bearer)
+POST /ai/wizard-quiz (ephemeral quiz job → SSE ai_quiz_ready/failed) · POST /ai/tests/generate (persists `[AI] <Skill> — adaptive`) · POST /ai/explain (per-question why + advice). All 503-gated when `AI_ENABLED=false` (ADR-015).
 
 ### Analytics — /api/analytics/* (4 paths / 4 ops, Bearer)
 GET dashboard · skill-growth · path-progress/{path_id} · learning-history

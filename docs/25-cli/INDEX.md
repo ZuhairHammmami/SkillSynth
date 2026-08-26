@@ -26,12 +26,12 @@ Document the command-line entry points and scripts that actually exist: `run.py`
 | `python run.py` | Start FastAPI backend on :8000 (uvicorn; reload when MODE=dev) | repo root |
 | `PYTHONPATH=src python seed_v3.py` | Seed all 15 tables (~1,100 rows, idempotent, FK-gated) | repo root |
 | `PYTHONPATH=src python tools/verify_schema.py` | Verify DDL ↔ ORM parity → prints SCHEMA MATCH | repo root |
-| `PYTHONPATH=src python -m pytest tests/ -q` | Run the 142-test backend suite (isolated temp DB) | repo root |
+| `PYTHONPATH=src python -m pytest tests/ -q` | Run the 178-test backend suite (isolated temp DB) | repo root |
 | `pnpm dev` | Student frontend dev server :3000 | src/frontend |
 | `pnpm build` / `pnpm type-check` / `pnpm lint` | Build / tsc --noEmit / next lint | src/frontend |
 | `pnpm dev` / `pnpm build` / `pnpm type-check` | Admin app dev/build/check (:3001) | src/admin-app |
 | `bash start.sh` | Full-stack launcher (venv + pnpm PATH bootstrap) | repo root |
-| `docker compose up -d` | Container stack: backend/frontend/admin (+ollama) | repo root |
+| `docker compose up -d` | Container stack: backend/frontend/admin | repo root |
 
 ## Sequence: First-Run Bootstrap
 ```

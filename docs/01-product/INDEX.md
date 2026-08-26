@@ -25,7 +25,7 @@ Define SkillSynth as a bilingual adaptive-learning platform: assessment-driven s
 
 ## Sequence: Feature Lifecycle
 ```
-Idea → Spec → Review → Implementation → Tests (142 pytest + tsc/lint/build) → Merge
+Idea → Spec → Review → Implementation → Tests (178 pytest + tsc/lint/build) → Merge
 ```
 
 ## State Diagram: Feature Status

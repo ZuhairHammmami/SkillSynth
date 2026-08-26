@@ -1,7 +1,7 @@
 # SS-EDS: Test Scenarios
 
 ## Purpose
-Map the automated pytest suite to the behaviors it proves. The suite is the source of truth — 142 tests across 11 files, run against an isolated temp SQLite DB (tests/conftest.py); the dev DB is never touched. No manual-only scenarios are tracked here.
+Map the automated pytest suite to the behaviors it proves. The suite is the source of truth — 178 tests across 20 files, run against an isolated temp SQLite DB (tests/conftest.py); the dev DB is never touched. No manual-only scenarios are tracked here.
 
 ## Responsibilities
 - Document what each suite file covers with representative scenarios
@@ -13,7 +13,7 @@ Map the automated pytest suite to the behaviors it proves. The suite is the sour
 - Seeded temp DB built per session by tests/conftest.py (+ tests/integrity_support.py helpers)
 
 ## Outputs
-- Green pipeline: `PYTHONPATH=src python -m pytest tests/ -q` → 142 passed
+- Green pipeline: `PYTHONPATH=src python -m pytest tests/ -q` → 178 passed
 
 ## Dependencies
 - 16-testing (strategy, commands, coverage rules)
@@ -26,13 +26,22 @@ Map the automated pytest suite to the behaviors it proves. The suite is the sour
 | tests/test_catalog_integrity.py | 20 | Rename conflicts 409 (incl. case-insensitive), unknown-FK 400, self/ancestor cycles 400, restricted deletes + ?force=true |
 | tests/test_catalog.py | 19 | Public catalog reads, wizard options, resource queries |
 | tests/test_auth.py | 17 | Register/login, lockout 5→15min, me GET/PUT, change-password, reset flow, SSE token |
-| tests/test_learning.py | 15 | Path generation, graph/gaps endpoints, step complete/undo, progress dashboard |
+| tests/test_learning.py | 16 | Path generation, graph/gaps/analysis endpoints, step complete/undo, progress dashboard |
 | tests/test_assessments.py | 13 | Question fetch, submit scoring → user_skills, role-based question sets |
-| tests/test_integrity.py | 10 | Cascade matrix vs ERD contract, census payloads, duplicate natural keys 409/400, double-complete idempotence |
+| tests/test_integrity.py | 11 | Cascade matrix vs ERD contract, census payloads, duplicate natural keys 409/400, double-complete idempotence |
 | tests/test_analytics.py | 8 | Dashboard keys, skill-growth, path-progress ownership, learning history/velocity |
 | tests/test_schema.py | 7 | ORM ↔ DDL parity for the 15 tables (mirrors tools/verify_schema.py) |
 | tests/test_realtime.py | 7 | SSE stream auth, connected/ping frames, publish gating |
+| tests/test_ai_router.py | 7 | /api/ai/* generation endpoints: AI_ENABLED gate → 503, inline quiz/practice jobs |
+| tests/test_ai_review.py | 7 | /ai/explain fallback + bounded proficiency review hook |
+| tests/test_ai_pipeline.py | 5 | Pipeline ops against a fake engine (quiz/test/review flows) |
 | tests/test_learning_guards.py | 4 | Cross-user access 404, mastered-skill omission, topological step order, /generate alias parity |
+| tests/test_cors.py | 3 | CORS origin allow-list enforcement |
+| tests/test_wizard_analysis.py | 3 | PURE two-phase analysis before path creation (zero writes) |
+| tests/test_llm_prompts.py | 3 | Prompt templates pin JSON contract markers |
+| tests/test_llm_engine.py | 3 | GGUF singleton guard rails, LLMUnavailable degradation |
+| tests/test_ai_config.py | 2 | AI settings defaults when env absent (disabled/CPU-safe) |
+| tests/test_ai_repo.py | 1 | [AI]-titled assessment persistence helper |
 
 ## Representative Scenarios
 ```gherkin

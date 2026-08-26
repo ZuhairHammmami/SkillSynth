@@ -12,6 +12,7 @@ Document the SSE event system: the in-memory pub/sub bus (`src/backend/events/pu
 ## Inputs
 - Path generation success (routers/paths.py)
 - Assessment submission success (routers/assessments.py)
+- SS-AI job completion/failure and bounded review (routers/ai.py, services/assess_service.py — ADR-015)
 - Client connect/disconnect lifecycle
 
 ## Outputs
@@ -46,10 +47,15 @@ POST /api/generate-path/ succeeds
 | ping | publisher.py keepalive | none |
 | path_generated | routers/paths.py:32 | {"path_id": int} |
 | assessment_completed | routers/assessments.py:87 | {"assessment_id", "score", "total_questions"} |
+| ai_quiz_ready | routers/ai.py | {"job_id", "questions": [...]} |
+| ai_quiz_failed | routers/ai.py | {"job_id", "error"} |
+| ai_test_ready | routers/ai.py | {"job_id", "assessment_id", "skill_id"} |
+| ai_test_failed | routers/ai.py | {"job_id", "error"} |
+| proficiency_adjusted | services/assess_service.py | {"skill_id", "skill_name", "delta", "rationale"} |
 
 Admin channel frames mirror activity_log entries and honor the `?category=` filter on /api/realtime/admin/events.
 
-Historical note (one line): gamification, notification, and broadcast event families were removed with their features; only the four types above are emitted.
+Historical note (one line): gamification, notification, and broadcast event families were removed with their features; the four base types above plus the five SS-AI types (ADR-015) are all that is emitted.
 
 ## Publishing Pattern
 ```python

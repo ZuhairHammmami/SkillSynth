@@ -185,3 +185,4 @@ erDiagram
 - Strict 3NF with 4 documented JSON exceptions: `assessment_questions.options`, `path_steps.resource_ids`, `path_steps.assessment_ids`, `activity_log.data`.
 - Canonical DDL: `src/migrations/003_reduced_schema.sql`; verified against ORM by `tools/verify_schema.py` (SCHEMA MATCH — tables, columns, PKs, FKs incl. ON DELETE, uniques, indexes).
 - Removal rationale + table→API coverage matrix: `docs/41-decision-records/adr-013.md`.
+- Schema unchanged by SS-AI (ADR-015): AI wizard quizzes are ephemeral (SSE-only), practice tests persist in existing `assessments` rows titled `[AI] <Skill> — adaptive`, and proficiency reviews write `user_skills` + `activity_log` only.

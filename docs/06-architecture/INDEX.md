@@ -36,11 +36,11 @@ Document the SkillSynth system architecture: Clean Architecture backend (8 layer
               │ Middlewares: CORS, Compression(1KB),│
               │ SecurityHeaders, CSRF (prod only)   │
               ├─────────────────────────────────────┤
-              │ Routers (7): auth · learning · paths│
+              │ Routers (8): auth · learning · paths│
               │ · assessments · analytics · admin ×2│
-              │ · realtime          49 paths / 63 op│
+              │ · realtime · ai     54 paths / 68 op│
               ├─────────────────────────────────────┤
-              │ Services (8): business logic        │
+              │ Services (11): business logic       │
               │ Repositories (6): SQLAlchemy only   │
               │ Entities (5 modules): 15 ORM tables │
               └──────────────┬──────────────────────┘

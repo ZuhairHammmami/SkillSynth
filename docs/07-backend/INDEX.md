@@ -1,7 +1,7 @@
 # SS-EDS: Backend
 
 ## Purpose
-Document the FastAPI backend — Clean Architecture with 9 layer directories under `src/backend/`, 7 mounted routers serving 49 paths / 63 operations, JWT-only auth, SSE-only realtime, and an inline 30s stats cache.
+Document the FastAPI backend — Clean Architecture with 9 layer directories under `src/backend/`, 8 mounted routers serving 54 paths / 68 operations, JWT-only auth, SSE-only realtime, an optional local-LLM engine (ADR-015), and an inline 30s stats cache.
 
 ## Responsibilities
 - Serve all API operations via thin router handlers
@@ -31,8 +31,8 @@ Document the FastAPI backend — Clean Architecture with 9 layer directories und
 main.py            # app factory, lifespan (create_all + admin autoseed), middleware, router mounting
 database.py        # SQLAlchemy engine: MODE=dev→SQLite skillsynth.db, prod→DATABASE_URL (pooled)
 limiter.py         # slowapi limiters: global 100/min, auth 10/min, admin 60/min (Redis store if REDIS_URL in prod)
-routers/ (9)       # auth · learning · paths · assessments · analytics · admin · catalog_admin · realtime (+ error_mapping.py)
-services/ (8)      # auth · catalog · catalog_integrity · learning · assess · wizard · analytics · admin
+routers/ (10)       # auth · learning · paths · assessments · analytics · admin · catalog_admin · realtime · ai (+ error_mapping.py)
+services/ (11)      # auth · catalog · catalog_integrity · learning · assess · wizard · analytics · admin · llm_engine · llm_pipeline · llm_prompts
 repositories/ (6)  # identity · catalog · learning · assess · engagement · integrity
 entities/ (6)      # base.py + identity/catalog/learning/assessment/engagement modules → 15 tables
 dto/ (4)           # auth · catalog · learning · admin (Pydantic)
@@ -43,14 +43,14 @@ config/ (1)        # app_settings.py — env vars, CORS, ACCESS_TOKEN_EXPIRE_MIN
 ```
 Removed layers (no longer exist): mappers/, validators/, commands/, queries/, cache/, infrastructure/ — see ADR-013.
 
-## Router Directory (7 mounted routers, 8 modules)
+## Router Directory (8 mounted routers, 9 modules)
 ```
 auth.py             /api/auth      register · token · me (GET/PUT) · change-password ·
                                    forgot-password · reset-password · sse-token     7 paths / 8 ops
-learning.py         /api/learning  graph · gaps · generate                           3 / 3
+learning.py         /api/learning  graph · gaps · generate · analysis                4 / 4
 paths.py            /api           generate-path/ · paths CRUD (list/get/put/delete) ·
                                    steps complete/undo · progress/dashboard ·
-                                   wizard-options                                    7 / 9
+                                   wizard/analysis · wizard-options                  8 / 10
 assessments.py      /api           assessments/{skill_id}/questions · role/{title} · submit   3 / 3
 analytics.py        /api/analytics dashboard · skill-growth · path-progress/{id} ·
                                    learning-history                                  4 / 4
@@ -60,6 +60,8 @@ admin.py            /api/admin     users CRUD · assessments (get/delete) · pat
                                    reports/system-health                            11 / 14
 catalog_admin.py    /api/admin     skills/categories/resources/job-roles × CRUD      8 / 16
 realtime.py         /api/realtime  events (user SSE) · admin/events (admin SSE)      2 / 2
+ai.py               /api           ai/wizard-quiz · ai/tests/generate · ai/explain    3 / 3
+                                   (AI_ENABLED gate → 503; ADR-015)
 main.py extras      /              root health · public/stats · auth/csrf · events alias   4 / 4
 ```
 

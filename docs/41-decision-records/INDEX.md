@@ -32,10 +32,11 @@ Identify Decision → Draft ADR → Review → Accept/Reject → Implement → S
 | ADR-003 | JWT access-only auth (24h), no refresh rotation | Accepted | not digitized |
 | ADR-006 | SQLite dev / PostgreSQL prod mode switching | Accepted | not digitized |
 | ADR-007 | Gamification as side effects | **Superseded by ADR-013** (gamification fully removed) | file never created; title preserved here |
-| ADR-010 | Local-first LLM provider chain → static fallback | Accepted | not digitized |
+| ADR-010 | Local-first LLM provider chain → static fallback | **Superseded by ADR-015** (multi-provider chain replaced by direct in-process llama.cpp serving; local-first + deterministic-fallback intent realized) | not digitized |
 | ADR-011 | Post-rebuild consolidation (dead layers removed, isolated tests, canonical DDL v2, separate admin app) | **Superseded by ADR-013** (schema specifics; operational points stand) | adr-011.md |
 | ADR-013 | Feature reduction to the 15-table core (admin CRUD completion, integrity layer, removal of gamification/notifications/sessions/granular roles) — see [adr-013.md](adr-013.md) | Accepted | adr-013.md |
 | ADR-014 | Referential-Integrity Policy (FK validation → 400, rename-uniqueness → 409, cycle guards → 400, restricted deletes with census payloads + ?force=true semantics) — see [adr-014.md](adr-014.md) | Accepted | adr-014.md |
+| ADR-015 | Local LLM Integration (in-process llama.cpp GGUF, bounded autonomy, two-phase wizard) — see [adr-015.md](adr-015.md) | Accepted | adr-015.md |
 
 ## Template
 ```markdown

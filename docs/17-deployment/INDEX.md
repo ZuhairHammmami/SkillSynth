@@ -15,7 +15,7 @@ Document how SkillSynth is built, configured, and run: `run.py`/uvicorn backend,
 
 ## Outputs
 - Backend on :8000, student frontend on :3000, admin app on :3001
-- docker compose services: skillsynth-backend/-frontend/-admin (+ optional ollama :11434)
+- docker compose services: skillsynth-backend/-frontend/-admin
 
 ## Dependencies
 - 07-backend (run.py entrypoint)
@@ -32,7 +32,7 @@ cd src/admin-app && pnpm dev           # admin app :3001
 ## Sequence: Container Stack
 ```
 docker compose up -d     # builds Dockerfile (python:3.14-slim multi-stage) +
-                         # starts backend:8000, frontend:3000, admin:3001, ollama:11434
+                         # starts backend:8000, frontend:3000, admin:3001
 docker compose down      # stop; named volumes persist data
 ```
 
@@ -56,10 +56,11 @@ PYTHONPATH=src python seed_v3.py                # seed dev database (~1,100 rows
 | ADMIN_EMAIL / ADMIN_PASSWORD | No | admin@skillsynth.io / unset | main.py lifespan admin autoseed |
 | PASSWORD_PEPPER | No | empty | auth_service password hashing |
 | REDIS_URL | prod optional | in-memory | limiter.py rate-limit storage |
+| AI_ENABLED / AI_MODEL_PATH / AI_N_GPU_LAYERS / AI_N_CTX / AI_TEMPERATURE / AI_MAX_NEW_TOKENS | No | false / src/data/*.gguf / -1 / 4096 / 0.2 / 700 | llm_engine.py + routers/ai.py (ADR-015) |
 
 Frontends read `NEXT_PUBLIC_API_BASE_URL` (default `http://localhost:8000/api`) from their env files.
 
-Note: `.env.example` also lists legacy keys (SENDGRID_API_KEY, LLM_*/OPENAI_*/OLLAMA_*, VECTOR_*/EMBEDDING_*, GITHUB_TOKEN, ADMIN_API_TOKEN). Current backend code does not consume these; they remain only as placeholders.
+Note: `.env.example` also lists legacy keys (SENDGRID_API_KEY, GITHUB_TOKEN). Current backend code does not consume these; they remain only as placeholders. The dead Phase-4 LLM blocks (LLM_*/OPENAI_*/OLLAMA_*, VECTOR_*/EMBEDDING_*) and the docker ollama service were removed — the local model is configured via the AI_* block above (ADR-015).
 
 ## Rules
 1. pnpm is the only package manager for both frontends

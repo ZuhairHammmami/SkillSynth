@@ -47,7 +47,7 @@ Learner → Wizard (job role + preferences) → Skill Scoring → Prerequisite T
 |---------|-----------|-------|
 | Catalog | Category tree, Skill (+prerequisites), JobRole (+skill weights), Resource | Admin-managed; delete-gated by dependency census |
 | Assessment | Assessment, Question, Result | Questions normalized in assessment_questions; options JSON |
-| Learning | Path, PathStep, StepProgress, UserSkill | Deterministic generation; no LLM in the loop |
+| Learning | Path, PathStep, StepProgress, UserSkill | Deterministic generation is the source of truth; a local LLM augments quiz/narrative/explanation and applies bounded audited review only (ADR-015) |
 | Engagement | ActivityLog entry | Append-only audit trail |
 
 ## Domain Rules

@@ -3,7 +3,7 @@
 > **SS-EDS**: SkillSynth Engineering Documentation System
 
 ## Overview
-Complete documentation for SkillSynth, an adaptive learning platform: **FastAPI + SQLAlchemy** backend (Clean Architecture, 7 routers), **two Next.js 14 apps** (student ar/en RTL-first :3000, admin English-only :3001) on **pnpm**, and a **strict-3NF 15-table database** (SQLite dev / PostgreSQL prod).
+Complete documentation for SkillSynth, an adaptive learning platform: **FastAPI + SQLAlchemy** backend (Clean Architecture, 8 routers), **two Next.js 14 apps** (student ar/en RTL-first :3000, admin English-only :3001) on **pnpm**, and a **strict-3NF 15-table database** (SQLite dev / PostgreSQL prod).
 
 ## Documentation Structure
 
@@ -44,7 +44,7 @@ Complete documentation for SkillSynth, an adaptive learning platform: **FastAPI 
 ### API & Events
 | # | Section | Description |
 |---|---------|-------------|
-| 22 | [API](22-api/INDEX.md) | Endpoint reference — 63 operations across 49 paths (7 routers) |
+| 22 | [API](22-api/INDEX.md) | Endpoint reference — 68 operations across 54 paths (8 routers) |
 | 23 | [Events](23-events/INDEX.md) | SSE event catalog |
 | 24 | [Caching](24-caching/INDEX.md) | 30s TTL inline cache on /api/public/stats |
 | 25 | [CLI](25-cli/INDEX.md) | seed_v3.py + tools/verify_schema.py commands |
@@ -74,13 +74,14 @@ Complete documentation for SkillSynth, an adaptive learning platform: **FastAPI 
 | 41 | [Decision Records](41-decision-records/INDEX.md) | ADR index incl. supersessions; integrity policy in adr-014.md |
 | 42 | [Runbooks](42-runbooks/INDEX.md) | Verified operational commands |
 | 43 | [Checklists](43-checklists/INDEX.md) | Pre-commit, review gates |
-| 44 | [Test Scenarios](44-test-scenarios/INDEX.md) | Suite map: 143 tests / 11 files |
+| 44 | [Test Scenarios](44-test-scenarios/INDEX.md) | Suite map: 178 tests / 20 files |
 | 45 | [Release Notes](45-release-notes/INDEX.md) | Changelog, newest first |
 | 46 | [Glossary](46-glossary/INDEX.md) | Current terminology only |
 | 47 | [Contributing](47-contributing/INDEX.md) | PR process |
 | 48 | [Style Guide](48-style-guide/INDEX.md) | TS/React/Python/CSS rules |
 | 49 | [Module Boundaries](49-module-boundaries/INDEX.md) | Import direction rules |
 | 50 | [Anti-Patterns](50-anti-patterns/INDEX.md) | Banned practices + guards |
+| 51 | [AI Integration](51-ai-integration/INDEX.md) | Local LLM endpoints, bounded autonomy, degradation ladder (ADR-015) |
 
 ## Quick Start
 ```bash
@@ -96,12 +97,12 @@ cd src/admin-app && pnpm dev
 
 ## Quick Reference
 - **Seed**: `PYTHONPATH=src python seed_v3.py` (~1109 rows, FK-gated, idempotent)
-- **Tests**: `PYTHONPATH=src python -m pytest tests/ -q` — 143 passed, isolated temp DB per run
+- **Tests**: `PYTHONPATH=src python -m pytest tests/ -q` — 178 passed, isolated temp DB per run
 - **Schema**: `PYTHONPATH=src python tools/verify_schema.py` → SCHEMA MATCH (15 tables)
-- **API**: 7 routers · 49 paths · 63 operations; OpenAPI UI at `http://localhost:8000/docs`
+- **API**: 8 routers · 54 paths · 68 operations; OpenAPI UI at `http://localhost:8000/docs`
 - **Integrity**: restricted deletes → 409 census + `?force=true`; cycles and bad refs rejected at write time ([ADR-014](41-decision-records/adr-014.md))
 - **Status**: August 2026 — integrity layer shipped (ADR-014 accepted)
 
 ## File Stats
-- **Sections**: 50 numbered slots (28 retired after feature removal); every live section has an INDEX.md
+- **Sections**: 51 numbered slots (28 retired after feature removal); every live section has an INDEX.md
 - **Last updated**: August 2026

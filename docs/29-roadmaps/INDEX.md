@@ -11,7 +11,7 @@ Track the current state of SkillSynth and the near-term work queue. Historical p
 ## Inputs
 - Commit history (git log)
 - ADRs (docs/41-decision-records/)
-- Test suite status (tests/, 142 passing)
+- Test suite status (tests/, 178 passing)
 
 ## Outputs
 - Current-state table (below)
@@ -25,14 +25,14 @@ Track the current state of SkillSynth and the near-term work queue. Historical p
 ## Current State (August 2026)
 | Area | State | Evidence |
 |------|-------|----------|
-| Backend | FastAPI Clean Architecture, 7 routers / 49 paths / 63 operations | src/backend/routers/, OpenAPI at :8000/docs |
+| Backend | FastAPI Clean Architecture, 8 routers / 54 paths / 68 operations | src/backend/routers/, OpenAPI at :8000/docs |
 | Database | Strict-3NF 15-table core + seed_v3 (~1100 rows) | src/migrations/003_reduced_schema.sql, tools/verify_schema.py → SCHEMA MATCH |
 | Admin CRUD | Full users/skills/categories/resources/job-roles CRUD incl. restricted deletes | routers/admin.py, routers/catalog_admin.py |
 | Integrity layer | FK validation 400, cycle guards 400, restricted deletes 409, IntegrityError→409 net | services/catalog_integrity.py, main.py:115 |
-| Realtime | SSE only (connected/ping/path_generated/assessment_completed) | events/publisher.py, routers/realtime.py |
+| Realtime | SSE only (connected/ping/path_generated/assessment_completed + ai_quiz_ready/failed · ai_test_ready/failed · proficiency_adjusted) | events/publisher.py, routers/realtime.py, routers/ai.py |
 | Frontend | Next.js 14 student app :3000, bilingual ar/en, RTL-first | src/frontend/ |
 | Admin app | Separate Next.js app :3001 with categories/job-roles pages | src/admin-app/ |
-| Tests | 142 passing across 11 files, isolated temp DB | PYTHONPATH=src python -m pytest tests/ -q |
+| Tests | 178 passing across 20 files, isolated temp DB | PYTHONPATH=src python -m pytest tests/ -q |
 
 ## Active Queue
 | Item | Focus | Status |

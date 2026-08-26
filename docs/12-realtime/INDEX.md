@@ -48,6 +48,9 @@ Client → POST /api/auth/sse-token (5-min SSE JWT, type=sse)
 | ping | publisher.py keepalive | none (30s idle heartbeat) |
 | path_generated | routers/paths.py:32 | {"path_id": <id>} |
 | assessment_completed | routers/assessments.py:87 | {"assessment_id", "score", "total_questions"} |
+| ai_quiz_ready / ai_quiz_failed | routers/ai.py | {"job_id", "questions"} / {"job_id", "error"} |
+| ai_test_ready / ai_test_failed | routers/ai.py | {"job_id", "assessment_id", "skill_id"} / {"job_id", "error"} |
+| proficiency_adjusted | services/assess_service.py | {"skill_id", "skill_name", "delta", "rationale"} |
 
 The admin channel (/api/realtime/admin/events) forwards activity_log-shaped frames and supports `?category=` filtering.
 
