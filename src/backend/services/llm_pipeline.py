@@ -57,11 +57,13 @@ def _extract_json(text: str) -> dict:
     return obj
 
 
-def _complete_json(contract: dict, *, max_tokens: int) -> dict:
+def _complete_json(contract: dict, *, max_tokens: int,
+                   temperature: float | None = None) -> dict:
     """Complete a prompts-template contract with ONE corrective retry.
 
     Shared callee of all five public ops; reads contract["system"] /
-    ["user"], appends the parse error to the retry turn, then raises
+    ["user"], appends the parse error to the retry turn, forwards an
+    optional temperature override (review_level pins 0.1), then raises
     LLMOperationError once both attempts fail.
     """
     engine = _engine_factory()
@@ -69,11 +71,13 @@ def _complete_json(contract: dict, *, max_tokens: int) -> dict:
     for _ in range(2):
         suffix = "" if not last_err else (
             f"\nYour previous reply was invalid JSON ({last_err}). "
-            "Reply again with ONLY the JSON object.")
+            "Reply again with ONLY the JSON object. "
+            "Every question object requires text, options (exactly 4 "
+            "strings) and correct_index.")
         try:
             raw = engine.complete(
                 contract["system"] + "\n\n" + contract["user"] + suffix,
-                max_tokens=max_tokens)
+                max_tokens=max_tokens, temperature=temperature)
             return _extract_json(raw)
         except (ValueError, json.JSONDecodeError) as exc:
             last_err = str(exc)[:120]
@@ -123,7 +127,7 @@ def generate_skill_quiz(skill_name: str, difficulty: int, n: int = 5,
     exclude = set(exclude_texts)
     data = _complete_json(
         prompts.skill_quiz_prompt(topic, difficulty, n, sorted(exclude)),
-        max_tokens=max(400, n * 140))
+        max_tokens=max(650, n * 230))
     out: list[dict] = []
     for q in data.get("questions", []):
         if _valid_question(q, {x["text"] for x in out}, exclude):
@@ -150,7 +154,7 @@ def generate_role_quiz(role_title: str, skills: list[dict],
              "difficulty": int(s.get("difficulty") or 1)} for s in skills]
     data = _complete_json(
         prompts.role_quiz_prompt(sanitize_topic(role_title), safe),
-        max_tokens=max(600, len(safe) * 280))
+        max_tokens=max(850, len(safe) * 330))
     exclude, out = set(exclude_texts), []
     seen_names = {s["name"] for s in safe}
     for q in data.get("questions", []):
@@ -177,7 +181,7 @@ def analyze_diagnostic(per_skill: list[dict]) -> dict | None:
         return None
     try:
         data = _complete_json(
-            prompts.diagnostic_analysis_prompt(per_skill), max_tokens=500)
+            prompts.diagnostic_analysis_prompt(per_skill), max_tokens=750)
         return {
             "summary": str(data.get("summary", ""))[:800],
             "strengths": data.get("strengths", [])[:8],
@@ -204,7 +208,7 @@ def explain_result(responses: list[dict]) -> dict | None:
         return None
     try:
         data = _complete_json(
-            prompts.explain_result_prompt(responses), max_tokens=650)
+            prompts.explain_result_prompt(responses), max_tokens=950)
         known = {r["question_index"] for r in responses}
         expl = [{"question_index": e.get("question_index"),
                  "why": str(e.get("why", ""))[:400]}
@@ -236,7 +240,7 @@ def review_level(correct: int, total: int, difficulty: int,
         data = _complete_json(
             prompts.review_level_prompt(correct, total, difficulty,
                                         attempt_no, current_level),
-            max_tokens=220)
+            max_tokens=240, temperature=0.1)
         delta = data.get("suggested_delta")
         conf = data.get("confidence")
         if not (isinstance(delta, int) and -1 <= delta <= 1):

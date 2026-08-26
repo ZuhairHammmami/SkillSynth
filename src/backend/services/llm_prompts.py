@@ -20,7 +20,12 @@ def skill_quiz_prompt(skill_name: str, difficulty: int, n: int,
         f'Write {n} multiple-choice questions about "{skill_name}" '
         f"(difficulty {difficulty}/5). Avoid duplicating these existing "
         f'items: [{avoided}]. Schema: {{"questions":[{{"text":str,'
-        f'"options":[str,str,str,str],"correct_index":0..3}}]}}'
+        f'"options":[str,str,str,str],"correct_index":0..3}}]}} '
+        "Every question MUST contain exactly the keys text, options, "
+        "correct_index; correct_index is the INTEGER 0..3 of the correct "
+        "option. Example of one valid question: "
+        '{"text":"Which runs Python code?","options":'
+        '["CPython","GCC","JVM","LLVM"],"correct_index":0}'
     )
     return {"system": _BASE_SYSTEM, "user": user}
 
@@ -33,7 +38,12 @@ def role_quiz_prompt(role_title: str, skills: list[dict]) -> dict:
         f'Diagnostic quiz for the job role "{role_title}". Skills: {rows}. '
         f"For EACH listed skill write exactly 2 distinct questions. "
         f'Schema: {{"questions":[{{"skill":exact-skill-name,"text":str,'
-        f'"options":[str,str,str,str],"correct_index":0..3}}]}}'
+        f'"options":[str,str,str,str],"correct_index":0..3}}]}} '
+        "Every question MUST contain exactly the keys skill, text, options, "
+        "correct_index; correct_index is the INTEGER 0..3 of the correct "
+        "option. Example of one valid question: "
+        '{"skill":"JavaScript","text":"Which declares a constant?",'
+        '"options":["let x","const x","var x","def x"],"correct_index":1}'
     )
     return {"system": _BASE_SYSTEM, "user": user}
 

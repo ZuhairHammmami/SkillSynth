@@ -73,12 +73,16 @@ def complete(prompt: str, *, max_tokens: int,
     """One serialized completion; raises LLMUnavailable when unusable.
 
     Sole inference entry point (pipeline._complete_json); semaphore
-    keeps concurrent requests from interleaving token streams.
+    keeps concurrent requests from interleaving token streams. Applies
+    anti-degeneration sampling (AI_TEMPERATURE/AI_REPEAT_PENALTY/
+    AI_TOP_P) unless the caller overrides temperature.
     """
     llm = _get_llm()
     temp = settings.AI_TEMPERATURE if temperature is None else temperature
     with _semaphore:
         out = llm(prompt, max_tokens=max_tokens, temperature=temp,
+                  repeat_penalty=settings.AI_REPEAT_PENALTY,
+                  top_p=settings.AI_TOP_P,
                   stop=["</s>", "\n\n\n"])
     return out["choices"][0]["text"] if isinstance(out, dict) else str(out)
 

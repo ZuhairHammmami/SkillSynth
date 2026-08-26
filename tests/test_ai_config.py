@@ -10,13 +10,28 @@ def test_ai_defaults_off(monkeypatch):
     """
     monkeypatch.delenv("AI_ENABLED", raising=False)
     monkeypatch.delenv("AI_MODEL_PATH", raising=False)
+    monkeypatch.delenv("AI_REPEAT_PENALTY", raising=False)
+    monkeypatch.delenv("AI_TOP_P", raising=False)
     import backend.config.app_settings as s
     m = importlib.reload(s)
     assert m.AI_ENABLED is False
     assert m.AI_MODEL_PATH.endswith(
         "Llama-3.2-3B-Instruct-uncensored.Q6_K.gguf")
-    assert m.AI_N_CTX == 4096 and m.AI_TEMPERATURE == 0.2
+    assert m.AI_N_CTX == 4096 and m.AI_TEMPERATURE == 0.3
     assert isinstance(m.AI_MAX_NEW_TOKENS, int)
+
+
+def test_ai_anti_degeneration_defaults(monkeypatch):
+    """Repeat-penalty/top-p sampling knobs default per task-13 budgets.
+
+    Guards the anti-degeneration env contract consumed by
+    llm_engine.complete against accidental default drift.
+    """
+    monkeypatch.delenv("AI_REPEAT_PENALTY", raising=False)
+    monkeypatch.delenv("AI_TOP_P", raising=False)
+    import backend.config.app_settings as s
+    m = importlib.reload(s)
+    assert m.AI_REPEAT_PENALTY == 1.15 and m.AI_TOP_P == 0.95
 
 
 def test_ai_enabled_toggle(monkeypatch):

@@ -12,6 +12,21 @@ def test_skill_quiz_contract():
     assert "React Hooks" in p["user"] and "old text" in p["user"]
 
 
+def test_quiz_prompts_pin_keys_with_exemplar():
+    """Both quiz prompts state exact key rule + one-shot exemplar.
+
+    Guards against the 3B model omitting correct_index / fragmenting
+    question objects (task-13 follow-up).
+    """
+    skill_p = P.skill_quiz_prompt("Python Basics", 1, 2, [])
+    role_p = P.role_quiz_prompt(
+        "Frontend Developer", [{"name": "JavaScript", "difficulty": 2}])
+    for p in (skill_p, role_p):
+        assert "correct_index" in p["user"] and "Example" in p["user"]
+        assert "INTEGER 0..3" in p["user"]
+    assert '"skill"' in role_p["user"]
+
+
 def test_role_quiz_tags_skills():
     """Role prompt requires a skill tag per question.
 

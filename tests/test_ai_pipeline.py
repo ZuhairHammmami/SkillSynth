@@ -14,9 +14,12 @@ class FakeEngine:
     def __init__(self, payloads):
         self.queue = list(payloads)
         self.calls = []
+        self.kwargs = []
 
-    def complete(self, prompt, *, max_tokens, temperature=None):
+    def complete(self, prompt, *, max_tokens, temperature=None, **_):
         self.calls.append(prompt)
+        self.kwargs.append({"max_tokens": max_tokens,
+                            "temperature": temperature})
         item = self.queue.pop(0)
         if isinstance(item, Exception):
             raise item
@@ -134,3 +137,33 @@ def test_garbage_without_braces_still_raises(fake):
     with pytest.raises(pipe.LLMOperationError):
         pipe.generate_skill_quiz("SQL", 1, 1)
     assert len(eng.calls) == 2 and "invalid" in eng.calls[1].lower()
+
+
+def test_retry_suffix_mentions_missing_key_risk(fake):
+    """Parse-failure retry hints at required keys incl. correct_index."""
+    obj = _one_question_obj("Retry hint Q")
+    broken = json.dumps(obj)[:20] + "..."  # braces, but unparseable
+    eng = fake(broken, obj)
+    qs = pipe.generate_skill_quiz("SQL", 1, 1)
+    assert qs[0]["text"] == "Retry hint Q"
+    assert "options (exactly 4 strings)" in eng.calls[1]
+    assert "correct_index." in eng.calls[1]
+
+
+def test_token_budgets_realistic(fake):
+    """Quiz ops request anti-truncation budgets (task-13 follow-up)."""
+    obj = _one_question_obj()
+    eng = fake(obj)
+    pipe.generate_skill_quiz("SQL", 1, 2)
+    assert eng.kwargs[0]["max_tokens"] == max(650, 2 * 230)
+    eng2 = fake({"questions": [{"skill": "SQL", **_one_question_obj()["questions"][0]}]})
+    pipe.generate_role_quiz("Dev", [{"name": "SQL", "difficulty": 1}])
+    assert eng2.kwargs[0]["max_tokens"] == max(850, 1 * 330)
+
+
+def test_review_level_low_sampling_temperature(fake):
+    """review_level pins temperature=0.1 for stable verdicts."""
+    eng = fake({"suggested_delta": 0, "confidence": "low",
+                "rationale": "r"})
+    pipe.review_level(5, 10, 2, 1, 3)
+    assert eng.kwargs[0]["temperature"] == 0.1
