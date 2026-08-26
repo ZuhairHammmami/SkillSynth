@@ -1,0 +1,10 @@
+{
+	"/(auth)": [],
+	"/(app)": [],
+	"/": [],
+	"/(app)/dashboard": [],
+	"/(auth)/forgot-password": [],
+	"/(auth)/login": [],
+	"/(auth)/register": [],
+	"/(auth)/reset-password": []
+}

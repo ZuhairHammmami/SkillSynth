@@ -1,0 +1,25 @@
+import './shims.js';
+import 'node:fs';
+import 'node:path';
+import 'node:process';
+export { h as handler } from './server/chunks/handler-CwAqQ8aO.js';
+import './server/chunks/index.js-CxCvvHfG.js';
+import './server/chunks/manifest.js-BpzP3EGe.js';
+import './env.js';
+import 'node:buffer';
+import 'node:crypto';
+import 'node:http';
+import 'node:timers';
+import 'node:querystring';
+import 'node:stream';
+import './server/chunks/chunks/utils.js-DwNP_mEr.js';
+import './server/chunks/chunks/utils2.js-BQzn9ikS.js';
+import './server/chunks/chunks/uneval.js-5Y6J9rDU.js';
+import 'node:url';
+import './server/chunks/chunks/index.js-DKBV1yhz.js';
+import './server/chunks/chunks/server.js-Bf8x1V_n.js';
+import './server/chunks/chunks/exports.js-8HOoaa4e.js';
+import './server/chunks/chunks/index2.js-DOfo_N45.js';
+import './server/chunks/chunks/internal.js-BjXMTKBM.js';
+import './server/chunks/chunks/root.js-Br7Q0GCE.js';
+//# sourceMappingURL=handler.js.map
