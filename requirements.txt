@@ -1,17 +1,33 @@
 # FastAPI and ASGI Server
 fastapi
-uvicorn
+uvicorn[standard]
 python-multipart
 
 # Database
-SQLAlchemy
+SQLAlchemy>=1.4
 psycopg2-binary
 
 # Pydantic and Settings
-pydantic
+pydantic>=2.0
 python-dotenv
 email-validator
 
 # Authentication & Security
-passlib[bcrypt]
-python-jose
+passlib==1.7.4
+bcrypt==3.2.0
+python-jose[cryptography]
+slowapi
+
+# Email
+sendgrid
+
+# Caching
+redis>=4.0
+
+# SS-AI local inference (install CUDA build with:
+#   CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python --force-reinstall --no-cache-dir
+llama-cpp-python>=0.3
+
+# Test dependencies
+pytest>=8.0.0
+httpx>=0.27.0

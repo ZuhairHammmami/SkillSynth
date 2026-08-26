@@ -1,20 +1,22 @@
-// المسار: src/frontend/src/app/wizard/page.tsx
+'use client';
 
-// استيراد المكون الذي يحتوي على النموذج
-import GenerateWizard from "@/app/components/GenerateWizard";
+import { useTranslations } from 'next-intl';
+import { PathWizard } from '@/shared/components/PathWizard';
 
 export default function WizardPage() {
+  const t = useTranslations('wizard');
+
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-16">
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold text-primary">أنشئ مسارك التعليمي</h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          أخبرنا عن هدفك، وسنقوم بتوليد خطة مخصصة لك.
-        </p>
+    <div className="flex min-h-screen items-center justify-center p-8">
+      <div className="mx-auto max-w-lg text-center space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{t('generatePath')}</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            {t('pageSubtitle') || 'Answer a few questions to generate a personalized learning path'}
+          </p>
+        </div>
+        <PathWizard />
       </div>
-      
-      {/* هنا نضع النموذج الذي قمنا بتصميمه سابقًا */}
-      <GenerateWizard />
     </div>
   );
 }

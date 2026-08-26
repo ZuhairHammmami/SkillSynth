@@ -1,58 +1,50 @@
-# اسم المشروع (SkillSynth)
+# SkillSynth
 
-أهلاً بك في مشروعنا! هذا الدليل سيساعدك على فهم المشروع وتشغيله على جهازك بسهولة.
+SkillSynth is an **adaptive learning platform**: a FastAPI + Next.js system that builds personalized, skill-based learning paths from a prerequisite DAG — with assessments, gap analysis, analytics, SSE real-time updates, and a separate admin console with full CRUD and referential-integrity guards. Arabic-first (RTL) UI for learners. Documentation follows the SS-EDS system in [`docs/INDEX.md`](docs/INDEX.md).
 
-## نظرة عامة
-هذا المشروع عبارة عن تطبيق ويب يتكون من جزأين رئيسيين:
-- **Frontend**: واجهة المستخدم (المجلد `frontend`).
-- **Backend**: الخادم وقواعد البيانات (المجلد `backend`).
-- **data**:  الذكاء و توليد المسارات (المجلد `data`).
+**Stack**: FastAPI + SQLAlchemy (Clean Architecture) · Next.js 14 + React 18 + Tailwind (pnpm) · SQLite (dev) / PostgreSQL (prod), strict-3NF 15 tables.
 
-## المتطلبات الأساسية (Prerequisites)
-قبل البدء، تأكد من تثبيت البرامج التالية على جهازك:
-- [Node.js](https://nodejs.org/) (الإصدار LTS)
-- [Git](https://git-scm.com/)
+## Project Structure
 
----
+```
+src/backend/     FastAPI API — routers/ services/ repositories/ entities/ dto/
+                 policies/ middlewares/ events/ + database.py, main.py, config/
+src/frontend/    Student app :3000 — src/{app,shared,i18n,types} + middleware.ts,
+                 bilingual ar/en, RTL-first
+src/admin-app/   Admin app :3001 — English-only, CRUD dialogs + force-delete flow
+docs/            SS-EDS documentation (50 numbered sections, each with INDEX.md)
+seed_v3.py       15-table seed (~1109 rows, FK-gated, idempotent)
+tools/           verify_schema.py and other repo tooling
+tests/           pytest suite (143 tests, isolated temp DB per run)
+```
 
-## دليل التشغيل المحلي (Local Setup)
+## Quick Start
 
-اتبع هذه الخطوات لتشغيل المشروع على جهازك:
-
-### 1. استنساخ المشروع (Clone)
-افتح الطرفية (Terminal) ونفذ الأمر التالي لتحميل المشروع:
 ```bash
-git clone https://github.com/zuhairpro/SkillSynth
-cd SkillSynth
+# Backend (:8000) — OpenAPI UI at /docs
+source .venv/bin/activate && pip install -r requirements.txt && PYTHONPATH=src python run.py
 
----
+# Student frontend (:3000)
+cd src/frontend && pnpm dev
 
-## 🚀 دليل النشر اليدوي (Deployment)
+# Admin app (:3001)
+cd src/admin-app && pnpm dev
 
-هذه الخطوات تشرح كيفية نشر الجزء الخلفي (Backend) من المشروع على الإنترنت باستخدام خدمة Render المجانية.
+# Seed database (idempotent; safe to re-run)
+PYTHONPATH=src python seed_v3.py
+```
 
-### ما هي متغيرات البيئة (Environment Variables)؟
+## Tests & Verification
 
-هي "الأسرار" التي يحتاجها مشروعنا ليعمل، مثل كلمات مرور قاعدة البيانات أو مفاتيح سرية. نحن لا نكتبها مباشرة في الكود، بل نضعها في لوحة تحكم موقع النشر للحفاظ على أمانها.
+```bash
+PYTHONPATH=src python -m pytest tests/ -q        # 143 passed; isolated temp DB, dev DB untouched
+PYTHONPATH=src python tools/verify_schema.py     # prints SCHEMA MATCH on success
+cd src/frontend && pnpm type-check && pnpm lint && pnpm build
+cd src/admin-app && pnpm type-check && pnpm build
+```
 
-**المتغيرات المطلوبة لهذا المشروع:**
-- `DATABASE_URL`: رابط الاتصال بقاعدة البيانات.
-- `JWT_SECRET_KEY`: مفتاح سري لتأمين المستخدمين.
-- `PORT`: رقم المنفذ الذي سيعمل عليه الخادم (Render يوفره تلقائياً).
+## API Surface
 
-### خطوات النشر على Render
+7 routers (`auth`, `learning`, `paths`, `assessments`, `analytics`, `admin`, `realtime`) exposing **63 operations across 49 paths**. Writes are integrity-guarded: unknown references and cycles → 400, rename collisions → 409, restricted deletes → 409 census unless `?force=true` (see [ADR-014](docs/41-decision-records/adr-014.md)).
 
-1.  اذهب إلى موقع [Render.com](https://render.com) وقم بإنشاء حساب مجاني (يمكنك استخدام حساب GitHub).
-2.  في لوحة التحكم، اضغط على **"New"** ثم اختر **"Web Service"**.
-3.  اربط حساب GitHub الخاص بك واختر هذا المستودع (`SkillSynth`).
-4.  املأ الإعدادات التالية:
-    - **Name**: اختر اسماً لمشروعك (مثلاً `skillsynth-backend`).
-    - **Root Directory**: اكتب `backend` (هذا يخبر Render أن الكود موجود داخل مجلد الـ backend).
-    - **Environment**: اختر `Python 3`.
-    - **Build Command**: `pip install -r requirements.txt` (هذا الأمر لتثبيت المكتبات).
-    - **Start Command**: `python main.py` (هذا الأمر لتشغيل الخادم).
-5.  اضغط على **"Advanced Settings"**.
-6.  اضغط على **"Add Environment Variable"** وأضف "الأسرار" التي ذكرناها أعلاه واحداً تلو الآخر.
-7.  اضغط على **"Create Web Service"**.
-
-انتظر بضع دقائق، وسيقوم Render ببناء ونشر مشروعك. سيعطيك رابطاً عاماً يمكنك استخدامه للوصول إلى الـ Backend الخاص بك من أي مكان.
+Seed credentials and repo conventions live in [AGENTS.md](AGENTS.md). See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
