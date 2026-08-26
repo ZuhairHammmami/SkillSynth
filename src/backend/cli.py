@@ -135,33 +135,49 @@ def _pnpm_bin():
 
     Called by _spawn_node_app; returns the binary path or None when pnpm is
     genuinely unavailable, so the caller can skip that Node app with a warning
-    instead of failing the whole `run` command.
+    instead of failing the whole `run` command. On Windows (os.name == "nt")
+    shutil.which("pnpm") resolves pnpm.cmd and no ~/.npm-global fallback is used.
     """
     found = shutil.which("pnpm")
     if found:
         return found
-    alt = os.path.expanduser("~/.npm-global/bin/pnpm")
-    return alt if os.path.exists(alt) else None
+    if os.name != "nt":
+        alt = os.path.expanduser("~/.npm-global/bin/pnpm")
+        if os.path.exists(alt):
+            return alt
+    return None
 
 
 def _spawn_node_app(name, cwd):
-    """Spawn a Next.js dev server (pnpm dev) under cwd if pnpm + node_modules exist.
+    """Spawn a Node dev server under cwd if node_modules exist.
 
     Called by _cmd_run for the frontend and admin apps; returns a one-element
-    list with the started Popen, or empty when skipped. Runs the process in
-    its own session and streams its merged output line-prefixed to the console.
+    list with the started Popen, or empty when skipped. Prefers the local
+    Vite binary (node_modules/.bin/vite) so the dev server starts without
+    going through pnpm's deps-status check, and falls back to `pnpm dev`
+    when the Vite binary is unavailable. Runs the process in its own session
+    and streams its merged output line-prefixed to the console.
     """
-    pnpm = _pnpm_bin()
-    if not pnpm:
-        print(f"[{name}] skipped: pnpm not found (install Node + pnpm and add to PATH)")
-        return []
     if not os.path.isdir(os.path.join(cwd, "node_modules")):
         print(f"[{name}] skipped: node_modules missing — run `pnpm install` in {cwd}")
         return []
-    proc = subprocess.Popen(
-        [pnpm, "dev"], cwd=cwd, env=dict(os.environ),
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        start_new_session=True)
+    vite_bin = os.path.join(cwd, "node_modules", ".bin", "vite")
+    if os.path.exists(vite_bin):
+        cmd = [vite_bin, "dev"]
+    else:
+        pnpm = _pnpm_bin()
+        if not pnpm:
+            print(f"[{name}] skipped: neither vite nor pnpm found")
+            return []
+        cmd = [pnpm, "dev"]
+    spawn_kwargs = dict(
+        cwd=cwd, env=dict(os.environ),
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    if os.name != "nt":
+        spawn_kwargs["start_new_session"] = True
+    else:
+        spawn_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+    proc = subprocess.Popen(cmd, **spawn_kwargs)
     threading.Thread(target=_pump_output, args=(name, proc), daemon=True).start()
     print(f"[{name}] started (pid {proc.pid})")
     return [proc]
@@ -174,10 +190,14 @@ def _spawn_dev_server(name, cwd, src_path, cmd):
     the started Popen. Session isolation lets _supervise terminate the uvicorn
     reloader and its workers together on shutdown.
     """
-    proc = subprocess.Popen(
-        cmd, cwd=cwd, env=dict(os.environ, PYTHONPATH=src_path),
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        start_new_session=True)
+    spawn_kwargs = dict(
+        cwd=cwd, env=dict(os.environ, PYTHONPATH=src_path),
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    if os.name != "nt":
+        spawn_kwargs["start_new_session"] = True
+    else:
+        spawn_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+    proc = subprocess.Popen(cmd, **spawn_kwargs)
     threading.Thread(target=_pump_output, args=(name, proc), daemon=True).start()
     print(f"[{name}] started (pid {proc.pid})")
     return proc
@@ -201,8 +221,8 @@ def _supervise(procs):
     """Block on the project's child processes and terminate them on exit/signal.
 
     Called by _cmd_run as the supervisor; registers SIGINT/SIGTERM handlers
-    that SIGTERM each child's session (so uvicorn reloaders and Next.js
-    children die together), then waits. Returns 0 after a clean shutdown.
+    (POSIX only) that SIGTERM each child's session (so uvicorn reloaders and
+    Next.js children die together), then waits. Returns 0 after a clean shutdown.
     """
     def _shutdown(signum, frame):
         print("\nskillsynth run: shutting down…")
@@ -214,8 +234,9 @@ def _supervise(procs):
             except Exception:
                 _terminate_session(p, force=True)
 
-    signal.signal(signal.SIGINT, _shutdown)
-    signal.signal(signal.SIGTERM, _shutdown)
+    if os.name != "nt":
+        signal.signal(signal.SIGINT, _shutdown)
+        signal.signal(signal.SIGTERM, _shutdown)
     try:
         for p in procs:
             p.wait()
@@ -226,11 +247,17 @@ def _supervise(procs):
 
 
 def _terminate_session(proc, force=False):
-    """SIGTERM (or SIGKILL) a child's process session so its subtree dies.
+    """Terminate (or force-kill) a child's process tree so its subtree dies.
 
-    Called by _supervise; uses killpg on the child's session id, falling back
-    to a direct terminate/kill when the session lookup fails.
+    Called by _supervise; on Windows uses taskkill /T /F on the whole tree,
+    while on POSIX uses killpg on the child's session id (SIGTERM or SIGKILL),
+    falling back to a direct terminate/kill when the lookup fails. SIGKILL and
+    os.killpg are referenced only inside the POSIX branch.
     """
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(proc.pid), "/T", "/F"], check=False)
+        return
     try:
         pgid = os.getpgid(proc.pid)
         os.killpg(pgid, signal.SIGKILL if force else signal.SIGTERM)
