@@ -1,14 +1,8 @@
-"""LLM pipeline — validated high-level operations over llm_engine (SS-AI).
-
-Sole consumer of services/llm_engine.complete and llm_prompts templates;
-called by routers/ai.py and the assess-service review hook. Every op
-first gates on _engine_available() so a present-but-unusable engine
-degrades gracefully, then either returns contract-valid data or a
-documented fallback (None / raise) per spec Failure Handling.
-"""
+"""LLM pipeline — validated ops over llm_engine (SS-AI). Sole consumer of llm_engine.complete and llm_prompts templates; called by routers/ai.py and the assess review hook. Each op gates on _engine_available() and degrades gracefully; _extract_json is the strict parse and _salvage_* recover sub-objects from broken output."""
 import json
 import logging
 import re
+from typing import Callable
 
 from backend.services import llm_prompts as prompts
 
@@ -22,34 +16,19 @@ class LLMOperationError(Exception):
 
 
 def _engine_available() -> bool:
-    """Report engine readiness; test seam monkeypatched to bypass engine.
-
-    Called by every public op as its first gate; delegates to
-    llm_engine.available() in production.
-    """
+    """First gate of every public op. Deps: imports backend.services.llm_engine and calls its available(). Impl: thin wrapper so tests monkeypatch the gate."""
     from backend.services import llm_engine
     return llm_engine.available()
 
 
 def _engine_factory():
-    """Return the engine provider; test seam monkeypatched by tests.
-
-    Called by _complete_json only; returns the llm_engine module whose
-    complete() performs inference.
-    """
+    """Return the engine provider module for inference. Deps: imports backend.services.llm_engine. Impl: returns the module whose complete() runs inference; the indirection is a test seam."""
     from backend.services import llm_engine
     return llm_engine
 
 
 def _extract_json(text: str) -> dict:
-    """Parse the FIRST JSON object in a completion, ignoring all chatter.
-
-    Called by _complete_json on each attempt of every public op; scans
-    to the first "{" and decodes exactly one object via raw_decode, so
-    trailing code fences/prose or back-to-back objects cannot trigger
-    "Extra data" failures. Raises ValueError (incl. JSONDecodeError)
-    when no object parses so the caller records the error and retries.
-    """
+    """Parse the FIRST JSON object, ignoring chatter. Deps: json.JSONDecoder().raw_decode. Impl: scans to first "{" and decodes one object, raising ValueError when none parses so the caller retries."""
     idx = text.find("{")
     if idx == -1:
         raise ValueError("no JSON object found")
@@ -57,17 +36,85 @@ def _extract_json(text: str) -> dict:
     return obj
 
 
-def _complete_json(contract: dict, *, max_tokens: int,
-                   temperature: float | None = None) -> dict:
-    """Complete a prompts-template contract with ONE corrective retry.
+def _iter_objects(text: str) -> list[dict]:
+    """Yield every balanced {...} substring decoded as a dict. Deps: json.loads per brace pair. Impl: stack scan recovers objects the model emitted concatenated/wrapped/nested in a malformed outer doc; braces in strings are rare (backticks used instead)."""
+    objs: list[dict] = []
+    stack: list[int] = []
+    for i, ch in enumerate(text):
+        if ch == "{":
+            stack.append(i)
+        elif ch == "}" and stack:
+            start = stack.pop()
+            try:
+                objs.append(json.loads(text[start:i + 1]))
+            except Exception:  # noqa: BLE001 — skip non-JSON fragments
+                pass
+    return objs
 
-    Shared callee of all five public ops; reads contract["system"] /
-    ["user"], appends the parse error to the retry turn, forwards an
-    optional temperature override (review_level pins 0.1), then raises
-    LLMOperationError once both attempts fail.
-    """
+
+def _salvage_questions(text: str) -> dict | None:
+    """Recover valid MCQs from broken quiz output. Deps: _iter_objects, _valid_question. Impl: scans each balanced object and nested lists for dicts passing _valid_question, returning {"questions":[...]} or None."""
+    out: list[dict] = []
+
+    def consider(q):
+        if not isinstance(q, dict):
+            return
+        if _valid_question(q, {x["text"] for x in out}, set()):
+            item = {"text": q["text"].strip(),
+                    "options": [o.strip() for o in q["options"]],
+                    "correct_index": q["correct_index"]}
+            if q.get("skill"):
+                item["skill"] = q["skill"]
+            out.append(item)
+
+    for obj in _iter_objects(text):
+        if not isinstance(obj, dict):
+            continue
+        consider(obj)
+        for value in obj.values():
+            if isinstance(value, list):
+                for item in value:
+                    consider(item)
+    return {"questions": out} if out else None
+
+
+def _salvage_diagnostic(text: str) -> dict | None:
+    """Recover the narrative report from broken diagnostic output. Deps: _iter_objects. Impl: returns the object carrying the most diagnostic keys (summary/strengths/weaknesses/recommended_focus/next_steps), else None."""
+    keys = ("summary", "strengths", "weaknesses",
+            "recommended_focus", "next_steps")
+    best = None
+    best_score = 0
+    for obj in _iter_objects(text):
+        if isinstance(obj, dict):
+            score = sum(k in obj for k in keys)
+            if score > best_score:
+                best, best_score = obj, score
+    return best
+
+
+def _salvage_explanations(text: str) -> dict | None:
+    """Recover the explanation list from broken explain output. Deps: _iter_objects. Impl: prefers a {"explanations":[...]} wrapper; else gathers {"question_index":int,"why":str} objects (wrapper items skipped to avoid double-count). Returns {"explanations":[...]} or None."""
+    objs = _iter_objects(text)
+    for obj in objs:
+        if (isinstance(obj, dict) and "explanations" in obj
+                and isinstance(obj["explanations"], list)):
+            expls = [e for e in obj["explanations"]
+                     if isinstance(e, dict) and "question_index" in e]
+            if expls:
+                return {"explanations": expls}
+    expls = [obj for obj in objs
+             if isinstance(obj, dict) and "question_index" in obj
+             and "why" in obj and "explanations" not in obj]
+    return {"explanations": expls} if expls else None
+
+
+def _complete_json(contract: dict, *, max_tokens: int,
+                   temperature: float | None = None,
+                   salvage: Callable[[str], dict | None] | None = None) -> dict:
+    """Complete a prompts contract with ONE corrective retry. Deps: _engine_factory().complete, _extract_json, optional salvage hook. Impl: reads contract system/user, appends prior parse error to a retry turn, forwards a temperature override; on failure offers raw payload to salvage, else raises LLMOperationError."""
     engine = _engine_factory()
     last_err = ""
+    raw = None
     for _ in range(2):
         suffix = "" if not last_err else (
             f"\nYour previous reply was invalid JSON ({last_err}). "
@@ -81,25 +128,21 @@ def _complete_json(contract: dict, *, max_tokens: int,
             return _extract_json(raw)
         except (ValueError, json.JSONDecodeError) as exc:
             last_err = str(exc)[:120]
+    if salvage is not None and raw is not None:
+        salvaged = salvage(raw)
+        if salvaged is not None:
+            return salvaged
     raise LLMOperationError(f"invalid JSON after retry: {last_err}")
 
 
 def sanitize_topic(text: str, limit: int = 120) -> str:
-    """Strip braces/backticks/control chars; clamp length.
-
-    Applied by generate_skill_quiz / generate_role_quiz to skill names
-    and role titles before they reach prompts (injection hardening).
-    """
+    """Strip braces/backticks/control chars; clamp length. Deps: re.sub. Impl: removes {,},<,>,`,\\ and control chars, trims, clamps to `limit`; used on skill/role names before prompts (injection hardening)."""
     cleaned = re.sub(r"[{}<>`\\]|[\x00-\x1f]", "", str(text))
     return cleaned.strip()[:limit]
 
 
 def _valid_question(q, seen_texts: set[str], exclude_texts: set[str]) -> bool:
-    """Schema gate for one MCQ; True iff usable.
-
-    Callee of generate_skill_quiz / generate_role_quiz; enforces 4
-    non-empty string options, correct_index 0..3, fresh non-excluded text.
-    """
+    """Schema gate for one MCQ; True iff usable. Deps: builtins only. Impl: enforces 4 non-empty string options, correct_index 0..3, and a fresh text not in seen_texts or exclude_texts."""
     if not isinstance(q, dict):
         return False
     text, opts = q.get("text"), q.get("options")
@@ -114,20 +157,15 @@ def _valid_question(q, seen_texts: set[str], exclude_texts: set[str]) -> bool:
 
 def generate_skill_quiz(skill_name: str, difficulty: int, n: int = 5,
                         exclude_texts=frozenset()) -> list[dict]:
-    """Validated single-skill MCQs for practice tests.
-
-    Called by routers/ai.py; gates on _engine_available() (raise "AI
-    unavailable"), validates via _valid_question, raises
-    LLMOperationError when nothing survives so callers fall back to
-    seeded quizzes.
-    """
+    """Validated single-skill MCQs for practice tests. Deps: _engine_available, sanitize_topic, prompts.skill_quiz_prompt, _complete_json, _valid_question. Impl: gates on engine (raise "AI unavailable"), validates output, raises LLMOperationError when nothing survives so callers fall back to seeded quizzes."""
     if not _engine_available():
         raise LLMOperationError("AI unavailable")
     topic = sanitize_topic(skill_name)
     exclude = set(exclude_texts)
     data = _complete_json(
         prompts.skill_quiz_prompt(topic, difficulty, n, sorted(exclude)),
-        max_tokens=max(650, n * 230))
+        max_tokens=max(650, n * 230),
+        salvage=_salvage_questions)
     out: list[dict] = []
     for q in data.get("questions", []):
         if _valid_question(q, {x["text"] for x in out}, exclude):
@@ -141,20 +179,15 @@ def generate_skill_quiz(skill_name: str, difficulty: int, n: int = 5,
 
 def generate_role_quiz(role_title: str, skills: list[dict],
                        exclude_texts=frozenset()) -> list[dict]:
-    """Validated role diagnostic quiz; items carry exact skill tag.
-
-    Called by routers/ai.py; gates on _engine_available() (raise "AI
-    unavailable"), keeps only questions tagged with a requested skill
-    name that pass _valid_question; per-skill shortfall is tolerated
-    downstream (analysis handles partial coverage).
-    """
+    """Validated role diagnostic quiz; items carry exact skill tag. Deps: _engine_available, sanitize_topic, prompts.role_quiz_prompt, _complete_json, _valid_question. Impl: gates on engine, keeps only questions tagged with a requested skill passing _valid_question; per-skill shortfall tolerated downstream."""
     if not _engine_available():
         raise LLMOperationError("AI unavailable")
     safe = [{"name": sanitize_topic(s["name"]),
              "difficulty": int(s.get("difficulty") or 1)} for s in skills]
     data = _complete_json(
         prompts.role_quiz_prompt(sanitize_topic(role_title), safe),
-        max_tokens=max(850, len(safe) * 330))
+        max_tokens=max(850, len(safe) * 330),
+        salvage=_salvage_questions)
     exclude, out = set(exclude_texts), []
     seen_names = {s["name"] for s in safe}
     for q in data.get("questions", []):
@@ -170,15 +203,7 @@ def generate_role_quiz(role_title: str, skills: list[dict],
 
 
 def analyze_diagnostic(per_skill: list[dict]) -> dict | None:
-    """Narrative report for pre-path results; None ⇒ deterministic fallback.
-
-    Called by routers/paths.py wizard_analysis; gates on
-    _engine_available() (return None), normalizes each row's
-    gap_to_mastery to the gap key diagnostic_analysis_prompt reads
-    (pipeline-owned so wire rows stay untouched), caps narrative fields
-    to bounded sizes, and converts any failure into None so callers
-    render the numbers-only report.
-    """
+    """Narrative report for pre-path results; None ⇒ deterministic fallback. Deps: _engine_available, prompts.diagnostic_analysis_prompt, _complete_json, _salvage_diagnostic, logger. Impl: normalizes gap_to_mastery→gap (pipeline-owned), caps narrative fields, converts any failure into None so callers render numbers-only."""
     if not _engine_available():
         logger.info("analyze_diagnostic skipped: AI unavailable")
         return None
@@ -186,7 +211,8 @@ def analyze_diagnostic(per_skill: list[dict]) -> dict | None:
         rows = [{**r, "gap": r.get("gap", r.get("gap_to_mastery", 0))}
                 for r in per_skill]
         data = _complete_json(
-            prompts.diagnostic_analysis_prompt(rows), max_tokens=750)
+            prompts.diagnostic_analysis_prompt(rows), max_tokens=750,
+            salvage=_salvage_diagnostic)
         return {
             "summary": str(data.get("summary", ""))[:800],
             "strengths": data.get("strengths", [])[:8],
@@ -201,19 +227,14 @@ def analyze_diagnostic(per_skill: list[dict]) -> dict | None:
 
 
 def explain_result(responses: list[dict]) -> dict | None:
-    """Per-question explanations + advice; None ⇒ static recap fallback.
-
-    Called by routers/ai.py result explanation endpoint; gates on
-    _engine_available() (return None), keeps only explanations whose
-    question_index matches a graded row, and converts any failure into
-    None.
-    """
+    """Per-question explanations + advice; None ⇒ static recap fallback. Deps: _engine_available, prompts.explain_result_prompt, _complete_json, _salvage_explanations, logger. Impl: keeps only explanations whose question_index matches a graded row, converts any failure into None."""
     if not _engine_available():
         logger.info("explain_result skipped: AI unavailable")
         return None
     try:
         data = _complete_json(
-            prompts.explain_result_prompt(responses), max_tokens=950)
+            prompts.explain_result_prompt(responses), max_tokens=950,
+            salvage=_salvage_explanations)
         known = {r["question_index"] for r in responses}
         expl = [{"question_index": e.get("question_index"),
                  "why": str(e.get("why", ""))[:400]}
@@ -228,15 +249,7 @@ def explain_result(responses: list[dict]) -> dict | None:
 
 def review_level(correct: int, total: int, difficulty: int,
                  attempt_no: int, current_level: int) -> dict:
-    """Bounded-autonomy level verdict; never moves beyond ±1/high-conf.
-
-    Called by the assess-service review hook after each quiz attempt;
-    gates on _engine_available() (delta-0/low-confidence fallback),
-    coerces model output into safe ranges, and applies the delta only
-    when confidence is high, delta non-zero, and target stays 0..5.
-    The reported delta keeps the suggestion when confidence is high even
-    if clamping blocked application (applied=False, final=current).
-    """
+    """Bounded-autonomy level verdict; never moves beyond ±1/high-conf. Deps: _engine_available, prompts.review_level_prompt, _complete_json, logger. Impl: coerces output to safe ranges, applies delta only when confidence high & target 0..5; reported delta keeps suggestion even if clamping blocked application."""
     if not _engine_available():
         return {"delta": 0, "confidence": "low",
                 "rationale": "AI unavailable", "applied": False,

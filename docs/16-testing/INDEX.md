@@ -1,7 +1,7 @@
 # SS-EDS: Testing
 
 ## Purpose
-Document the verification suite: 190 backend pytest tests across 21 files against an isolated temporary SQLite database (conftest-built per run; dev DB untouched), plus TypeScript type-check, ESLint, and production builds for both frontends.
+Document the verification suite: 199 backend pytest tests across 21 files against an isolated temporary SQLite database (conftest-built per run; dev DB untouched), plus TypeScript type-check, ESLint, and production builds for both frontends.
 
 ## Responsibilities
 - Maintain the pytest suite in repo-root `tests/` (pytest + httpx)
@@ -25,7 +25,7 @@ Document the verification suite: 190 backend pytest tests across 21 files agains
 
 ## Sequence: Pre-Merge Verification
 ```
-PYTHONPATH=src python -m pytest tests/ -q        → 190 passed?
+PYTHONPATH=src python -m pytest tests/ -q        → 199 passed?
 cd src/frontend  && pnpm type-check && pnpm lint && pnpm build
 cd src/admin-app && pnpm type-check && pnpm build
 ```
@@ -34,14 +34,14 @@ cd src/admin-app && pnpm type-check && pnpm build
 ```
 PYTHONPATH=src python -m pytest tests/ -q
   → conftest.py creates an isolated temp SQLite DB (seeded from seed_v3 data; dev DB never touched)
-  → 190 tests collected across 21 files
+  → 199 tests collected across 21 files
   → temp DB discarded after the session
 ```
 
 ## Current Test State
 | Component | Status | Details |
 |-----------|--------|---------|
-| Backend tests | ✅ 190/190 | isolated temp SQLite per run |
+| Backend tests | ✅ 199/199 | isolated temp SQLite per run |
 | Frontend type-check + lint + build | ✅ pass | src/frontend |
 | Admin app type-check + build | ✅ pass | src/admin-app |
 | Schema verifier | ✅ SCHEMA MATCH | tools/verify_schema.py |
@@ -73,7 +73,7 @@ PYTHONPATH=src python -m pytest tests/ -q
 
 ## Available Verification Commands
 ```bash
-PYTHONPATH=src python -m pytest tests/ -q      # 190 tests, isolated temp DB
+PYTHONPATH=src python -m pytest tests/ -q      # 199 tests, isolated temp DB
 cd src/frontend && pnpm type-check             # tsc --noEmit
 cd src/frontend && pnpm lint                   # next lint
 cd src/frontend && pnpm build                  # type-check + next build
@@ -84,7 +84,7 @@ PYTHONPATH=src python seed_v3.py               # re-seed dev database (~1,100 ro
 
 ## Rules
 1. Tests always run against the conftest temp DB — never the dev skillsynth.db
-2. All 190 must pass before any merge
+2. All 199 must pass before any merge
 3. New endpoints require tests in the matching file before merge
 4. After schema edits: update DDL + entities, then verify_schema.py must print SCHEMA MATCH
 5. Frontend commits require type-check + lint; merges require builds

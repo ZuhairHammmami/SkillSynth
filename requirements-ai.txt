@@ -1,0 +1,3 @@
+# SS-AI local inference (optional). For a CUDA build use:
+#   CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python --force-reinstall --no-cache-dir
+llama-cpp-python>=0.3

@@ -28,7 +28,7 @@ Document the deterministic learning engine with 3 core services (LearningEngine,
 
 ## Dependencies
 - 10-database (skills, skill_prerequisites, resources, categories tables)
-- LearningQueries (data access layer in queries/learning_queries.py)
+- backend.repositories.learning_repository (the current learning data-access module; the queries/ layer was removed per ADR-013)
 - 12-realtime (SSE events on path generation)
 
 ## Sequence: Personalized Path Generation

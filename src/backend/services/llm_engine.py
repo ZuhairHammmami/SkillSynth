@@ -37,7 +37,10 @@ def reset_for_tests() -> None:
 def available() -> bool:
     """True iff enabled, artifact exists and no failed load latch.
 
-    Gate used by routers/ai.py endpoints and pipeline callers.
+    Dependencies: reads settings.AI_ENABLED and calls _model_path_exists().
+    Implementation: short-circuits on the _load_failed latch so a prior
+    missing/misloaded artifact is not retried on every gate check. Used by
+    routers/ai.py endpoints and pipeline callers.
     """
     return bool(settings.AI_ENABLED) and not _load_failed and \
         _model_path_exists()
@@ -46,6 +49,9 @@ def available() -> bool:
 def health() -> dict:
     """Diagnostics payload for status endpoints/logs.
 
+    Dependencies: reads settings.AI_ENABLED/AI_MODEL_PATH and calls
+    available()/_model_path_exists(). Implementation: returns a snapshot of
+    enablement, artifact existence, load state and the live availability gate.
     Consumed by admin system-health surfacing and tests.
     """
     return {"enabled": bool(settings.AI_ENABLED),
@@ -58,7 +64,9 @@ def health() -> dict:
 def warmup() -> bool:
     """Force-load the model now; True when serving afterwards.
 
-    Called optionally at startup (main lifespan follow-up) and tests.
+    Dependencies: calls _get_llm() and logs via logger. Implementation:
+    triggers the lazy singleton load eagerly; swallows LLMUnavailable and
+    returns False instead of crashing. Called optionally at startup and tests.
     """
     try:
         _get_llm()
@@ -69,13 +77,15 @@ def warmup() -> bool:
 
 
 def complete(prompt: str, *, max_tokens: int,
-             temperature: float | None = None) -> str:
+              temperature: float | None = None) -> str:
     """One serialized completion; raises LLMUnavailable when unusable.
 
-    Sole inference entry point (pipeline._complete_json); semaphore
-    keeps concurrent requests from interleaving token streams. Applies
-    anti-degeneration sampling (AI_TEMPERATURE/AI_REPEAT_PENALTY/
-    AI_TOP_P) unless the caller overrides temperature.
+    Dependencies: calls _get_llm(), reads settings for temperature/repeat/
+    top_p defaults, and logs via logger. Implementation: the sole inference
+    entry point (pipeline._complete_json); a semaphore keeps concurrent
+    requests from interleaving token streams. Applies anti-degeneration
+    sampling unless the caller overrides temperature. Returns the text field
+    when the backend yields a dict, else the raw string.
     """
     llm = _get_llm()
     temp = settings.AI_TEMPERATURE if temperature is None else temperature
@@ -88,7 +98,12 @@ def complete(prompt: str, *, max_tokens: int,
 
 
 def _model_path_exists() -> bool:
-    """Artifact existence probe relative to repo root (cwd)."""
+    """Artifact existence probe relative to repo root (cwd).
+
+    Dependencies: lazily imports os and reads settings.AI_MODEL_PATH.
+    Implementation: a plain os.path.isfile check; intentionally lazy so the
+    os import cost is paid only when availability is actually queried.
+    """
     import os
     return os.path.isfile(settings.AI_MODEL_PATH)
 
@@ -96,8 +111,12 @@ def _model_path_exists() -> bool:
 def _get_llm():
     """Load-or-return the shared Llama instance (double-checked).
 
-    Imports llama_cpp lazily so the package is never required unless
-    AI features are actually exercised.
+    Dependencies: reads settings (AI_ENABLED, AI_MODEL_PATH, AI_N_CTX,
+    AI_N_GPU_LAYERS), lazily imports llama_cpp.Llama, and logs. Implementation:
+    double-checked locking returns a cached instance; on first load sets the
+    _load_failed latch for a missing model or any import/inference error so
+    the app degrades instead of crashing. llama_cpp is imported lazily so the
+    package is never required unless AI is exercised.
     """
     global _llm, _load_failed
     if _llm is not None:

@@ -34,6 +34,18 @@ cd src/admin-app && pnpm dev
 PYTHONPATH=src python seed_v3.py
 ```
 
+## Installation
+
+```bash
+# Base install (FastAPI backend + CLI)
+pip install -r requirements.txt && pip install -e .
+
+# Optional SS-AI local inference (CUDA build optional)
+pip install -r requirements-ai.txt
+```
+
+**Model note:** place the `Llama-3.2-3B-Instruct-Q6_K.gguf` GGUF (~2.46 GiB, gitignored, user-supplied) into `src/data/`; `skillsynth doctor --strict` verifies its presence when `AI_ENABLED=true`. `AI_ENABLED` defaults to `false`.
+
 ## Tests & Verification
 
 ```bash

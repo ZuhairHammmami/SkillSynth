@@ -15,7 +15,7 @@ Catalog the functional requirements implemented by SkillSynth and map each to it
 
 ## Outputs
 - Requirements traceability (this document)
-- Coverage evidence via tests/ (190 tests)
+- Coverage evidence via tests/ (199 tests)
 
 ## Dependencies
 - 22-api (endpoints implement requirements)

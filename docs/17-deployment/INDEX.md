@@ -25,7 +25,7 @@ Document how SkillSynth is built, configured, and run: `run.py`/uvicorn backend,
 ## Sequence: Local Full Stack
 ```
 pip install -e .                        # one-time: installs the skillsynth script
-skillsynth run                          # backend :8000 (reload when MODE=dev)
+skillsynth run                          # full stack: backend :8000 + frontend :3000 + admin :3001 (reload when MODE=dev)
 cd src/frontend && pnpm dev             # student frontend :3000
 cd src/admin-app && pnpm dev            # admin app :3001
 ```
@@ -60,7 +60,7 @@ skillsynth doctor --strict                      # gate: deps/AI/model/db all OK
 | ADMIN_EMAIL / ADMIN_PASSWORD | No | admin@skillsynth.io / unset | main.py lifespan admin autoseed |
 | PASSWORD_PEPPER | No | empty | auth_service password hashing |
 | REDIS_URL | prod optional | in-memory | limiter.py rate-limit storage |
-| AI_ENABLED / AI_MODEL_PATH / AI_N_GPU_LAYERS / AI_N_CTX / AI_TEMPERATURE / AI_REPEAT_PENALTY / AI_TOP_P / AI_MAX_NEW_TOKENS | No | false / src/data/Llama-3.2-3B-Instruct-uncensored.Q6_K.gguf / -1 / 4096 / 0.3 / 1.15 / 0.95 / 700 | llm_engine.py + routers/ai.py (ADR-015) |
+| AI_ENABLED / AI_MODEL_PATH / AI_N_GPU_LAYERS / AI_N_CTX / AI_TEMPERATURE / AI_REPEAT_PENALTY / AI_TOP_P / AI_MAX_NEW_TOKENS | No | false / src/data/Llama-3.2-3B-Instruct-Q6_K.gguf / -1 / 4096 / 0.3 / 1.15 / 0.95 / 700 | llm_engine.py + routers/ai.py (ADR-015) |
 
 Frontends read `NEXT_PUBLIC_API_BASE_URL` (default `http://localhost:8000/api`) from their env files.
 

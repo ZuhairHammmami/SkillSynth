@@ -14,7 +14,7 @@ Document the SS-AI local-LLM subsystem (ADR-015): five endpoints served by an in
 - Wizard goal/preferences and submitted answers (POST /api/wizard/analysis)
 - Skill ids for quiz/test generation (POST /api/ai/wizard-quiz, POST /api/ai/tests/generate)
 - Submitted answer sets for explanation (POST /api/ai/explain)
-- Model file: `src/data/Llama-3.2-3B-Instruct-uncensored.Q6_K.gguf` (2,967,059,008 B; header metadata = standard Meta Llama 3.2 3B Instruct, no abliteration markers; filename kept for provenance)
+- Model file: `src/data/Llama-3.2-3B-Instruct-Q6_K.gguf` (2,643,853,856 B (~2.46 GiB); header metadata = standard Meta Llama 3.2 3B Instruct, no abliteration markers; filename kept for provenance)
 
 ## Outputs
 - Quiz/test question sets delivered via SSE job events

@@ -24,10 +24,6 @@ sendgrid
 # Caching
 redis>=4.0
 
-# SS-AI local inference (install CUDA build with:
-#   CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python --force-reinstall --no-cache-dir
-llama-cpp-python>=0.3
-
 # Test dependencies
 pytest>=8.0.0
 httpx>=0.27.0

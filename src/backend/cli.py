@@ -11,8 +11,11 @@ import argparse
 import importlib.metadata
 import os
 import runpy
+import shutil
+import signal
 import subprocess
 import sys
+import threading
 
 BASE_DIR = os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))))
@@ -53,10 +56,17 @@ def _build_parser():
         prog="skillsynth", description="SkillSynth console entrypoint")
     sub = parser.add_subparsers(dest="command", metavar="<command>")
 
-    p_run = sub.add_parser("run", help="serve backend.main:app via uvicorn")
+    p_run = sub.add_parser(
+        "run", help="run the full project (backend + frontend + admin dev servers)")
     p_run.add_argument("--host", default=None, help="overrides HOST env")
     p_run.add_argument("--port", type=int, default=None, help="overrides PORT env")
-    p_run.add_argument("--dev", action="store_true", help="force autoreload")
+    p_run.add_argument("--dev", action="store_true", help="force backend autoreload")
+    p_run.add_argument("--skip-backend", action="store_true",
+                       help="do not start the backend")
+    p_run.add_argument("--skip-frontend", action="store_true",
+                       help="do not start the frontend dev server")
+    p_run.add_argument("--skip-admin", action="store_true",
+                       help="do not start the admin dev server")
     p_run.set_defaults(func=_cmd_run)
 
     p_seed = sub.add_parser("seed", help="run seed_v3 against --db")
@@ -83,22 +93,152 @@ def _build_parser():
 
 
 def _cmd_run(args):
-    """Serve backend.main:app with uvicorn, mirroring legacy run.py exactly.
+    """Launch the full project and block until interrupted.
 
-    Invoked by main via `skillsynth run`; loads .env, injects src/ onto the
-    path, resolves host/port from flags over HOST/PORT env defaults, enables
-    reload when --dev or MODE=dev, then blocks until shutdown. Returns 0.
+    Invoked by main via `skillsynth run`; dependencies imported locally are
+    dotenv (load_dotenv) plus the spawn/supervise helpers. Implementation:
+    loads .env, resolves the backend host/port, then spawns three managed
+    child processes — the backend (uvicorn) plus the frontend and admin
+    Next.js dev servers — each in its own session so one Ctrl-C terminates
+    all of them. Frontend/admin are skipped with a warning when pnpm is
+    unavailable or their node_modules are missing. Returns 0 after a clean
+    shutdown, or 1 when every component was skipped.
     """
     from dotenv import load_dotenv
     load_dotenv()
     os.environ["PYTHONPATH"] = SRC_PATH
     host = args.host or os.getenv("HOST", "127.0.0.1")
     port = int(args.port if args.port is not None else os.getenv("PORT", "8000"))
-    reload_on = bool(args.dev) or os.getenv("MODE", "prod").lower() == "dev"
-    import uvicorn
-    uvicorn.run("backend.main:app", host=host, port=port,
-                reload=reload_on, log_level="info")
+    reload_on = bool(args.dev) or os.getenv("MODE", "dev").lower() == "dev"
+
+    procs = []
+    if not getattr(args, "skip_backend", False):
+        procs.append(_spawn_dev_server(
+            "backend", BASE_DIR, SRC_PATH,
+            [sys.executable, "-m", "uvicorn", "backend.main:app",
+             "--host", host, "--port", str(port),
+             "--reload" if reload_on else "--no-reload"]))
+    if not getattr(args, "skip_frontend", False):
+        procs.extend(_spawn_node_app(
+            "frontend", os.path.join(BASE_DIR, "src", "frontend")))
+    if not getattr(args, "skip_admin", False):
+        procs.extend(_spawn_node_app(
+            "admin", os.path.join(BASE_DIR, "src", "admin-app")))
+    if not procs:
+        print("skillsynth run: nothing to start")
+        return 1
+    return _supervise(procs)
+
+
+def _pnpm_bin():
+    """Locate the pnpm executable, preferring PATH then the npm-global dir.
+
+    Called by _spawn_node_app; returns the binary path or None when pnpm is
+    genuinely unavailable, so the caller can skip that Node app with a warning
+    instead of failing the whole `run` command.
+    """
+    found = shutil.which("pnpm")
+    if found:
+        return found
+    alt = os.path.expanduser("~/.npm-global/bin/pnpm")
+    return alt if os.path.exists(alt) else None
+
+
+def _spawn_node_app(name, cwd):
+    """Spawn a Next.js dev server (pnpm dev) under cwd if pnpm + node_modules exist.
+
+    Called by _cmd_run for the frontend and admin apps; returns a one-element
+    list with the started Popen, or empty when skipped. Runs the process in
+    its own session and streams its merged output line-prefixed to the console.
+    """
+    pnpm = _pnpm_bin()
+    if not pnpm:
+        print(f"[{name}] skipped: pnpm not found (install Node + pnpm and add to PATH)")
+        return []
+    if not os.path.isdir(os.path.join(cwd, "node_modules")):
+        print(f"[{name}] skipped: node_modules missing — run `pnpm install` in {cwd}")
+        return []
+    proc = subprocess.Popen(
+        [pnpm, "dev"], cwd=cwd, env=dict(os.environ),
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        start_new_session=True)
+    threading.Thread(target=_pump_output, args=(name, proc), daemon=True).start()
+    print(f"[{name}] started (pid {proc.pid})")
+    return [proc]
+
+
+def _spawn_dev_server(name, cwd, src_path, cmd):
+    """Spawn the backend (uvicorn) child in its own session with prefixed logging.
+
+    Called by _cmd_run; builds the environment (PYTHONPATH=src) and returns
+    the started Popen. Session isolation lets _supervise terminate the uvicorn
+    reloader and its workers together on shutdown.
+    """
+    proc = subprocess.Popen(
+        cmd, cwd=cwd, env=dict(os.environ, PYTHONPATH=src_path),
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        start_new_session=True)
+    threading.Thread(target=_pump_output, args=(name, proc), daemon=True).start()
+    print(f"[{name}] started (pid {proc.pid})")
+    return proc
+
+
+def _pump_output(prefix, proc):
+    """Forward a child's merged stdout/stderr, line-prefixed, to the console.
+
+    Called by _spawn_dev_server/_spawn_node_app in a daemon thread; decodes
+    bytes safely and never raises, so a slow or closed stream cannot crash
+    the supervisor.
+    """
+    try:
+        for raw in iter(proc.stdout.readline, b""):
+            print(f"[{prefix}] {raw.decode(errors='replace').rstrip()}", flush=True)
+    except Exception:
+        pass
+
+
+def _supervise(procs):
+    """Block on the project's child processes and terminate them on exit/signal.
+
+    Called by _cmd_run as the supervisor; registers SIGINT/SIGTERM handlers
+    that SIGTERM each child's session (so uvicorn reloaders and Next.js
+    children die together), then waits. Returns 0 after a clean shutdown.
+    """
+    def _shutdown(signum, frame):
+        print("\nskillsynth run: shutting down…")
+        for p in procs:
+            _terminate_session(p)
+        for p in procs:
+            try:
+                p.wait(timeout=5)
+            except Exception:
+                _terminate_session(p, force=True)
+
+    signal.signal(signal.SIGINT, _shutdown)
+    signal.signal(signal.SIGTERM, _shutdown)
+    try:
+        for p in procs:
+            p.wait()
+    except KeyboardInterrupt:
+        pass
+    _shutdown(None, None)
     return 0
+
+
+def _terminate_session(proc, force=False):
+    """SIGTERM (or SIGKILL) a child's process session so its subtree dies.
+
+    Called by _supervise; uses killpg on the child's session id, falling back
+    to a direct terminate/kill when the session lookup fails.
+    """
+    try:
+        pgid = os.getpgid(proc.pid)
+        os.killpg(pgid, signal.SIGKILL if force else signal.SIGTERM)
+    except Exception:
+        try:
+            (proc.kill if force else proc.terminate)()
+        except Exception:
+            pass
 
 
 def _cmd_seed(args):

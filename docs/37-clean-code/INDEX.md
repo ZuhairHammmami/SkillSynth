@@ -37,7 +37,7 @@ Submit PR → Automated Checks (lint/type) → Readability Review → Structure 
 2. **DRY**: No code duplication — extract into shared utilities
 3. **Small Functions**: Functions under 50 lines, components under 200 lines
 4. **Meaningful Names**: Variables describe what they contain, functions describe what they do
-5. **No Comments**: Code should be self-documenting; comments indicate code smell
+5. **Docstrings Required**: Docstrings are REQUIRED on every function (state purpose, dependencies, implementation); inline comments only where non-obvious.
 6. **Early Return**: Guard clauses over nested if-else
 7. **No Magic Numbers**: Named constants for all literal values
 8. **Consistent Error Handling**: Services never throw, return fallbacks

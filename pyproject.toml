@@ -11,3 +11,6 @@ skillsynth = "backend.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.optional-dependencies]
+ai = ["llama-cpp-python>=0.3"]

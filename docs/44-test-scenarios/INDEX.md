@@ -1,7 +1,7 @@
 # SS-EDS: Test Scenarios
 
 ## Purpose
-Map the automated pytest suite to the behaviors it proves. The suite is the source of truth — 190 tests across 21 files, run against an isolated temp SQLite DB (tests/conftest.py); the dev DB is never touched. No manual-only scenarios are tracked here.
+Map the automated pytest suite to the behaviors it proves. The suite is the source of truth — 199 tests across 21 files, run against an isolated temp SQLite DB (tests/conftest.py); the dev DB is never touched. No manual-only scenarios are tracked here.
 
 ## Responsibilities
 - Document what each suite file covers with representative scenarios
@@ -13,7 +13,7 @@ Map the automated pytest suite to the behaviors it proves. The suite is the sour
 - Seeded temp DB built per session by tests/conftest.py (+ tests/integrity_support.py helpers)
 
 ## Outputs
-- Green pipeline: `PYTHONPATH=src python -m pytest tests/ -q` → 190 passed
+- Green pipeline: `PYTHONPATH=src python -m pytest tests/ -q` → 199 passed
 
 ## Dependencies
 - 16-testing (strategy, commands, coverage rules)

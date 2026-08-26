@@ -44,7 +44,7 @@ cd src/admin-app  && pnpm dev                     # :3001
 
 ## Runbook: Full Verification Pipeline
 ```bash
-PYTHONPATH=src python -m pytest tests/ -q            # 190 tests, isolated temp DB
+PYTHONPATH=src python -m pytest tests/ -q            # 199 tests, isolated temp DB
 PYTHONPATH=src python tools/verify_schema.py         # → SCHEMA MATCH
 cd src/frontend && pnpm type-check && pnpm lint && pnpm build
 cd src/admin-app && pnpm type-check && pnpm build

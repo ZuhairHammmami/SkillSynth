@@ -5,9 +5,12 @@
 ```
 # Backend (port 8000)
 source .venv/bin/activate && pip install -r requirements.txt && pip install -e . && PYTHONPATH=src python run.py
+pip install -r requirements-ai.txt   # optional SS-AI local inference (CUDA build optional)
+# Model: place Llama-3.2-3B-Instruct-Q6_K.gguf (2.46 GiB, gitignored, user-supplied) into src/data/;
+#        skillsynth doctor --strict confirms presence when AI_ENABLED=true (AI_ENABLED defaults to false)
 
 # CLI (after pip install -e . — or use ./skillsynth shim without installing)
-skillsynth run            # serve :8000 (HOST/PORT/MODE env; --host/--port/--dev override)
+skillsynth run            # run full stack: backend :8000 + frontend :3000 + admin :3001 (--skip-backend/--skip-frontend/--skip-admin; HOST/PORT/MODE env; --host/--port/--dev override)
 skillsynth seed           # seed dev db; skillsynth seed --db /tmp/x.db isolates target
 skillsynth test           # pytest wrapper (PYTHONPATH=src); e.g. skillsynth test -k auth
 skillsynth schema         # DDL ↔ ORM verifier → SCHEMA MATCH
@@ -24,10 +27,10 @@ cd src/admin-app && pnpm dev
 PYTHONPATH=src python seed_v3.py    # 15-table seed (~1109 rows, FK-gated, idempotent)
 
 # Tests
-PYTHONPATH=src python -m pytest tests/ -q    # 197 tests, isolated temp DB
+PYTHONPATH=src python -m pytest tests/ -q    # 199 tests, isolated temp DB
 
 # Optional SS-AI (local LLM; off by default)
-# Model file: src/data/Llama-3.2-3B-Instruct-uncensored.Q6_K.gguf (provenance in ADR-015)
+# Model file: src/data/Llama-3.2-3B-Instruct-Q6_K.gguf (working format-following model; see ADR-015)
 CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python --force-reinstall --no-cache-dir   # needs CUDA toolkit; CPU build works without
 AI_ENABLED=true PYTHONPATH=src python run.py
 ```
@@ -65,7 +68,7 @@ PYTHONPATH=src python tools/verify_schema.py   # prints SCHEMA MATCH on success
 | **Performance** | ✅ Cache, compression | 30s TTL inline cache on `/api/public/stats`; compression middleware |
 | **Security** | ✅ OWASP Top 10 | Rate limiting, CSRF, CSP, HSTS, activity_log audit trail |
 | **Referential Integrity** | ✅ Write-time guards (ADR-014) | FK validation→400 naming bad ref; rename-uniqueness (case-insensitive)→409; category/prerequisite cycle guards→400; restricted deletes skills/categories/job_roles→409 `{"detail":{"message","dependents"}}` unless `?force=true`; IntegrityError→409 safety net in main.py |
-| **QA** | ✅ 190/190 tests passed ×2 | Isolated temp SQLite DB per run; dev DB never touched |
+| **QA** | ✅ 199/199 tests passed ×2 | Isolated temp SQLite DB per run; dev DB never touched |
 
 **Backend Layer Structure (`src/backend/`)**  
 ```

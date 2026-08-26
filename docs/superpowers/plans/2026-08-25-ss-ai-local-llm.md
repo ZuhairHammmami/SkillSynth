@@ -19,7 +19,7 @@
 - i18n: every user-facing string needs leaf keys in BOTH `messages/en.json` and `messages/ar.json` (parity preserved).
 - Database: zero schema/DDL changes; `tools/verify_schema.py` must print SCHEMA MATCH after every task.
 - Wire contracts frozen: question ids `f"{normalize_key(skill.name).lower()}_q{i}"`; dashboard/analytics key sets.
-- `AI_ENABLED` defaults to **false**: all 143 existing tests must stay green without the model file or llama_cpp installed.
+- `AI_ENABLED` defaults to **false**: all 199 tests must stay green without the model file or llama_cpp installed.
 - SSE events are fire-and-forget via `backend.events.publisher.send_event(user_id, type, data)`.
 - Commits per task; message prefix `feat(ai):`/`test(ai):`/`docs(ai):`.
 
