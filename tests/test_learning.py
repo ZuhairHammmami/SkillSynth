@@ -146,6 +146,19 @@ class TestStepProgress:
         }
 
 
+def test_learning_analysis_payload(api_client, auth_headers):
+    """GET /learning/analysis returns the frozen weaknesses payload keys.
+
+    Consumed by frontend useWeaknesses (Task 10b); delegates to
+    analytics_service.analyze_weaknesses.
+    """
+    r = api_client.get("/api/learning/analysis", headers=auth_headers)
+    assert r.status_code == 200
+    body = r.json()
+    assert {"weaknesses", "strengths", "recommended_focus",
+            "average_assessment_score"} <= set(body)
+
+
 class TestWizardScoringNoDowngrade:
 
     def test_empty_answers_do_not_downgrade_proficiency(

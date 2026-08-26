@@ -34,6 +34,16 @@ def get_skill_gaps(target_role: str | None = Query(default=None),
                                           target_role=target_role)
 
 
+@router.get("/analysis")
+def learning_analysis(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    """GET /learning/analysis — strengths vs weaknesses for the caller.
+
+    Delegates to analytics_service.analyze_weaknesses; consumed by the
+    student analytics weaknesses panel (frontend Task 10b).
+    """
+    return analytics_service.analyze_weaknesses(db, current_user.id)
+
+
 @router.post("/generate", response_model=PathDetailOut)
 def generate_path_alias(data: GeneratePathIn, db: Session = Depends(get_db),
                         current_user=Depends(get_current_user)):
