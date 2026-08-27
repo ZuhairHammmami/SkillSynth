@@ -1,26 +1,32 @@
 import pytest
 
-from backend.entities.catalog import Category, Skill
 from backend.repositories import catalog_repository as crepo
 
 
 def test_get_skills_by_category_filters_and_excludes(db_session):
-    """Only skills whose category_id matches are returned; others excluded."""
-    cat_a = Category(name="cat_acat", description="A")
-    cat_b = Category(name="cat_bcat", description="B")
-    db_session.add_all([cat_a, cat_b])
-    db_session.flush()
+    """Only skills whose category_id matches are returned; others excluded.
 
-    s_a1 = Skill(name="skill_a1", category_id=cat_a.id, difficulty_level=1,
-                 estimated_hours=1)
-    s_a2 = Skill(name="skill_a2", category_id=cat_a.id, difficulty_level=1,
-                 estimated_hours=1)
-    s_b1 = Skill(name="skill_b1", category_id=cat_b.id, difficulty_level=1,
-                 estimated_hours=1)
-    db_session.add_all([s_a1, s_a2, s_b1])
-    db_session.commit()
+    Uses seeded data only (no commits) so the shared session DB stays pristine
+    for the stable-catalog-counts test."""
+    categories = crepo.get_all_categories(db_session)
+    assert len(categories) >= 2
 
-    result = crepo.get_skills_by_category(db_session, cat_a.id)
+    target = None
+    other = None
+    for c in categories:
+        if crepo.get_skills_by_category(db_session, c.id):
+            target = c
+            for c2 in categories:
+                if c2.id != c.id:
+                    other = c2
+                    break
+            break
+    assert target is not None, "seed must contain a category with skills"
+
+    result = crepo.get_skills_by_category(db_session, target.id)
     ids = {s.id for s in result}
-    assert ids == {s_a1.id, s_a2.id}
-    assert s_b1.id not in ids
+    assert ids
+    assert all(s.category_id == target.id for s in result)
+    if other is not None:
+        other_ids = {s.id for s in crepo.get_skills_by_category(db_session, other.id)}
+        assert not (ids & other_ids)

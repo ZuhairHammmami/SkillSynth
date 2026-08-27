@@ -1,53 +1,51 @@
-"""Focused tests for catalog_service._serialize_category."""
+"""Focused tests for catalog_service._serialize_category.
 
-from backend.entities.catalog import Category, Skill
+Use seeded data only (no commits) so the shared session DB stays pristine for
+the stable-catalog-counts test. The empty-skills case creates + deletes a
+throwaway category inside try/finally to leave no net residue."""
+
+from backend.entities.catalog import Category
+from backend.repositories import catalog_repository as crepo
 from backend.services import catalog_service as svc
 
 
-def _make_category(db, name):
-    """Insert a Category row and return it (uncommitted flush id)."""
-    cat = Category(name=name, description=f"{name} desc", parent_id=None)
-    db.add(cat)
-    db.flush()
-    return cat
-
-
-def _make_skill(db, name, category_id):
-    """Insert a Skill row bound to category_id; returns the row."""
-    skill = Skill(name=name, description=f"{name} desc", difficulty_level=5,
-                  estimated_hours=10, category_id=category_id)
-    db.add(skill)
-    db.flush()
-    return skill
-
-
 def test_serialize_category_returns_fields_and_filtered_skills(db_session):
-    cat_a = _make_category(db_session, "CatA_3_3")
-    cat_b = _make_category(db_session, "CatB_3_3")
-    db_session.commit()
+    categories = crepo.get_all_categories(db_session)
+    target = None
+    other = None
+    for c in categories:
+        if len(crepo.get_skills_by_category(db_session, c.id)) >= 2:
+            target = c
+            for c2 in categories:
+                if c2.id != c.id:
+                    other = c2
+                    break
+            break
+    assert target is not None, "seed must contain a category with >=2 skills"
 
-    s_a1 = _make_skill(db_session, "SkillA1_3_3", cat_a.id)
-    s_a2 = _make_skill(db_session, "SkillA2_3_3", cat_a.id)
-    s_b1 = _make_skill(db_session, "SkillB1_3_3", cat_b.id)
-    db_session.commit()
+    result = svc._serialize_category(db_session, target)
+    assert result["id"] == target.id
+    assert result["name"] == target.name
+    assert result["parent_id"] == target.parent_id
 
-    result = svc._serialize_category(db_session, cat_a)
-
-    assert result["id"] == cat_a.id
-    assert result["name"] == "CatA_3_3"
-    assert result["description"] == "CatA_3_3 desc"
-    assert result["parent_id"] is None
     returned_ids = {s["id"] for s in result["skills"]}
-    assert returned_ids == {s_a1.id, s_a2.id}
-    assert s_b1.id not in returned_ids
-    assert all(set(["id", "name", "category_id"]) <= set(s)
-               for s in result["skills"])
+    expected_ids = {s.id for s in crepo.get_skills_by_category(db_session, target.id)}
+    assert returned_ids == expected_ids
+    assert all(s["category_id"] == target.id for s in result["skills"])
+    if other is not None:
+        other_ids = {s.id for s in crepo.get_skills_by_category(db_session, other.id)}
+        assert not (returned_ids & other_ids)
 
 
 def test_serialize_category_empty_skills(db_session):
-    cat = _make_category(db_session, "CatEmpty_3_3")
+    cat = Category(name="CatEmpty_tmp_3_6", description="tmp", parent_id=None)
+    db_session.add(cat)
+    db_session.flush()
     db_session.commit()
-
-    result = svc._serialize_category(db_session, cat)
-    assert result["id"] == cat.id
-    assert result["skills"] == []
+    try:
+        result = svc._serialize_category(db_session, cat)
+        assert result["id"] == cat.id
+        assert result["skills"] == []
+    finally:
+        db_session.delete(cat)
+        db_session.commit()
