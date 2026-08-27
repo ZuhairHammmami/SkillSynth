@@ -87,6 +87,16 @@ def get_step(db: Session, step_id: int) -> PathStep | None:
     return db.query(PathStep).filter(PathStep.id == step_id).first()
 
 
+def update_step_current_level(db: Session, step_id: int, level: int) -> PathStep | None:
+    """Persist a step's current_level (level-up after grading); returns step."""
+    step = get_step(db, step_id)
+    if not step:
+        return None
+    step.current_level = level
+    db.commit()
+    return step
+
+
 def get_steps(db: Session, path_id: int) -> list[PathStep]:
     """A path's steps ordered by position (old step_number)."""
     return (

@@ -227,6 +227,8 @@ def _serialize_step(db, step, completed_ids: set[int], user_id: int) -> dict:
         "skill_id": step.skill_id, "order_index": step.position,
         "duration_hours": step.estimated_hours, "skill": skill,
         "current_topic": current_topic,
+        "selected_level": step.selected_level,
+        "current_level": step.current_level,
         "resources": resources, "resource_ids": step.resource_ids or [],
         "assessment_ids": step.assessment_ids or [],
     }

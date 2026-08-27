@@ -6,7 +6,8 @@ Wires /api/generate-path, /api/paths, /api/steps, /api/progress/dashboard,
 usePathApi.ts and useSystemApi.ts.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend.config import app_settings as settings
@@ -21,6 +22,8 @@ from backend.repositories import assess_repository as arepo
 from backend.repositories import catalog_repository
 from backend.repositories import learning_repository as lrepo
 from backend.services import llm_pipeline, learning_service, wizard_service
+from backend.services import settings_service
+from backend.services import step_test_service
 from backend.services.analytics_service import MASTERY_LEVEL
 from backend.services.assess_service import normalize_key
 
@@ -106,10 +109,70 @@ def undo_complete_step(step_id: int, db: Session = Depends(get_db),
 
 @router.get("/progress/dashboard")
 def progress_dashboard(db: Session = Depends(get_db),
-                       current_user=Depends(get_current_user)):
+                        current_user=Depends(get_current_user)):
     """Return the progress dashboard payload. Calls
     learning_service.progress_dashboard; consumed by usePathApi.useDashboard()."""
     return learning_service.progress_dashboard(db, current_user.id)
+
+
+class StepTestSubmitIn(BaseModel):
+    """POST /steps/{step_id}/test/submit body — answers keyed by question id."""
+
+    assessment_id: int
+    answers: dict[str, int] = {}
+
+
+def _locale_from_request(request: Request) -> str:
+    """Resolve request locale: LOCALE cookie, then Accept-Language, else en.
+
+    Callee of the step-test endpoints so generated quizzes match the UI
+    language the learner selected (frontend stores LOCALE as a cookie).
+    """
+    cookie = request.cookies.get("LOCALE")
+    if cookie in ("en", "ar"):
+        return cookie
+    accept = request.headers.get("accept-language", "")
+    return "ar" if accept.lower().startswith("ar") else "en"
+
+
+@router.post("/steps/{step_id}/test")
+def step_test(step_id: int, request: Request, db: Session = Depends(get_db),
+              current_user=Depends(get_current_user)):
+    """Generate a targeted step test synchronously. Calls
+    step_test_service.generate_step_test (AI quiz, seeded fallback); consumed
+    by the learn-page QuizRunner (additive endpoint). The response is enriched
+    with top-level `difficulty` and `level` (the level used = step.current_level)
+    for the learn-page to display calibration."""
+    payload, error, status = step_test_service.generate_step_test(
+        db, current_user.id, step_id, _locale_from_request(request))
+    if error:
+        raise HTTPException(status_code=status, detail=error)
+    step = lrepo.get_step(db, step_id)
+    payload["difficulty"] = payload["skill"]["effective_difficulty"]
+    payload["level"] = step.current_level if step else 1
+    return payload
+
+
+@router.post("/steps/{step_id}/test/submit")
+def step_test_submit(step_id: int, data: StepTestSubmitIn,
+                     request: Request, db: Session = Depends(get_db),
+                     current_user=Depends(get_current_user)):
+    """Grade a step test, update weak points + proficiency, complete on pass.
+
+    Calls step_test_service.grade_step_test; reuses learning_service.complete_step
+    when the learner passes, and persists the graded `next_level` onto the step's
+    current_level (R-C: no AI gating here). Consumed by the learn-page QuizRunner.
+    """
+    result, error, status = step_test_service.grade_step_test(
+        db, current_user.id, step_id,
+        {"assessment_id": data.assessment_id, "answers": data.answers},
+        _locale_from_request(request))
+    if error:
+        raise HTTPException(status_code=status, detail=error)
+    next_level = result.get("next_level")
+    if next_level is not None:
+        lrepo.update_step_current_level(db, step_id, next_level)
+    return result
 
 
 @router.get("/wizard-options", response_model=WizardOptionsOut)
@@ -166,15 +229,19 @@ def _analysis_from_bank(skills, answers, bank, previous):
     return rows, weak, strong
 
 
-def _attach_narrative(report: dict, per_skill: list) -> None:
+def _attach_narrative(report: dict, per_skill: list, locale: str = "en",
+                      topics: list = None) -> None:
     """Enrich a results report with the AI narrative when allowed.
 
     Callee of wizard_analysis; gated on settings.AI_ENABLED +
     llm_pipeline._engine_available, calls analyze_diagnostic and flips
-    narrative_available only on success (mutates report in place).
+    narrative_available only on success (mutates report in place). New
+    optional params focus recommendations on topics and select output
+    locale for the generated narrative.
     """
-    if settings.AI_ENABLED and llm_pipeline._engine_available():
-        narrative = llm_pipeline.analyze_diagnostic(per_skill)
+    if settings_service.is_ai_enabled() and llm_pipeline._engine_available():
+        narrative = llm_pipeline.analyze_diagnostic(
+            per_skill, topics=topics, locale=locale)
         if narrative:
             report.update(narrative=narrative, narrative_available=True)
 
@@ -218,7 +285,8 @@ def wizard_analysis(data: WizardAnalysisIn, db: Session = Depends(get_db),
         "estimated_weeks": max(1, round(hours / max(data.weekly_hours, 1))),
         "narrative": None, "narrative_available": False,
     }
-    _attach_narrative(report, per_skill)
+    _attach_narrative(report, per_skill, locale=data.locale or "en",
+                      topics=[t for s in skills for t in (s.topics or [])])
     return report
 
 

@@ -72,6 +72,8 @@ class StepOut(BaseModel):
     title: str
     content: Optional[str] = None
     is_completed: bool = False
+    selected_level: int = 0
+    current_level: int = 0
     resources: list[StepResource] = []
     resource_ids: Optional[list[int]] = None
     assessment_ids: Optional[list[int]] = None
