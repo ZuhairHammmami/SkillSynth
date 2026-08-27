@@ -40,7 +40,7 @@ class DetailedPreferences(BaseModel):
     """Resource preference filters inside GeneratePathIn."""
 
     is_free: Optional[bool] = True
-    format: Optional[str] = "any"
+    format: str | list[str] = "any"
     language: Optional[str] = "en"
 
 
@@ -51,6 +51,7 @@ class GeneratePathIn(BaseModel):
     weekly_hours: int = Field(..., json_schema_extra={"example": 10})
     preferences: DetailedPreferences
     answers: dict[str, int] = Field(default_factory=dict)
+    levels: dict[str, int] = Field(default_factory=dict)
 
 
 class StepResource(BaseModel):
@@ -219,3 +220,4 @@ class WizardAnalysisIn(BaseModel):
     weekly_hours: int = 10
     answers: dict[str, int] = Field(default_factory=dict)
     quiz_job_id: Optional[str] = None
+    locale: str = "en"
