@@ -39,6 +39,21 @@ def _serialize_skill(db, skill) -> dict:
     }
 
 
+def _serialize_category(db, category) -> dict:
+    """Category row + its serialized skills; admin category payloads.
+
+    Called by catalog_service category serializers; uses
+    repo.get_skills_by_category then _serialize_skill per skill."""
+    return {
+        "id": category.id,
+        "name": category.name,
+        "description": category.description,
+        "parent_id": category.parent_id,
+        "skills": [_serialize_skill(db, s)
+                   for s in repo.get_skills_by_category(db, category.id)],
+    }
+
+
 def list_skills(db) -> list[dict]:
     """All skills serialized; admin skills page."""
     return [_serialize_skill(db, s) for s in repo.get_all_skills(db)]
@@ -196,8 +211,21 @@ def update_resource(db, resource_id: int,
     return repo.update_resource(db, resource, fields), None
 
 
-def delete_resource(db, resource_id: int) -> tuple[bool, str | None]:
-    """Delete a resource; (ok, error) tuple for router mapping."""
+def delete_resource(db, resource_id: int,
+                    force: bool = False) -> tuple[bool, str | dict | None]:
+    """Restricted delete guarded by path_steps JSON census; (ok, error).
+
+    Called by routers/catalog_admin.delete_resource; ?force=true skips the
+    catalog_integrity census so the referencing path_steps survive with a
+    detached resource list.
+    """
+    resource = repo.get_resource(db, resource_id)
+    if not resource:
+        return False, "Resource not found"
+    if not force:
+        conflict = integrity.resource_delete_conflict(db, resource_id)
+        if conflict:
+            return False, conflict
     if not repo.delete_resource(db, resource_id):
         return False, "Resource not found"
     return True, None
