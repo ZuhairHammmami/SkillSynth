@@ -36,7 +36,7 @@ from backend.middlewares.compression import CompressionMiddleware
 from backend.middlewares.csrf import CSRFMiddleware
 from backend.middlewares.security import SecurityHeadersMiddleware
 from backend.repositories import identity_repository
-from backend.routers import admin, analytics, assessments, auth, catalog_admin
+from backend.routers import admin, analytics, assessments, auth, catalog, catalog_admin
 from backend.routers import ai, learning, paths, realtime
 from backend.services.auth_service import decode_token, hash_password
 
@@ -100,6 +100,7 @@ app.include_router(learning.router, prefix="/api/learning", tags=["Learning Engi
 app.include_router(paths.router, prefix="/api", tags=["Paths & Progress"])
 app.include_router(assessments.router, prefix="/api", tags=["Assessments"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
+app.include_router(catalog.router, prefix="/api/catalog", tags=["Catalog"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(catalog_admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(realtime.router, prefix="/api/realtime", tags=["Real-time"])
