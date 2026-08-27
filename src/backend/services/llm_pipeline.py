@@ -6,6 +6,7 @@ from typing import Callable
 
 from backend.config import app_settings as settings
 from backend.services import llm_prompts as prompts
+from backend.services import settings_service
 
 logger = logging.getLogger(__name__)
 
@@ -165,8 +166,8 @@ def _salvage_topics(text: str) -> dict | None:
 
 
 def generate_skill_topics(skill_name: str, level: int) -> list[str]:
-    """Level-appropriate practice topics for a skill, or seeded fallback. Deps: settings.AI_ENABLED, _engine_available, prompts.skill_topics_prompt, _complete_json, _salvage_topics. Impl: when AI_ENABLED and the engine is ready asks for min(3, level+1) topics, else returns a deterministic seeded fallback so callers/tests never require the LLM."""
-    if not (settings.AI_ENABLED and _engine_available()):
+    """Level-appropriate practice topics for a skill, or seeded fallback. Deps: settings_service.is_ai_enabled, _engine_available, prompts.skill_topics_prompt, _complete_json, _salvage_topics. Impl: when AI is enabled at runtime and the engine is ready asks for min(3, level+1) topics, else returns a deterministic seeded fallback so callers/tests never require the LLM."""
+    if not (settings_service.is_ai_enabled() and _engine_available()):
         return _seeded_topics(skill_name, level)
     try:
         data = _complete_json(

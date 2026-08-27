@@ -21,6 +21,7 @@ from backend.repositories import assess_repository as arepo
 from backend.repositories import catalog_repository
 from backend.repositories import learning_repository as lrepo
 from backend.services import assess_service, llm_pipeline, learning_service
+from backend.services import settings_service
 
 _PASS_THRESHOLD = 0.6
 _AI_N = 4
@@ -113,7 +114,7 @@ def _seeded_questions(db: Session, skill) -> list[dict]:
 
 def _ai_active() -> bool:
     """Gate AI features for step tests; config flag AND a ready engine."""
-    return bool(settings.AI_ENABLED) and llm_pipeline._engine_available()
+    return bool(settings_service.is_ai_enabled()) and llm_pipeline._engine_available()
 
 
 def _leveled_topics(skill_name: str, level: int) -> list[str]:
