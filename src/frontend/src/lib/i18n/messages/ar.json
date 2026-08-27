@@ -6,7 +6,7 @@
     "save": "حفظ",
     "cancel": "إلغاء",
     "delete": "حذف",
-  "forceDelete": "حذف إجباري",
+    "forceDelete": "حذف إجباري",
     "edit": "تعديل",
     "create": "إنشاء",
     "refresh": "تحديث الصفحة",
@@ -95,7 +95,9 @@
     "signingIn": "جارٍ تسجيل الدخول...",
     "noAccount": "ليس لديك حساب؟",
     "createOne": "إنشاء حساب",
-    "errorLoginFailed": "فشل تسجيل الدخول. حاول مرة أخرى."
+    "errorLoginFailed": "فشل تسجيل الدخول. حاول مرة أخرى.",
+    "success": "تم تسجيل الدخول بنجاح",
+    "forgot": "نسيت كلمة المرور؟"
   },
   "registerPage": {
     "title": "أنشئ حسابك",
@@ -112,7 +114,8 @@
     "create": "إنشاء حساب",
     "hasAccount": "لديك حساب بالفعل؟",
     "signIn": "تسجيل الدخول",
-    "errorFailed": "فشل التسجيل. حاول مرة أخرى."
+    "errorFailed": "فشل التسجيل. حاول مرة أخرى.",
+    "success": "تم إنشاء الحساب. سجّل الدخول."
   },
   "forgotPasswordPage": {
     "title": "نسيت كلمة المرور؟",
@@ -125,7 +128,10 @@
     "checkEmailTitle": "تحقق من بريدك الإلكتروني",
     "checkEmailDesc": "إذا كان هناك حساب بهذا البريد الإلكتروني، لقد أرسلنا رابط إعادة تعيين كلمة المرور.",
     "devResetNote": "وضع التطوير: لا يتم إرسال بريد إلكتروني. استخدم هذا الرابط لإعادة تعيين كلمة المرور (صالح لمدة 30 دقيقة):",
-    "devResetLink": "فتح رابط إعادة التعيين"
+    "devResetLink": "فتح رابط إعادة التعيين",
+    "success": "إذا كان الحساب موجودًا، فقد أُرسل رابط إعادة التعيين.",
+    "devLink": "استخدام رابط المطوّر",
+    "back": "العودة إلى تسجيل الدخول"
   },
   "resetPasswordPage": {
     "title": "تعيين كلمة مرور جديدة",
@@ -140,7 +146,9 @@
     "invalidTitle": "رابط غير صالح",
     "invalidDesc": "رابط إعادة التعيين غير صالح أو منتهي الصلاحية.",
     "requestNew": "طلب رابط جديد",
-    "errorFailed": "فشلت إعادة التعيين. حاول مرة أخرى."
+    "errorFailed": "فشلت إعادة التعيين. حاول مرة أخرى.",
+    "success": "تم تحديث كلمة المرور. سجّل الدخول.",
+    "badToken": "رابط إعادة التعيين غير صالح أو منتهٍ."
   },
   "studentLayout": {
     "dashboard": "لوحة التحكم",
@@ -169,7 +177,9 @@
     "completed": "مكتمل",
     "noPaths": "لا توجد مسارات تعلم بعد.",
     "createFirstPath": "أنشئ مسارك الأول",
-    "level": "المستوى"
+    "level": "المستوى",
+    "errorTitle": "حدث خطأ ما",
+    "errorDesc": "تعذّر تحميل هذه الصفحة. حاول مرة أخرى."
   },
   "adminDashboard": {
     "title": "لوحة الإدارة",
@@ -344,7 +354,18 @@
     "stepProgress": "{completed}/{total}",
     "stepsCount": "{count} خطوات",
     "subtitle": "رحلاتك التعليمية المخصصة.",
-    "title": "مساراتي التعليمية"
+    "title": "مساراتي التعليمية",
+    "errorLoading": "تعذّر تحميل مسار التعلّم."
+  },
+  "learn": {
+    "level": "المستوى",
+    "levelLadder": "سلم المستويات",
+    "baseline": "اختبار الأساس",
+    "levelUp": "ارتقِ إلى المستوى التالي!",
+    "tryAgainLower": "لم تنجح بعد — حاول مرة أخرى (أبسط)",
+    "testAtLevel": "اختبار تدريبي عند المستوى {level}",
+    "passed": "ناجح",
+    "notPassed": "استمر في التدرب"
   },
   "loginForm": {
     "createAccount": "إنشاء حساب",
@@ -359,6 +380,7 @@
   },
   "nav": {
     "admin": "الإدارة",
+    "analytics": "تحليلات",
     "adminPanel": "لوحة الإدارة",
     "dashboard": "لوحة التحكم",
     "learnHub": "مركز التعلم",
@@ -439,7 +461,9 @@
     "skillsTitle": "المهارات",
     "stepLabel": "خطوة",
     "stepsTitle": "الخطوات",
-    "toMaster": "للإتقان"
+    "toMaster": "للإتقان",
+    "skillLevel": "المستوى",
+    "currentTopic": "موضوع الإتقان الحالي"
   },
   "paths": {
     "clear": "مسح",
@@ -556,6 +580,21 @@
     "updateSuccess": "تم تحديث الملف الشخصي بنجاح"
   },
   "wizard": {
+    "fieldLabel": "المجال المهني",
+    "fieldHint": "اختر مجالاً لتضييق الأدوار",
+    "fieldAll": "كل المجالات",
+    "levelInstruction": "قيّم كفاءتك الحالية (0–5) لكل مهارة",
+    "levelLoading": "جارٍ تحميل المهارات...",
+    "levelError": "تعذّر تحميل مهارات هذا الدور",
+    "levelOverallLabel": "المستوى العام",
+    "levelFallback": "لا توجد مهارات مقيّمة لهذا الدور. حدّد مستواك العام:",
+    "summaryField": "المجال",
+    "analysisTitle": "التحليل",
+    "recommendedFocus": "التركيز المقترح",
+    "estimatedWeeks": "الأسابيع المقدّرة",
+    "strengths": "نقاط القوة",
+    "weaknesses": "نقاط الضعف",
+    "analysisFailed": "التحليل التفصيلي غير متاح.",
     "errorMessage": "فشل توليد المسار. يرجى المحاولة مرة أخرى.",
     "errorTitle": "عذراً",
     "successMessage": "تم توليد المسار بنجاح!",
@@ -701,5 +740,54 @@
     "pathsOverview": "نظرة عامة على المسارات",
     "practiceTest": "اختبار تدريبي",
     "weaknessNote": "المهارات الأقل درجة تحتاج اهتمامًا أكبر."
+  },
+  "validation": {
+    "passwordsNoMatch": "كلمتا المرور غير متطابقتين"
+  },
+  "forgotPasswordForm": {
+    "email": "البريد الإلكتروني",
+    "submit": "إرسال رابط إعادة التعيين"
+  },
+  "resetPasswordForm": {
+    "password": "كلمة المرور الجديدة",
+    "submit": "تحديث كلمة المرور"
+  },
+  "errors": {
+    "goBack": "رجوع",
+    "default": "حدث خطأ ما."
+  },
+  "units": {
+    "steps": "خطوات",
+    "step": "خطوة",
+    "hoursShort": "س",
+    "perWeek": "/أسبوع",
+    "completed": "مكتمل",
+    "learning": "قيد التعلم",
+    "mastered": "متقن"
+  },
+  "stepTest": {
+    "title": "اختبار الخطوة",
+    "intro": "أجب عن هذه الأسئلة لإكمال الخطوة.",
+    "questionOf": "السؤال {n}",
+    "yourAnswer": "إجابتك",
+    "correctAnswer": "الإجابة الصحيحة",
+    "correct": "صحيح",
+    "incorrect": "خطأ",
+    "score": "النتيجة",
+    "passed": "لقد اجتزت! تم إكمال الخطوة.",
+    "failed": "لم تجتز بعد — راجع وحاول مجددًا.",
+    "weakPoints": "نقاط الضعف",
+    "topicsToMaster": "مواضيع يجب إتقانها",
+    "resources": "مصادر الدراسة",
+    "objectives": "أهداف التعلّم",
+    "retry": "إعادة المحاولة",
+    "close": "إغلاق",
+    "explain": "اشرح الإجابات",
+    "explainUnavailable": "الشروح الذكية غير متاحة حاليًا.",
+    "submit": "إرسال الإجابات",
+    "answered": "{n}/{total} تمت الإجابة",
+    "allCorrect": "ممتاز — لا توجد نقاط ضعف!",
+    "loading": "جارٍ تحضير اختبارك...",
+    "noTest": "لا يتوفر اختبار لهذه الخطوة."
   }
 }
