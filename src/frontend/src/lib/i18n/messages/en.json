@@ -293,6 +293,8 @@
     "summaryFreeContent": "Free Content Only",
     "summaryYes": "Yes",
     "summaryNo": "No",
+    "placementTitle": "Placement by skill",
+    "placementLevel": "Placed level",
     "generateButton": "Generate My Path",
     "generating": "Generating your path...",
     "back": "Back",
