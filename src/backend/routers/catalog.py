@@ -30,7 +30,7 @@ def get_category(category_id: int, db: Session = Depends(get_db),
                  current_user=Depends(get_current_user)):
     """Return one category serialized with its skills. Raises 404 when the
     category id does not exist; consumed by the catalog detail view."""
-    category = db.query(Category).get(category_id)
+    category = db.get(Category, category_id)
     if category is None:
         raise HTTPException(status_code=404, detail="Category not found")
     return catalog_service._serialize_category(db, category)
