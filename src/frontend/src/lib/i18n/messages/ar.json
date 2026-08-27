@@ -200,7 +200,26 @@
     "stepsLabel": "إجمالي الخطوات",
     "subtitle": "تتبع نمو مهاراتك وسرعة تعلمك وتقدمك",
     "title": "تحليلات التعلم",
-    "skillsMastered": "مهارات مُتقنة"
+    "skillsMastered": "مهارات مُتقنة",
+    "byCategory": "التقدم حسب الفئة",
+    "overall": "الإجمالي",
+    "noData": "لا توجد بيانات تقدم بعد"
+  },
+  "catalog": {
+    "browse": "الكتالوج",
+    "subtitle": "استكشف المهارات مرتبة حسب الفئة",
+    "categories": "الفئات",
+    "skills": "المهارات",
+    "skillCount": "{count} مهارة",
+    "allSkills": "كل المهارات",
+    "emptySkills": "لا توجد مهارات في هذه الفئة بعد",
+    "mastered": "متقن",
+    "inProgress": "قيد التقدم",
+    "notStarted": "لم يبدأ",
+    "completion": "الإنجاز",
+    "backToCategories": "العودة إلى الفئات",
+    "viewSkills": "عرض المهارات",
+    "level": "المستوى"
   },
   "error": {
     "title": "حدث خطأ ما",

@@ -442,7 +442,26 @@
     "stepsLabel": "Total steps",
     "completedLabel": "Completed",
     "remainingHours": "Remaining hours",
-    "skillsMastered": "Skills Mastered"
+    "skillsMastered": "Skills Mastered",
+    "byCategory": "Progress by category",
+    "overall": "Overall",
+    "noData": "No progress data yet"
+  },
+  "catalog": {
+    "browse": "Catalog",
+    "subtitle": "Explore skills organized by category",
+    "categories": "Categories",
+    "skills": "Skills",
+    "skillCount": "{count} skills",
+    "allSkills": "All skills",
+    "emptySkills": "No skills in this category yet",
+    "mastered": "Mastered",
+    "inProgress": "In progress",
+    "notStarted": "Not started",
+    "completion": "Completion",
+    "backToCategories": "Back to categories",
+    "viewSkills": "View skills",
+    "level": "Level"
   },
   "error": {
     "title": "Something went wrong",
