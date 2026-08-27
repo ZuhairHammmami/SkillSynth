@@ -8,14 +8,16 @@
   import Logo from '$lib/components/Logo.svelte';
   import LocaleSwitcher from '$lib/components/LocaleSwitcher.svelte';
   import { getInitials } from '$lib/util';
+  import { t } from '$lib/i18n';
 
-  const items = [
-    { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { href: '/learn', label: 'My Paths', icon: 'learn' },
-    { href: '/analytics', label: 'Analytics', icon: 'analytics' },
-    { href: '/profile', label: 'Profile', icon: 'profile' },
-    { href: '/settings', label: 'Settings', icon: 'settings' }
-  ];
+  const items = $derived([
+    { href: '/dashboard', label: t('nav.dashboard'), icon: 'dashboard' },
+    { href: '/learn', label: t('nav.learningPaths'), icon: 'learn' },
+    { href: '/catalog', label: t('catalog.browse'), icon: 'category' },
+    { href: '/analytics', label: t('nav.analytics'), icon: 'analytics' },
+    { href: '/profile', label: t('nav.profile'), icon: 'profile' },
+    { href: '/settings', label: t('nav.settings'), icon: 'settings' }
+  ]);
 
   function isActive(href: string): boolean {
     const p = $page.url.pathname;
@@ -49,7 +51,7 @@
     </div>
     <div class="actions">
       <LocaleSwitcher />
-      <button class="logout" onclick={doLogout} aria-label="Sign out"><Icon name="logout" size={18} /></button>
+      <button class="logout" onclick={doLogout} aria-label={t('nav.logout')}><Icon name="logout" size={18} /></button>
     </div>
   </div>
 </aside>
@@ -65,17 +67,19 @@
   .nav-item {
     display: flex; align-items: center; gap: 0.65rem; padding: 0.6rem 0.7rem;
     color: var(--ink-soft); border-radius: var(--radius); font-weight: 600; position: relative;
+    min-height: 44px; transition: background 0.18s ease, color 0.18s ease;
   }
-  .nav-item:hover { background: rgba(181, 134, 46, 0.08); text-decoration: none; color: var(--ink); }
+  .nav-item:hover { background: var(--accent-soft); text-decoration: none; color: var(--ink); }
+  .nav-item:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-glow); }
   .marker { width: 6px; height: 6px; border-radius: 50%; background: var(--line-strong); transition: background 0.15s; }
-  .nav-item.active { color: var(--ochre-deep); background: rgba(181, 134, 46, 0.12); }
-  .nav-item.active .marker { background: var(--ochre); }
-  .foot { border-top: 1px dashed var(--line-strong); padding-top: 0.9rem; display: flex; flex-direction: column; gap: 0.7rem; }
+  .nav-item.active { color: var(--accent-deep); background: var(--accent-soft); }
+  .nav-item.active .marker { background: var(--accent); }
+  .foot { border-top: 1px solid var(--line); padding-top: 0.9rem; display: flex; flex-direction: column; gap: 0.7rem; }
   .who { display: flex; align-items: center; gap: 0.6rem; }
-  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--sage); color: #f3f6ee; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; }
   .meta { display: flex; flex-direction: column; line-height: 1.2; overflow: hidden; }
   .meta small { font-size: 0.72rem; }
   .actions { display: flex; align-items: center; justify-content: space-between; }
-  .logout { background: transparent; border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 0.35rem; cursor: pointer; color: var(--muted); display: inline-flex; }
+  .logout { background: transparent; border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 0.35rem; cursor: pointer; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
   .logout:hover { color: var(--danger); border-color: var(--danger); }
 </style>
