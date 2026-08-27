@@ -4,6 +4,7 @@ import logging
 import re
 from typing import Callable
 
+from backend.config import app_settings as settings
 from backend.services import llm_prompts as prompts
 
 logger = logging.getLogger(__name__)
@@ -155,15 +156,52 @@ def _valid_question(q, seen_texts: set[str], exclude_texts: set[str]) -> bool:
             and text.strip() not in exclude_texts)
 
 
+def _salvage_topics(text: str) -> dict | None:
+    """Recover a topics list from broken topic output. Deps: _iter_objects. Impl: returns the first balanced object carrying a non-empty "topics" list, else None."""
+    for obj in _iter_objects(text):
+        if isinstance(obj, dict) and isinstance(obj.get("topics"), list):
+            return obj
+    return None
+
+
+def generate_skill_topics(skill_name: str, level: int) -> list[str]:
+    """Level-appropriate practice topics for a skill, or seeded fallback. Deps: settings.AI_ENABLED, _engine_available, prompts.skill_topics_prompt, _complete_json, _salvage_topics. Impl: when AI_ENABLED and the engine is ready asks for min(3, level+1) topics, else returns a deterministic seeded fallback so callers/tests never require the LLM."""
+    if not (settings.AI_ENABLED and _engine_available()):
+        return _seeded_topics(skill_name, level)
+    try:
+        data = _complete_json(
+            prompts.skill_topics_prompt(
+                sanitize_topic(skill_name), level, min(3, level + 1)),
+            max_tokens=400, salvage=_salvage_topics)
+        topics = [str(t) for t in data.get("topics", []) if str(t).strip()]
+        if topics:
+            return topics[: min(3, level + 1)]
+    except LLMOperationError:
+        pass
+    return _seeded_topics(skill_name, level)
+
+
+def _seeded_topics(skill_name: str, level: int) -> list[str]:
+    """Deterministic fallback topic list for a skill at a level. Deps: builtins. Impl: produces min(3, level+1) reproducible strings so tests need no LLM."""
+    return [f"Topic {i} for {skill_name} (level {level})"
+            for i in range(1, min(3, level + 1) + 1)]
+
+
 def generate_skill_quiz(skill_name: str, difficulty: int, n: int = 5,
-                        exclude_texts=frozenset()) -> list[dict]:
-    """Validated single-skill MCQs for practice tests. Deps: _engine_available, sanitize_topic, prompts.skill_quiz_prompt, _complete_json, _valid_question. Impl: gates on engine (raise "AI unavailable"), validates output, raises LLMOperationError when nothing survives so callers fall back to seeded quizzes."""
+                         exclude_texts=frozenset(),
+                         proficiency_level: int = None,
+                         topics: list = None, locale: str = "en") -> list[dict]:
+    """Validated single-skill MCQs for practice tests. Deps: _engine_available, sanitize_topic, prompts.skill_quiz_prompt, _complete_json, _valid_question. Impl: gates on engine (raise "AI unavailable"), validates output, raises LLMOperationError when nothing survives so callers fall back to seeded quizzes. New optional params target the learner level, focus on topics, and select output locale."""
     if not _engine_available():
         raise LLMOperationError("AI unavailable")
     topic = sanitize_topic(skill_name)
     exclude = set(exclude_texts)
     data = _complete_json(
-        prompts.skill_quiz_prompt(topic, difficulty, n, sorted(exclude)),
+        prompts.skill_quiz_prompt(
+            topic, difficulty, n, sorted(exclude),
+            proficiency_level=proficiency_level,
+            topics=[sanitize_topic(t) for t in topics] if topics else None,
+            locale=locale),
         max_tokens=max(650, n * 230),
         salvage=_salvage_questions)
     out: list[dict] = []
@@ -178,14 +216,20 @@ def generate_skill_quiz(skill_name: str, difficulty: int, n: int = 5,
 
 
 def generate_role_quiz(role_title: str, skills: list[dict],
-                       exclude_texts=frozenset()) -> list[dict]:
-    """Validated role diagnostic quiz; items carry exact skill tag. Deps: _engine_available, sanitize_topic, prompts.role_quiz_prompt, _complete_json, _valid_question. Impl: gates on engine, keeps only questions tagged with a requested skill passing _valid_question; per-skill shortfall tolerated downstream."""
+                        exclude_texts=frozenset(),
+                        proficiency_level: int = None,
+                        topics: list = None, locale: str = "en") -> list[dict]:
+    """Validated role diagnostic quiz; items carry exact skill tag. Deps: _engine_available, sanitize_topic, prompts.role_quiz_prompt, _complete_json, _valid_question. Impl: gates on engine, keeps only questions tagged with a requested skill passing _valid_question; per-skill shortfall tolerated downstream. New optional params target the learner level, focus on topics, and select output locale."""
     if not _engine_available():
         raise LLMOperationError("AI unavailable")
     safe = [{"name": sanitize_topic(s["name"]),
              "difficulty": int(s.get("difficulty") or 1)} for s in skills]
     data = _complete_json(
-        prompts.role_quiz_prompt(sanitize_topic(role_title), safe),
+        prompts.role_quiz_prompt(
+            sanitize_topic(role_title), safe,
+            proficiency_level=proficiency_level,
+            topics=[sanitize_topic(t) for t in topics] if topics else None,
+            locale=locale),
         max_tokens=max(850, len(safe) * 330),
         salvage=_salvage_questions)
     exclude, out = set(exclude_texts), []
@@ -202,8 +246,10 @@ def generate_role_quiz(role_title: str, skills: list[dict],
     return out
 
 
-def analyze_diagnostic(per_skill: list[dict]) -> dict | None:
-    """Narrative report for pre-path results; None ⇒ deterministic fallback. Deps: _engine_available, prompts.diagnostic_analysis_prompt, _complete_json, _salvage_diagnostic, logger. Impl: normalizes gap_to_mastery→gap (pipeline-owned), caps narrative fields, converts any failure into None so callers render numbers-only."""
+def analyze_diagnostic(per_skill: list[dict],
+                       proficiency_level: int = None,
+                       topics: list = None, locale: str = "en") -> dict | None:
+    """Narrative report for pre-path results; None ⇒ deterministic fallback. Deps: _engine_available, prompts.diagnostic_analysis_prompt, _complete_json, _salvage_diagnostic, logger. Impl: normalizes gap_to_mastery→gap (pipeline-owned), caps narrative fields, converts any failure into None so callers render numbers-only. New optional params focus recommendations on topics, target the learner level, and select output locale."""
     if not _engine_available():
         logger.info("analyze_diagnostic skipped: AI unavailable")
         return None
@@ -211,7 +257,11 @@ def analyze_diagnostic(per_skill: list[dict]) -> dict | None:
         rows = [{**r, "gap": r.get("gap", r.get("gap_to_mastery", 0))}
                 for r in per_skill]
         data = _complete_json(
-            prompts.diagnostic_analysis_prompt(rows), max_tokens=750,
+            prompts.diagnostic_analysis_prompt(
+                rows, proficiency_level=proficiency_level,
+                topics=[sanitize_topic(t) for t in topics] if topics else None,
+                locale=locale),
+            max_tokens=750,
             salvage=_salvage_diagnostic)
         return {
             "summary": str(data.get("summary", ""))[:800],
