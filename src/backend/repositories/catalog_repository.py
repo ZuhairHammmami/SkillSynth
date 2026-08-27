@@ -36,6 +36,12 @@ def get_all_skills(db: Session) -> list[Skill]:
     return db.query(Skill).order_by(Skill.id).all()
 
 
+def get_skills_by_category(db: Session, category_id: int) -> list[Skill]:
+    """All skills in one category, id-ordered; called by catalog service."""
+    return db.query(Skill).filter(
+        Skill.category_id == category_id).order_by(Skill.id).all()
+
+
 def create_skill(db: Session, data: SkillCreate) -> Skill:
     """Insert a skill plus its prerequisite edges; commits. Called by
     catalog_service.create_skill; legacy category_ids collapses to the
