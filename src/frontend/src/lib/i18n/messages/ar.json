@@ -684,6 +684,7 @@
     "summaryNo": "لا",
     "placementTitle": "النتائج لكل مهارة",
     "placementLevel": "المستوى المحدد",
+    "optionsLoadError": "تعذّر تحميل الخيارات",
     "generateButton": "توليد مساري",
     "generating": "جارٍ توليد المسار...",
     "back": "رجوع",
@@ -750,6 +751,9 @@
     "learning": "قيد التعلّم",
     "notStarted": "لم يبدأ",
     "noSkills": "لا توجد مهارات متتبعة بعد."
+  },
+  "analytics": {
+    "loadError": "تعذّر تحميل التحليلات"
   },
   "analyticsPage": {
     "title": "التحليلات",

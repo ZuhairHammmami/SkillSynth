@@ -25,7 +25,7 @@
         query(['skillGrowth'], () => apiFetch('/analytics/skill-growth'))
       ]);
     } catch (e) {
-      loadError = e instanceof ApiError ? e.detail : 'Failed to load analytics';
+      loadError = e instanceof ApiError ? e.detail : t('analytics.loadError');
       toastError(loadError);
     } finally { loading = false; }
   }

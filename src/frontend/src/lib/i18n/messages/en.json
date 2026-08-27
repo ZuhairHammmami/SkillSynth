@@ -295,6 +295,7 @@
     "summaryNo": "No",
     "placementTitle": "Placement by skill",
     "placementLevel": "Placed level",
+    "optionsLoadError": "Failed to load options",
     "generateButton": "Generate My Path",
     "generating": "Generating your path...",
     "back": "Back",
@@ -750,6 +751,9 @@
     "learning": "Learning",
     "notStarted": "Not started",
     "noSkills": "No skills tracked yet."
+  },
+  "analytics": {
+    "loadError": "Failed to load analytics"
   },
   "analyticsPage": {
     "title": "Analytics",

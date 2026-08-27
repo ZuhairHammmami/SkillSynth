@@ -53,7 +53,7 @@
     optionsError = '';
     query(['wizardOptions'], () => apiFetch('/wizard-options'))
       .then((d) => (options = d))
-      .catch((e) => { optionsError = e?.detail || 'Failed to load options'; })
+      .catch((e) => { optionsError = e?.detail || t('wizard.optionsLoadError'); })
       .finally(() => (optionsLoading = false));
   });
 
@@ -65,7 +65,6 @@
     rolesForField.filter((r: any) =>
       !search || r.title.toLowerCase().includes(search.toLowerCase()))
   );
-  let levelOptions = $derived([0, 1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: String(n) })));
   // Answers payload is always { skillName: integerLevel (0-5) }, matching the
   // backend contract. When no role skills exist the map is empty ({}).
   let submitAnswers = $derived(answers);
