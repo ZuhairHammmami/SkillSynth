@@ -75,3 +75,18 @@ class TestPathProgressAndHistory:
             "daily_activity",
         }
         assert data["total_completions"] == 7
+
+
+class TestProgressByCategory:
+
+    def test_progress_by_category(self, api_client, auth_headers):
+        response = api_client.get("/api/analytics/progress-by-category",
+                                  headers=auth_headers)
+        assert response.status_code == 200
+        data = response.json()
+        assert "categories" in data
+        assert isinstance(data["categories"], list)
+
+    def test_progress_by_category_requires_auth(self, api_client):
+        assert api_client.get(
+            "/api/analytics/progress-by-category").status_code == 401

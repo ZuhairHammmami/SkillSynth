@@ -43,7 +43,15 @@ def path_progress(path_id: int, db: Session = Depends(get_db),
 
 @router.get("/learning-history")
 def learning_history(db: Session = Depends(get_db),
-                     current_user=Depends(get_current_user)):
+                      current_user=Depends(get_current_user)):
     """Return recent activity + daily counts. Calls
     analytics_service.learning_history; consumed by useAnalyticsApi.useLearningHistory()."""
     return analytics_service.learning_history(db, current_user.id)
+
+
+@router.get("/progress-by-category")
+def progress_by_category(db: Session = Depends(get_db),
+                         current_user=Depends(get_current_user)):
+    """Return per-category mastery breakdown. Calls
+    analytics_service.progress_by_category; consumed by the catalog UI."""
+    return analytics_service.progress_by_category(db, current_user.id)
