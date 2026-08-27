@@ -6,7 +6,7 @@ identity and catalog layers; DDL twin lives in
 src/migrations/003_reduced_schema.sql.
 """
 
-from sqlalchemy import Column, ForeignKey, Index, Integer, String, Text, JSON, TIMESTAMP, func
+from sqlalchemy import Column, ForeignKey, Index, Integer, String, Text, JSON, TIMESTAMP, func, text
 
 from backend.entities.base import Base
 
@@ -65,6 +65,8 @@ class PathStep(Base):
     estimated_hours = Column(Integer, default=8)
     resource_ids = Column(JSON, nullable=True)
     assessment_ids = Column(JSON, nullable=True)
+    selected_level = Column(Integer, nullable=False, default=0, server_default=text('0'))
+    current_level = Column(Integer, nullable=False, default=0, server_default=text('0'))
 
 
 class StepProgress(Base):

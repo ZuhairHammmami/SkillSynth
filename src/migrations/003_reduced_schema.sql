@@ -6,7 +6,7 @@
 --
 -- Documented exceptions to strict 3NF (JSON bridges):
 --   assessment_questions.options, path_steps.resource_ids, path_steps.assessment_ids,
---   activity_log.data
+--   activity_log.data, skills.topics
 
 PRAGMA foreign_keys=ON;
 
@@ -48,6 +48,7 @@ CREATE TABLE skills (
 	icon VARCHAR,
 	color VARCHAR,
 	category_id INTEGER,
+	topics JSON,  -- documented JSON exception: list of topic strings
 	PRIMARY KEY (id),
 	UNIQUE (name),
 	FOREIGN KEY(category_id) REFERENCES categories (id) ON DELETE SET NULL
@@ -184,6 +185,8 @@ CREATE TABLE path_steps (
 	estimated_hours INTEGER,
 	resource_ids JSON,
 	assessment_ids JSON,
+	selected_level INTEGER NOT NULL DEFAULT 0,
+	current_level INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY (id),
 	FOREIGN KEY(path_id) REFERENCES paths (id) ON DELETE CASCADE,
 	FOREIGN KEY(skill_id) REFERENCES skills (id) ON DELETE SET NULL
