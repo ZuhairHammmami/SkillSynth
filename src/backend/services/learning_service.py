@@ -72,32 +72,38 @@ def _score_answers(db, skill_rows: list, answers: dict[str, int],
                    user_id: int, persist: bool = True) -> dict[int, int]:
     """Proficiency per skill from wizard answers (upserts user_skills).
 
-    Graded against assessment_questions.correct_index using ids built
-    by assess_service.normalize_key. A skill keeps its existing level
-    when the user gave no answers for it (empty answers must never
-    downgrade mastery); answered skills take the computed level.
-    persist=False makes the pass read-only for /wizard/analysis.
+    Self-reported levels arrive as {skill.name: 0..5} and take priority
+    (clamped then rounded). Legacy quiz answers keyed "<norm(name)>_q<i>"
+    are graded against correct_index when present. A skill keeps its
+    existing level when the user gave no signal for it. persist=False
+    stays read-only for /wizard/analysis. Caller: generate_path,
+    _build_report_rows.
     """
     ids = [s.id for s in skill_rows]
     assessments = assess_repository.get_assessments_for_skills(db, ids)
     current = assess_repository.get_skill_profile(db, user_id)
     levels: dict[int, int] = {}
     for skill in skill_rows:
-        assessment = assessments.get(skill.id)
-        questions = (assess_repository.get_questions(db, assessment.id)
-                     if assessment else [])
-        answered = {
-            i: answers[f"{normalize_key(skill.name).lower()}_q{i}"]
-            for i in range(len(questions))
-            if f"{normalize_key(skill.name).lower()}_q{i}" in answers
-        }
-        if questions and answered:
-            correct = sum(
-                1 for i, q in enumerate(questions)
-                if i in answered and answered[i] == q.correct_index)
-            level = max(0, min(5, round(correct / len(questions) * 5)))
+        name = skill.name
+        val = answers.get(name)
+        if isinstance(val, (int, float)) and 0 <= val <= 5:
+            level = int(round(val))
         else:
-            level = current.get(skill.name, 0)
+            assessment = assessments.get(skill.id)
+            questions = (assess_repository.get_questions(db, assessment.id)
+                         if assessment else [])
+            answered = {
+                i: answers[f"{normalize_key(name).lower()}_q{i}"]
+                for i in range(len(questions))
+                if f"{normalize_key(name).lower()}_q{i}" in answers
+            }
+            if questions and answered:
+                correct = sum(
+                    1 for i, q in enumerate(questions)
+                    if i in answered and answered[i] == q.correct_index)
+                level = max(0, min(5, round(correct / len(questions) * 5)))
+            else:
+                level = current.get(name, 0)
         levels[skill.id] = level
         if persist:
             assess_repository.upsert_user_skill(db, user_id, skill.id, level)
@@ -187,11 +193,13 @@ def generate_path(db, user, data) -> tuple[dict | None, str | None]:
                                   if scored[s.id] < MASTERY_LEVEL])
     hours = sum((s.estimated_hours or 10) for s in plan)
     weeks = max(1, round(hours / max(data.weekly_hours, 1)))
+    scored_by_name = {s.name: scored[s.id] for s in skill_rows}
     current = _user_proficiency_by_name(db, user.id, skill_rows)
+    levels = {**scored_by_name, **(data.levels or {})}
     path = _persist_plan(
         db, user.id, f"{role.title} Learning Path",
         f"Personalized path toward {role.title}. Estimated {hours}h over {weeks} weeks.",
-        role.title, plan, data.levels, current, preferences)
+        role.title, plan, levels, current, preferences)
     return format_path_detail(db, path, user.id), None
 
 
