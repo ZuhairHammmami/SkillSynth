@@ -16,9 +16,9 @@ class TestLearningGraph:
         assert response.status_code == 200
         data = response.json()
         assert set(data) == {"nodes", "edges", "categories"}
-        assert len(data["nodes"]) == 102
+        assert len(data["nodes"]) == 152
         assert len(data["categories"]) == 16
-        assert len(data["edges"]) == 112
+        assert len(data["edges"]) == 269
 
     def test_gaps(self, api_client, auth_headers):
         response = api_client.get("/api/learning/gaps",
@@ -101,6 +101,64 @@ class TestGeneratePath:
             "goal": "Data Scientist", "weekly_hours": 10, "preferences": {},
         })
         assert response.status_code == 401
+
+
+class TestLeveledGeneration:
+
+    def test_levels_set_selected_and_current(self, api_client, db_session):
+        """Per-skill levels flow into selected_level/current_level on steps
+        and are echoed in the response `levels` mapping."""
+        from backend.dto.learning import DetailedPreferences, GeneratePathIn
+        from backend.entities.identity import User
+        from backend.repositories import catalog_repository as crepo
+        from backend.repositories import learning_repository as lrepo
+        from backend.services import learning_service as ls
+
+        email = _fresh_email("lvl")
+        api_client.post("/api/auth/register", json={
+            "email": email, "password": "LvlPass@123"})
+        api_client.post("/api/auth/token", data={
+            "username": email, "password": "LvlPass@123"})
+        user = db_session.query(User).filter_by(email=email).first()
+        assert user is not None
+
+        role = crepo.get_job_role_by_title(db_session, "Data Scientist")
+        skills = crepo.get_skills_by_ids(
+            db_session, crepo.get_job_role_skill_ids(db_session, role.id))
+        assert skills
+        target = skills[0]
+        data = GeneratePathIn(
+            goal="Data Scientist", weekly_hours=10,
+            preferences=DetailedPreferences(), answers={},
+            levels={target.name: 4})
+        detail, err = ls.generate_path(db_session, user, data)
+        assert err is None, err
+
+        steps = lrepo.get_steps(db_session, detail["id"])
+        matched = [s for s in steps if s.skill_id == target.id]
+        assert matched, "expected a step for the leveled goal skill"
+        assert matched[0].selected_level == 4
+        assert matched[0].current_level == 4
+        assert detail["levels"][target.name] == 4
+
+    def test_pick_resource_ids_accepts_format_list(self, db_session):
+        """format as a list accepts resources whose type is in the list; a
+        single-string exact match still excludes mismatched types."""
+        from backend.repositories import catalog_repository as crepo
+        from backend.services import learning_service as ls
+
+        skill = crepo.get_all_skills(db_session)[0]
+        sample = crepo.get_all_resources(db_session)[0]
+        rt = sample.type
+        other = "nonexistent_type_xyz"
+        prefs = {"is_free": False, "language": sample.language,
+                 "format": [rt, other]}
+        listed = ls._pick_resource_ids(db_session, skill, prefs)
+        assert sample.id in listed
+        exact = ls._pick_resource_ids(
+            db_session, skill, {"is_free": False,
+                               "language": sample.language, "format": other})
+        assert sample.id not in exact
 
 
 class TestStepProgress:
