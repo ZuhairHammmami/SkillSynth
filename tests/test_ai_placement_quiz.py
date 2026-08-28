@@ -57,6 +57,23 @@ def _wait_for_bank(job_id, timeout=5.0):
     return job_id in AI_QUIZ_BANK
 
 
+def _role_with_quiz(api_client, user_token, min_skills=2):
+    """Return (goal, job_id) for a role whose quiz bank has >= min_skills.
+
+    Needed because the bank-grading proof requires at least one fully-wrong
+    skill (level 0) and one fully-correct skill (level 5); scans roles until
+    the spawned job populates AI_QUIZ_BANK with enough skill keys.
+    """
+    roles = api_client.get("/api/wizard-options").json()["job_roles"]
+    for role in roles:
+        goal = role["title"]
+        job_id = api_client.post("/api/ai/wizard-quiz", json={"goal": goal},
+                                 headers={"Authorization": f"Bearer {user_token}"}).json()["job_id"]
+        if _wait_for_bank(job_id) and len(AI_QUIZ_BANK[job_id]) >= min_skills:
+            return goal, job_id
+    raise AssertionError(f"no role with >= {min_skills} skills found")
+
+
 def test_wizard_quiz_creates_bank_entry(api_client, user_token, ai_on):
     """POST /ai/wizard-quiz returns a job and populates the answer-key bank."""
     goal = _first_role(api_client)
@@ -69,11 +86,16 @@ def test_wizard_quiz_creates_bank_entry(api_client, user_token, ai_on):
 
 
 def test_quiz_analysis_grades_per_skill(api_client, user_token, ai_on):
-    """Analysis with quiz_job_id grades per-skill levels + weaknesses."""
-    goal = _first_role(api_client)
-    job_id = api_client.post("/api/ai/wizard-quiz", json={"goal": goal},
-                             headers={"Authorization": f"Bearer {user_token}"}).json()["job_id"]
-    assert _wait_for_bank(job_id)
+    """Bank grading yields 0 for the wrong skill, 5 for correct ones.
+
+    The fake bank stores correct_index==0 for every question. We answer the
+    FIRST skill fully wrong and every other skill fully correct, so only
+    _analysis_from_bank (driven by AI_QUIZ_BANK) can produce levels {0, 5}.
+    The fallback _build_report_rows would score against seeded questions and
+    yield a different level set, so these assertions fail if quiz_job_id is
+    not honored.
+    """
+    goal, job_id = _role_with_quiz(api_client, user_token)
     answers, first = {}, True
     for key, idxs in AI_QUIZ_BANK[job_id].items():
         for i, ci in enumerate(idxs):
@@ -85,8 +107,9 @@ def test_quiz_analysis_grades_per_skill(api_client, user_token, ai_on):
                            headers={"Authorization": f"Bearer {user_token}"})
     assert resp.status_code == 200, resp.text
     body = resp.json()
-    assert body["per_skill"], "per_skill must be populated"
-    assert all(isinstance(r["assessed_level"], int) for r in body["per_skill"])
+    levels = [r["assessed_level"] for r in body["per_skill"]]
+    assert levels, "per_skill must be populated"
+    assert set(levels) == {0, 5}, f"bank-only levels expected, got {levels}"
     assert body["weaknesses"], "graded skills should yield weaknesses"
     assert body["recommended_focus"], "recommended_focus should be populated"
 
