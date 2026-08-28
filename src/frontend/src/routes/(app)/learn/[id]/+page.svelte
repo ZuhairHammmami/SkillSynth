@@ -1,5 +1,6 @@
 <!-- Path detail: step completion toggles, progress, and delete (force on 409). -->
 <script lang="ts">
+  import { browser } from '$app/environment';
   import { page } from '$app/stores';
   import { apiFetch, ApiError } from '$lib/api/client';
   import { query, invalidate } from '$lib/query';
@@ -39,6 +40,80 @@
   }
   $effect(() => { id; load(); });
 
+  $effect(() => {
+    if (!browser) return;
+    const onReady = (e: Event) => void onAiTestReady((e as CustomEvent).detail);
+    const onFailed = (e: Event) =>
+      toastError((e as CustomEvent).detail?.error ?? t('practiceTest.testFailed'));
+    window.addEventListener('sse:ai_test_ready', onReady);
+    window.addEventListener('sse:ai_test_failed', onFailed);
+    return () => {
+      window.removeEventListener('sse:ai_test_ready', onReady);
+      window.removeEventListener('sse:ai_test_failed', onFailed);
+    };
+  });
+
+  async function onAiTestReady(detail: any) {
+    const { assessment_id: assessmentId, skill_id: skillId } = detail ?? {};
+    if (!assessmentId || !skillId) return;
+    try {
+      const res = await apiFetch(`/assessments/${assessmentId}`);
+      const mapped = (res?.questions ?? []).map((q: any) => ({
+        id: q.id, text: q.text, options: q.options ?? [], topic: q.topic ?? q.skill,
+      }));
+      quizTest = { assessment_id: assessmentId, skill: { name: res?.skill ?? '' }, questions: mapped };
+      quizStep = null;
+      showQuizRunner = true;
+    } catch (e) {
+      toastError(e instanceof ApiError ? e.detail : t('common.error'));
+    }
+  }
+
+  function handlePracticeTestStart(test: any) {
+    quizTest = test;
+    quizStep = null;
+    showQuizRunner = true;
+  }
+
+  async function submitPracticeTest(assessmentId: number, answers: Record<number, number>) {
+    const positional = quizTest?.questions.map((q: any) => answers[q.id] ?? -1) ?? [];
+    const raw = await apiFetch('/assessments/submit', { method: 'POST', body: { assessment_id: assessmentId, answers: positional } });
+    const responses = raw?.responses ?? [];
+    const questions = quizTest?.questions ?? [];
+    const correct = responses.filter((r: any) => r.is_correct).length;
+    const graded = responses.map((r: any) => {
+      const q = questions[r.question_index];
+      let correctIndex = r.selected_index;
+      if (q && r.correct_answer != null) {
+        const idx = q.options.indexOf(r.correct_answer);
+        if (idx >= 0) correctIndex = idx;
+      }
+      return { question_id: q ? q.id : r.question_index, correct_index: correctIndex, selected: r.selected_index, correct: r.is_correct };
+    });
+    return { passed: raw?.passed ?? true, score: (raw?.score ?? 100) / 100, correct, total: raw?.total_questions ?? responses.length, graded, weak_points: [], topics_to_master: [], resources: [] };
+  }
+
+  async function rateLevel(step: any, n: number) {
+    if (!step.skill_id) return;
+    const prev = step.current_level;
+    busyStep = step.id;
+    step.current_level = n;
+    path = { ...path };
+    try {
+      await apiFetch(`/learning/skills/${step.skill_id}/proficiency`, {
+        method: 'PUT', body: { level: n },
+      });
+      success(t('learn.ratingSaved'));
+      await load();
+    } catch (e) {
+      step.current_level = prev;
+      path = { ...path };
+      toastError(e instanceof ApiError ? e.detail : t('learn.ratingFailed'));
+    } finally {
+      busyStep = null;
+    }
+  }
+
   async function toggle(step: any) {
     busyStep = step.id;
     try {
@@ -70,10 +145,24 @@
       quizStep = step;
       showQuizRunner = true;
     } catch (e) {
-      toastError(e instanceof ApiError ? e.detail : t('common.error'));
+      const noAssessment = e instanceof ApiError && e.status === 400 &&
+        /no questions/i.test(String(e.detail));
+      if (noAssessment) {
+        await markStepComplete(step);
+      } else {
+        toastError(e instanceof ApiError ? e.detail : t('common.error'));
+      }
     } finally {
       busyStep = null;
     }
+  }
+
+  async function markStepComplete(step: any) {
+    await apiFetch(`/steps/${step.id}/complete`, { method: 'POST' });
+    step.is_completed = true;
+    path = { ...path, progress };
+    await invalidate(['dashboard']);
+    info(t('learn.noTest'));
   }
 
   async function submitStepTest(assessmentId: number, answers: Record<number, number>) {
@@ -84,14 +173,19 @@
   }
 
   async function onQuizResult(res: any) {
-    if (!quizStep) return;
-    if (res?.passed) {
-      quizStep.is_completed = true;
-      path = { ...path, progress };
-      invalidate(['dashboard']);
-      success(t('learn.levelUp'));
+    if (quizStep) {
+      if (res?.passed) {
+        quizStep.is_completed = true;
+        path = { ...path, progress };
+        invalidate(['dashboard']);
+        success(t('learn.levelUp'));
+      } else {
+        info(t('learn.tryAgainLower'));
+      }
     } else {
-      info(t('learn.tryAgainLower'));
+      info(t('practiceTest.testReady'));
+      invalidate(['analyticsDashboard']);
+      invalidate(['dashboard']);
     }
     try {
       await load();
@@ -152,7 +246,9 @@
             <span class="ladder-label">{t('learn.level')}</span>
             <span class="ladder-dots">
               {#each [1, 2, 3, 4, 5] as n}
-                <span class="dot" class:active={n === stepLevel} class:reached={n <= stepLevel}></span>
+                <button class="dot" class:active={n === stepLevel} class:reached={n <= stepLevel}
+                  title={`${t('learn.rateLevel')} — ${n}`} aria-label={`${t('learn.rateLevel')} ${n}`}
+                  onclick={() => rateLevel(step, n)} disabled={busyStep === step.id}></button>
               {/each}
             </span>
             <span class="ladder-val">{stepLevel}</span>
@@ -194,13 +290,13 @@
   {/snippet}
 </Dialog>
 
-<TakeQuizDialog bind:open={showQuiz} {skills} />
+<TakeQuizDialog bind:open={showQuiz} {skills} onstart={handlePracticeTestStart} />
 
 <QuizRunner
   bind:open={showQuizRunner}
   test={quizTest}
   objectives={quizStep?.learning_objectives ?? []}
-  submit={submitStepTest}
+  submit={quizStep ? submitStepTest : submitPracticeTest}
   onresult={onQuizResult}
   level={quizTest?.level ?? null}
   difficulty={quizTest?.difficulty ?? null}
@@ -225,7 +321,8 @@
   .ladder { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem; font-size: 0.8rem; color: var(--muted); }
   .ladder-label { font-weight: 600; color: var(--accent-deep); }
   .ladder-dots { display: inline-flex; gap: 0.25rem; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--paper-2); }
+  .dot { width: 10px; height: 10px; padding: 0; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--paper-2); cursor: pointer; }
+  .dot:disabled { opacity: 0.6; cursor: default; }
   .dot.reached { border-color: var(--sage); background: color-mix(in srgb, var(--sage) 30%, var(--paper)); }
   .dot.active { background: var(--accent-deep); border-color: var(--accent-deep); }
   .ladder-val { font-family: var(--font-display); color: var(--ochre-deep); font-weight: 600; }

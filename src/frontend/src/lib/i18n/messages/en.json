@@ -312,6 +312,8 @@
     "assessmentProgress": "{answered}/{total} answered",
     "continueWithoutAssessment": "Continue without assessment",
     "continueWithAssessment": "Continue with assessment",
+    "enriching": "Enriching…",
+    "enrichQuiz": "Upgrade with AI",
     "questionLabel": "Question {n}"
   },
   "paths": {
@@ -577,7 +579,10 @@
     "tryAgainLower": "Not yet — try again (easier)",
     "testAtLevel": "Practice test at level {level}",
     "passed": "Passed",
-    "notPassed": "Keep practicing"
+    "notPassed": "Keep practicing",
+    "rateLevel": "Rate your proficiency",
+    "ratingSaved": "Rating saved",
+    "ratingFailed": "Could not save rating"
   },
   "pathDetailPage": {
     "notFound": "Path not found.",

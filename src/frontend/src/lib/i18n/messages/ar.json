@@ -384,7 +384,10 @@
     "tryAgainLower": "لم تنجح بعد — حاول مرة أخرى (أبسط)",
     "testAtLevel": "اختبار تدريبي عند المستوى {level}",
     "passed": "ناجح",
-    "notPassed": "استمر في التدرب"
+    "notPassed": "استمر في التدرب",
+    "rateLevel": "قيّم مستواك",
+    "ratingSaved": "تم حفظ التقييم",
+    "ratingFailed": "تعذر حفظ التقييم"
   },
   "loginForm": {
     "createAccount": "إنشاء حساب",
@@ -701,6 +704,8 @@
     "assessmentProgress": "{answered}/{total} تمت الإجابة",
     "continueWithoutAssessment": "المتابعة بدون تقييم",
     "continueWithAssessment": "المتابعة مع التقييم",
+    "enriching": "جارٍ التحسين…",
+    "enrichQuiz": "تحسين بالذكاء الاصطناعي",
     "questionLabel": "سؤال {n}"
   },
   "ai": {

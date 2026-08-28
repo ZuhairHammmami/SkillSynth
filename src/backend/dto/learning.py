@@ -211,6 +211,15 @@ class PathUpdate(BaseModel):
     description: Optional[str] = None
 
 
+class RateProficiencyIn(BaseModel):
+    """PUT /learning/skills/{skill_id}/proficiency body; level 0..5.
+
+    Range is validated in the router so out-of-range yields 400 (this
+    repo's validation convention) rather than FastAPI's 422."""
+
+    level: int
+
+
 class WizardAnalysisIn(BaseModel):
     """POST /wizard/analysis body — same answer-key contract as
     GeneratePathIn.answers; weekly_hours feeds the weeks estimate.
