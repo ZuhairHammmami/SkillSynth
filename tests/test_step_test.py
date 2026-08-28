@@ -1,14 +1,33 @@
-"""Tests for the leveled step-test service (tasks 2.4 / 2.5 / 2.6 / 2.8)."""
+"""Tests for the leveled step-test service (tasks 2.4 / 2.5 / 2.6 / 2.8).
+
+Covers the bank-first-by-default generation (deterministic, no LLM on the
+request path), synchronous deterministic grading, and the async bounded-AI
+review (proficiency_adjusted + ai_step_diagnostic via step_jobs).
+"""
 
 import types
 from unittest import mock
 
+import pytest
+
 from backend.entities.catalog import Skill
 from backend.entities.identity import User
 from backend.entities.learning import Path, PathStep
+from backend.events import publisher
 from backend.repositories import assess_repository as arepo
-from backend.services import assess_service, llm_pipeline
+from backend.services import assess_service, llm_pipeline, settings_service
 from backend.services import step_test_service as st
+
+
+@pytest.fixture(autouse=True)
+def _clear_review_audits(db_session):
+    """Drop ai_proficiency_review rows so the async-review tests are isolated."""
+    from backend.entities.engagement import ActivityLog
+    db_session.query(ActivityLog).filter(
+        ActivityLog.action == "ai_proficiency_review").delete(
+        synchronize_session=False)
+    db_session.commit()
+    yield
 
 
 def _make_step(db, user_id, skill, level=1):
@@ -28,6 +47,25 @@ def _veteran_id(db):
     """Return the seeded veteran user id (has a known login)."""
     return db.query(User).filter_by(
         email="veteran@skillsynth.io").first().id
+
+
+def _no_llm(monkeypatch):
+    """Bomb if the request path ever touches the LLM (fast test gate)."""
+    monkeypatch.setattr(llm_pipeline, "generate_skill_topics",
+                        mock.MagicMock(
+                            side_effect=AssertionError("LLM topics must not run")))
+    monkeypatch.setattr(llm_pipeline, "generate_skill_quiz",
+                        mock.MagicMock(
+                            side_effect=AssertionError("LLM quiz must not run")))
+    monkeypatch.setattr(llm_pipeline, "analyze_diagnostic",
+                        mock.MagicMock(
+                            side_effect=AssertionError("LLM diag must not run")))
+
+
+def _disable_review(monkeypatch):
+    """Keep deterministic grading green by never spawning a real review."""
+    monkeypatch.setattr(st, "_spawn_review", lambda fn: None)
+    monkeypatch.setattr(llm_pipeline, "_engine_available", lambda: False)
 
 
 def test_compute_effective_difficulty_adapts_to_recent_result():
@@ -50,8 +88,26 @@ def test_compute_effective_difficulty_adapts_to_recent_result():
     assert ceil == 5, "difficulty must cap at 5 on repeated pass"
 
 
-def test_grade_failing_attempt_no_nameerror_and_holds_level(db_session):
-    """Failing grade with AI disabled must not raise and next_level holds."""
+def test_generate_bank_first_no_llm_on_request_path(db_session, monkeypatch):
+    """Open must come from the seeded bank, instantly, without any LLM call."""
+    _no_llm(monkeypatch)
+    user_id = _veteran_id(db_session)
+    skill = db_session.query(Skill).first()
+    step = _make_step(db_session, user_id, skill, level=3)
+    payload, err, _ = st.generate_step_test(
+        db_session, user_id, step.id, locale="en", level=3,
+        enrich=True)  # enrich requested but AI gate off → still bank-only
+    assert err is None, err
+    assert payload["questions"], "seeded bank must supply questions"
+    assert payload["assessment_id"] is not None
+    assert all("(level 3)" in t for t in payload["topics"]), payload["topics"]
+    assert all(q.get("correct_index") is not None for q in payload["questions"])
+
+
+def test_grade_failing_attempt_no_nameerror_and_holds_level(db_session,
+                                                            monkeypatch):
+    """Failing grade with AI off must not raise; deterministic level lands."""
+    _disable_review(monkeypatch)
     user_id = _veteran_id(db_session)
     skill = db_session.query(Skill).first()
     step = _make_step(db_session, user_id, skill, level=2)
@@ -69,12 +125,15 @@ def test_grade_failing_attempt_no_nameerror_and_holds_level(db_session):
         {"assessment_id": payload["assessment_id"], "answers": answers},
         locale="en")
     assert gerr is None, gerr
+    assert result["next_level"] == max(
+        0, min(5, round(result["correct"] / result["total"] * 5)))
     assert result["next_level"] <= before + 1
     assert result["level_passed"] is True or result["next_level"] <= before
 
 
-def test_grade_passing_attempt_completes_step(db_session):
-    """All-correct grade must pass and complete the step."""
+def test_grade_passing_attempt_completes_step(db_session, monkeypatch):
+    """All-correct grade must pass deterministically and complete the step."""
+    _disable_review(monkeypatch)
     user_id = _veteran_id(db_session)
     skill = db_session.query(Skill).first()
     step = _make_step(db_session, user_id, skill, level=1)
@@ -90,43 +149,6 @@ def test_grade_passing_attempt_completes_step(db_session):
     assert gerr is None, gerr
     assert result["passed"] is True
     assert result["completed"] is True
-
-
-def _set_proficiency(db_session, user_id, skill_id, level):
-    """Pin the user's proficiency_level for a skill (persisted)."""
-    arepo.upsert_user_skill(db_session, user_id, skill_id, level)
-    db_session.commit()
-
-
-def _fake_review(correct, total, difficulty, attempt_no, current_level):
-    """Stand-in for the bounded-autonomy verdict (Task 2.6 seam).
-
-    Simulates a high-confidence model: +1 on pass, -1 on fail, clamped 0..5,
-    mirroring llm_pipeline.review_level without requiring the LLM engine.
-    """
-    passed = (correct / total) >= st._PASS_THRESHOLD if total else False
-    delta = 1 if passed else -1
-    target = current_level + delta
-    final = max(0, min(5, target))
-    return {"delta": delta, "confidence": "high", "rationale": "test",
-            "applied": target != current_level, "final_level": final}
-
-
-def _grade_with(db_session, user_id, step, correct=True):
-    """Generate a seeded test for step, then grade all-correct/all-wrong."""
-    payload, err, _ = st.generate_step_test(
-        db_session, user_id, step.id, locale="en", ai_enabled=False)
-    assert err is None, err
-    answers = {
-        str(q["id"]): (q["correct_index"] if correct
-                       else (q["correct_index"] + 1) % 4)
-        for q in payload["questions"]}
-    result, gerr, _ = st.grade_step_test(
-        db_session, user_id, step.id,
-        {"assessment_id": payload["assessment_id"], "answers": answers},
-        locale="en")
-    assert gerr is None, gerr
-    return result
 
 
 def test_generate_step_test_level1_uses_seeded_topics(db_session, monkeypatch):
@@ -149,11 +171,10 @@ def test_generate_step_test_high_level_ai_disabled_seeded_fallback(
         db_session, monkeypatch):
     """Level > 1 with AI disabled must return a deterministic seeded fallback.
 
-    Mocks llm_pipeline._engine_available to False and forces AI_ENABLED off so
-    the test never touches the LLM; the payload must still be well-formed and
-    reproducible.
+    Forces the runtime AI flag off so the test never touches the LLM; the
+    payload must still be well-formed and reproducible.
     """
-    monkeypatch.setattr(st.settings, "AI_ENABLED", False)
+    monkeypatch.setattr(settings_service, "is_ai_enabled", lambda: False)
     monkeypatch.setattr(llm_pipeline, "_engine_available", lambda: False)
     ai_quiz = mock.MagicMock(side_effect=AssertionError("AI must not run"))
     monkeypatch.setattr(llm_pipeline, "generate_skill_quiz", ai_quiz)
@@ -172,55 +193,144 @@ def test_generate_step_test_high_level_ai_disabled_seeded_fallback(
     assert again["questions"] == payload["questions"]
 
 
-def test_grade_failing_lowers_level(db_session, monkeypatch):
-    """A failing attempt lowers the level by one (seam-driven verdict)."""
-    monkeypatch.setattr(assess_service, "review_level", _fake_review)
-    user_id = _veteran_id(db_session)
-    skill = db_session.query(Skill).first()
-    step = _make_step(db_session, user_id, skill, level=1)
-    _set_proficiency(db_session, user_id, skill.id, 3)
-    result = _grade_with(db_session, user_id, step, correct=False)
-    assert result["passed"] is False
-    assert result["next_level"] == 2, "fail must lower level by 1"
-    assert result["level_passed"] is False
-    assert st._proficiency(db_session, user_id, skill.id) == 2
+def _set_proficiency(db_session, user_id, skill_id, level):
+    """Pin the user's proficiency_level for a skill (persisted)."""
+    arepo.upsert_user_skill(db_session, user_id, skill_id, level)
+    db_session.commit()
 
 
-def test_grade_failing_holds_at_floor(db_session, monkeypatch):
-    """A failing attempt at the floor (0) holds rather than going negative."""
-    monkeypatch.setattr(assess_service, "review_level", _fake_review)
-    user_id = _veteran_id(db_session)
-    skill = db_session.query(Skill).first()
-    step = _make_step(db_session, user_id, skill, level=1)
-    _set_proficiency(db_session, user_id, skill.id, 0)
-    result = _grade_with(db_session, user_id, step, correct=False)
-    assert result["next_level"] == 0, "fail at floor must hold at 0"
-    assert st._proficiency(db_session, user_id, skill.id) == 0
+def _grade(db_session, user_id, step, correct=True):
+    """Generate a seeded test for step, then grade all-correct/all-wrong."""
+    payload, err, _ = st.generate_step_test(
+        db_session, user_id, step.id, locale="en", ai_enabled=False)
+    assert err is None, err
+    answers = {
+        str(q["id"]): (q["correct_index"] if correct
+                       else (q["correct_index"] + 1) % 4)
+        for q in payload["questions"]}
+    result, gerr, _ = st.grade_step_test(
+        db_session, user_id, step.id,
+        {"assessment_id": payload["assessment_id"], "answers": answers},
+        locale="en")
+    assert gerr is None, gerr
+    return result
 
 
-def test_grade_pass_below_top_raises_level(db_session, monkeypatch):
-    """A passing attempt below the top level raises the level by one."""
-    monkeypatch.setattr(assess_service, "review_level", _fake_review)
+def _review_env(monkeypatch, review_fn):
+    """Enable AI + run reviews inline and capture SSE; returns `sent` list.
+
+    Patches the seams the bounded review depends on so no real model loads:
+    review_level is faked, _engine_ready forced on, and llm_pipeline's own
+    gate stays off so the diagnostic narrative resolves harmlessly.
+    """
+    sent = []
+    monkeypatch.setattr(settings_service, "is_ai_enabled", lambda: True)
+    monkeypatch.setattr(st, "_engine_ready", lambda: True)
+    monkeypatch.setattr(llm_pipeline, "_engine_available", lambda: False)
+    monkeypatch.setattr(assess_service, "review_level", review_fn)
+    monkeypatch.setattr(st, "_spawn_review", lambda fn: fn())
+    monkeypatch.setattr(publisher, "send_event",
+                        lambda uid, t, d=None: sent.append((uid, t, d)))
+    return sent
+
+
+def test_grade_applies_high_confidence_review(db_session, monkeypatch):
+    """Async review applies +1; audit row + proficiency_adjusted SSE land."""
+    from backend.entities.engagement import ActivityLog
+
+    def fake_review(correct, total, difficulty, attempt_no, current_level):
+        return {"delta": 1, "confidence": "high", "rationale": "solid",
+                "applied": True, "final_level": min(5, current_level + 1)}
+
+    sent = _review_env(monkeypatch, fake_review)
     user_id = _veteran_id(db_session)
     skill = db_session.query(Skill).first()
     step = _make_step(db_session, user_id, skill, level=1)
     _set_proficiency(db_session, user_id, skill.id, 2)
-    result = _grade_with(db_session, user_id, step, correct=True)
-    assert result["passed"] is True
-    assert result["next_level"] == 3, "pass below top must raise by 1"
-    assert result["level_passed"] is True
-    assert st._proficiency(db_session, user_id, skill.id) == 3
+    payload, err, _ = st.generate_step_test(
+        db_session, user_id, step.id, locale="en", ai_enabled=False)
+    assert err is None, err
+    questions = payload["questions"]
+    half = len(questions) // 2 or 1
+    answers = {}
+    for i, q in enumerate(questions):
+        answers[str(q["id"])] = (q["correct_index"] if i < half
+                                 else (q["correct_index"] + 1) % 4)
+    result, gerr, _ = st.grade_step_test(
+        db_session, user_id, step.id,
+        {"assessment_id": payload["assessment_id"], "answers": answers},
+        locale="en")
+    assert gerr is None, gerr
+    formula = round(result["correct"] / result["total"] * 5)
+    db_session.expire_all()
+    assert result["next_level"] == formula
+    assert st._proficiency(db_session, user_id, skill.id) == min(5, formula + 1)
+    audit = db_session.query(ActivityLog).filter_by(
+        action="ai_proficiency_review").order_by(
+        ActivityLog.id.desc()).first()
+    assert audit is not None
+    assert audit.user_id == user_id
+    assert audit.entity_type == "skill"
+    assert audit.data["delta"] == 1
+    assert any(t == "proficiency_adjusted"
+               for _, t, _ in sent), sent
 
 
-def test_grade_pass_at_top_holds_level(db_session, monkeypatch):
-    """A passing attempt at the top level (5) holds the level, no overflow."""
-    monkeypatch.setattr(assess_service, "review_level", _fake_review)
+def test_grade_low_confidence_keeps_formula_level(db_session, monkeypatch):
+    """applied False → deterministic formula level stands, no audit row."""
+    from backend.entities.engagement import ActivityLog
+
+    def fake_review(correct, total, difficulty, attempt_no, current_level):
+        return {"delta": 1, "confidence": "low", "rationale": "unsure",
+                "applied": False, "final_level": current_level}
+
+    _review_env(monkeypatch, fake_review)
     user_id = _veteran_id(db_session)
     skill = db_session.query(Skill).first()
     step = _make_step(db_session, user_id, skill, level=1)
-    _set_proficiency(db_session, user_id, skill.id, 5)
-    result = _grade_with(db_session, user_id, step, correct=True)
-    assert result["passed"] is True
-    assert result["next_level"] == 5, "pass at top must hold at 5"
-    assert result["level_passed"] is True
-    assert st._proficiency(db_session, user_id, skill.id) == 5
+    _set_proficiency(db_session, user_id, skill.id, 2)
+    result = _grade(db_session, user_id, step, correct=True)
+    db_session.expire_all()
+    assert result["next_level"] == st._proficiency(db_session, user_id, skill.id)
+    assert db_session.query(ActivityLog).filter_by(
+        action="ai_proficiency_review").count() == 0
+
+
+def test_grade_review_skipped_when_engine_unready(db_session, monkeypatch):
+    """Engine not ready ⇒ review_level never invoked; formula level stands."""
+    monkeypatch.setattr(settings_service, "is_ai_enabled", lambda: True)
+    monkeypatch.setattr(st, "_engine_ready", lambda: False)
+    boom = mock.MagicMock(side_effect=AssertionError("review must not run"))
+    monkeypatch.setattr(assess_service, "review_level", boom)
+    user_id = _veteran_id(db_session)
+    skill = db_session.query(Skill).first()
+    step = _make_step(db_session, user_id, skill, level=1)
+    _set_proficiency(db_session, user_id, skill.id, 2)
+    result = _grade(db_session, user_id, step, correct=False)
+    assert result["next_level"] == 0
+    assert st._proficiency(db_session, user_id, skill.id) == 0
+
+
+def test_grade_diagnostic_emits_ai_step_diagnostic(db_session, monkeypatch):
+    """Background review emits ai_step_diagnostic with refined weak points."""
+    from backend.entities.engagement import ActivityLog
+
+    def fake_review(correct, total, difficulty, attempt_no, current_level):
+        return {"delta": 0, "confidence": "low", "rationale": "ok",
+                "applied": False, "final_level": current_level}
+
+    canned = {"summary": "s", "strengths": [], "weaknesses":
+              [{"focus": "Topic A"}], "recommended_focus": ["Topic B"],
+              "next_steps": ""}
+    monkeypatch.setattr(llm_pipeline, "analyze_diagnostic",
+                        lambda *a, **k: dict(canned))
+    sent = _review_env(monkeypatch, fake_review)
+    user_id = _veteran_id(db_session)
+    skill = db_session.query(Skill).first()
+    step = _make_step(db_session, user_id, skill, level=1)
+    _set_proficiency(db_session, user_id, skill.id, 2)
+    _grade(db_session, user_id, step, correct=False)
+    diag = [d for _, t, d in sent if t == "ai_step_diagnostic"]
+    assert diag, "ai_step_diagnostic must be emitted"
+    assert diag[0]["weak_points"] == ["Topic A"]
+    assert diag[0]["topics_to_master"] == ["Topic A", "Topic B"]
