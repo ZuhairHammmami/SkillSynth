@@ -5,6 +5,7 @@
   import { apiFetch, ApiError } from '$lib/api/client';
   import { query } from '$lib/query';
   import { goto } from '$app/navigation';
+  import { onMount, onDestroy } from 'svelte';
   import Panel from '$lib/components/ui/Panel.svelte';
   import Button from '$lib/components/ui/Button.svelte';
   import Input from '$lib/components/ui/Input.svelte';
@@ -39,6 +40,15 @@
   let analysis = $state<any>(null);
   let analysisError = $state('');
 
+  // AI placement quiz flow (alternative to self-assessment when AI enabled)
+  let aiEnabled = $state<boolean | null>(null);
+  let quizMode = $state<'quiz' | 'self' | null>(null);
+  let quizJobId = $state<string | null>(null);
+  let quizQuestions = $state<any[]>([]);
+  let quizAnswers = $state<Record<string, number>>({});
+  let quizStatus = $state<'idle' | 'requesting' | 'ready' | 'submitting' | 'error'>('idle');
+  let quizError = $state('');
+
   let generating = $state(false);
   let optionsLoading = $state(true);
   let optionsError = $state('');
@@ -55,6 +65,40 @@
       .then((d) => (options = d))
       .catch((e) => { optionsError = e?.detail || t('wizard.optionsLoadError'); })
       .finally(() => (optionsLoading = false));
+  });
+
+  $effect(() => {
+    apiFetch('/ai/status')
+      .then((d) => {
+        aiEnabled = !!(d && d.ai_enabled);
+        if (!aiEnabled) quizMode = 'self';
+      })
+      .catch(() => { aiEnabled = false; quizMode = 'self'; });
+  });
+
+  function onQuizReady(e: CustomEvent) {
+    if (quizJobId && e.detail?.job_id === quizJobId) {
+      quizQuestions = e.detail?.questions ?? [];
+      quizStatus = quizQuestions.length ? 'ready' : 'error';
+      if (!quizQuestions.length) quizError = t('wizard.noQuestions');
+    }
+  }
+
+  function onQuizFailed(e: CustomEvent) {
+    if (quizJobId && e.detail?.job_id === quizJobId) {
+      quizStatus = 'error';
+      quizError = e.detail?.error || t('wizard.quizError');
+    }
+  }
+
+  onMount(() => {
+    window.addEventListener('sse:ai_quiz_ready', onQuizReady as EventListener);
+    window.addEventListener('sse:ai_quiz_failed', onQuizFailed as EventListener);
+  });
+
+  onDestroy(() => {
+    window.removeEventListener('sse:ai_quiz_ready', onQuizReady as EventListener);
+    window.removeEventListener('sse:ai_quiz_failed', onQuizFailed as EventListener);
   });
 
   let fields = $derived(!options ? [] : Object.keys(options.career_fields ?? {}));
@@ -107,9 +151,46 @@
     }
   }
 
+  async function startQuiz() {
+    if (!goal) return;
+    quizStatus = 'requesting';
+    quizError = '';
+    try {
+      const r = await apiFetch('/ai/wizard-quiz', {
+        method: 'POST', body: { goal }
+      });
+      quizJobId = r.job_id;
+    } catch (e) {
+      quizStatus = 'error';
+      quizError = e instanceof ApiError ? e.detail : t('wizard.quizError');
+    }
+  }
+
+  async function submitQuiz() {
+    if (!quizJobId) return;
+    quizStatus = 'submitting';
+    try {
+      const r = await apiFetch('/wizard/analysis', {
+        method: 'POST',
+        body: {
+          goal, weekly_hours: weeklyHours,
+          quiz_job_id: quizJobId, answers: quizAnswers
+        }
+      });
+      analysis = r;
+      answers = Object.fromEntries(
+        (r.per_skill ?? []).map((ps: any) => [ps.skill, ps.assessed_level]));
+      roleSkills = (r.per_skill ?? []).map((ps: any) => ps.skill);
+      step = 3;
+    } catch (e) {
+      quizStatus = 'error';
+      quizError = e instanceof ApiError ? e.detail : t('wizard.quizError');
+    }
+  }
+
   async function goNext() {
     const next = step + 1;
-    if (step === 1) await loadSkills();
+    if (step === 1 && quizMode !== 'quiz') await loadSkills();
     if (next === 4) await loadAnalysis();
     if (next < totalSteps) step = next;
   }
@@ -198,27 +279,67 @@
 
   {:else if step === 2}
     <Panel>
-      <p class="sub">{t('wizard.step3Subtitle')}</p>
-      {#if skillsLoading}
-        <div class="center-spin"><Spinner /></div>
-      {:else if skillsError}
-        <p class="err-state"><Icon name="alert" size={18} /> {skillsError}</p>
-      {:else if roleSkills.length === 0}
-        <p class="muted">{t('wizard.levelFallback')}</p>
-        <div class="level-row">
-          <span class="level-name">{t('wizard.levelOverallLabel')}</span>
-          <input type="range" min="0" max="5" step="1" bind:value={overall} class="range" />
-          <span class="level-val">{overall}</span>
+      {#if aiEnabled && quizMode === null}
+        <p class="sub">{t('wizard.placementQuizDesc')}</p>
+        <div class="quiz-choice">
+          <Button onclick={startQuiz} disabled={quizStatus === 'requesting'}>
+            {#if quizStatus === 'requesting'}<Spinner />{:else}<Icon name="sparkles" size={16} />{/if}
+            {quizStatus === 'requesting' ? t('wizard.generating') : t('wizard.takePlacementQuiz')}
+          </Button>
+          <button class="link" onclick={() => (quizMode = 'self')}>{t('wizard.useSelfAssessment')}</button>
         </div>
+      {:else if quizMode === 'quiz'}
+        <p class="sub">{t('wizard.placementQuizTitle')}</p>
+        {#if quizStatus === 'requesting'}
+          <div class="center-spin"><Spinner /></div>
+        {:else if quizStatus === 'error'}
+          <p class="err-state"><Icon name="alert" size={18} /> {quizError || t('wizard.quizError')}</p>
+          <button class="link" onclick={() => (quizMode = 'self')}>{t('wizard.useSelfAssessment')}</button>
+        {:else if quizStatus === 'ready' || quizStatus === 'submitting'}
+          {#each quizQuestions as q, i}
+            <div class="q">
+              <p class="q-text">{t('wizard.questionLabel', { n: i + 1 })}: {q.text}</p>
+              <div class="q-opts">
+                {#each q.options as opt, oi}
+                  <label class="q-opt">
+                    <input type="radio" name={q.id} value={oi}
+                      checked={quizAnswers[q.id] === oi}
+                      onchange={() => (quizAnswers[q.id] = oi)} />
+                    <span>{opt}</span>
+                  </label>
+                {/each}
+              </div>
+            </div>
+          {/each}
+          {#if quizStatus === 'submitting'}
+            <div class="center-spin"><Spinner /></div>
+          {:else}
+            <Button onclick={submitQuiz}>{t('wizard.submitQuiz')}</Button>
+          {/if}
+        {/if}
       {:else}
-        <p class="muted">{t('wizard.levelInstruction')}</p>
-        {#each roleSkills as sk}
+        <p class="sub">{t('wizard.step3Subtitle')}</p>
+        {#if skillsLoading}
+          <div class="center-spin"><Spinner /></div>
+        {:else if skillsError}
+          <p class="err-state"><Icon name="alert" size={18} /> {skillsError}</p>
+        {:else if roleSkills.length === 0}
+          <p class="muted">{t('wizard.levelFallback')}</p>
           <div class="level-row">
-            <span class="level-name">{sk}</span>
-            <input type="range" min="0" max="5" step="1" bind:value={answers[sk]} class="range" />
-            <span class="level-val">{answers[sk]}</span>
+            <span class="level-name">{t('wizard.levelOverallLabel')}</span>
+            <input type="range" min="0" max="5" step="1" bind:value={overall} class="range" />
+            <span class="level-val">{overall}</span>
           </div>
-        {/each}
+        {:else}
+          <p class="muted">{t('wizard.levelInstruction')}</p>
+          {#each roleSkills as sk}
+            <div class="level-row">
+              <span class="level-name">{sk}</span>
+              <input type="range" min="0" max="5" step="1" bind:value={answers[sk]} class="range" />
+              <span class="level-val">{answers[sk]}</span>
+            </div>
+          {/each}
+        {/if}
       {/if}
     </Panel>
 
@@ -292,9 +413,9 @@
 
 <div class="nav">
   <Button variant="ghost" onclick={() => step > 0 && step--} disabled={step === 0 || generating}>{t('wizard.back')}</Button>
-  {#if step < totalSteps - 1}
+  {#if step < totalSteps - 1 && !(step === 2 && quizMode === 'quiz')}
     <Button onclick={goNext} disabled={!stepValid || generating}>{t('wizard.next')}</Button>
-  {:else}
+  {:else if step >= totalSteps - 1}
     <Button onclick={generate} disabled={generating}>
       {#if generating}<Spinner />{:else}<Icon name="sparkles" size={16} />{/if}
       {generating ? t('wizard.generating') : t('wizard.generateButton')}
@@ -340,4 +461,12 @@
   .err-state { display: flex; align-items: center; gap: 0.5rem; color: var(--danger); margin-top: 0.8rem; }
   .nav { display: flex; justify-content: space-between; margin-top: 1.2rem; }
   .center-spin { display: flex; justify-content: center; padding: 1.2rem; }
+  .quiz-choice { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.4rem; }
+  .link { background: none; border: none; color: var(--accent-deep); cursor: pointer; font-family: var(--font-body); font-size: 0.9rem; text-decoration: underline; padding: 0.4rem 0; }
+  .link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-glow); border-radius: var(--radius); }
+  .q { border: 1px solid var(--line); border-radius: var(--radius); padding: 0.8rem; margin-bottom: 0.8rem; }
+  .q-text { font-weight: 500; margin: 0 0 0.5rem; color: var(--ink); }
+  .q-opts { display: grid; gap: 0.4rem; }
+  .q-opt { display: flex; align-items: center; gap: 0.5rem; color: var(--ink-soft); cursor: pointer; }
+  .q-opt input { width: 18px; height: 18px; accent-color: var(--accent); }
 </style>
