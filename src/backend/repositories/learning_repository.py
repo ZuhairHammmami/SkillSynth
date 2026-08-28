@@ -97,14 +97,21 @@ def update_step_current_level(db: Session, step_id: int, level: int) -> PathStep
     return step
 
 
-def update_step_current_level_for_skill(db: Session, skill_id: int,
-                                        level: int) -> list[PathStep]:
-    """Set current_level on every PathStep of a skill and commit.
+def update_step_current_level_for_skill(db: Session, user_id: int,
+                                        skill_id: int, level: int) -> list[PathStep]:
+    """Set current_level on the current user's PathSteps of a skill and
+    commit; scoped via Path.user_id so a rating only moves the caller's
+    ladder.
 
-    Called by the learning rate-proficiency router so the ladder reflects
-    a manually-rated level; returns the touched steps.
+    Called by the learning rate-proficiency router; returns the touched
+    steps.
     """
-    steps = db.query(PathStep).filter(PathStep.skill_id == skill_id).all()
+    steps = (
+        db.query(PathStep)
+        .join(Path, PathStep.path_id == Path.id)
+        .filter(Path.user_id == user_id, PathStep.skill_id == skill_id)
+        .all()
+    )
     for step in steps:
         step.current_level = level
     db.commit()

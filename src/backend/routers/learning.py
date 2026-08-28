@@ -81,7 +81,8 @@ def rate_proficiency(skill_id: int, data: RateProficiencyIn,
         db, "learning", "rate.proficiency.set",
         user_id=current_user.id, entity_type="skill", entity_id=skill_id,
         data={"level": data.level})
-    steps = lrepo.update_step_current_level_for_skill(db, skill_id, data.level)
+    steps = lrepo.update_step_current_level_for_skill(
+        db, current_user.id, skill_id, data.level)
     return {"skill_id": skill_id, "level": data.level,
             "steps": [{"id": s.id, "current_level": s.current_level}
                       for s in steps]}

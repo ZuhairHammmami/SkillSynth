@@ -104,6 +104,7 @@
         method: 'PUT', body: { level: n },
       });
       success(t('learn.ratingSaved'));
+      await invalidate(['path']);
       await load();
     } catch (e) {
       step.current_level = prev;

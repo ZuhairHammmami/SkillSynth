@@ -1,4 +1,6 @@
 """tests/test_proficiency.py — PUT /api/learning/skills/{id}/proficiency."""
+import uuid
+
 import pytest
 
 from backend.entities.engagement import ActivityLog
@@ -6,6 +8,7 @@ from backend.entities.identity import User
 from backend.entities.learning import Path, PathStep, UserSkill
 
 _TOUCHED = set()
+_TOUCHED_USERS = set()
 
 
 def _veteran_id(db_session):
@@ -18,9 +21,9 @@ def _veteran_id(db_session):
 def purge_proficiency_rows(db_session):
     """Delete this module's authored rows so pinned seed counts stay green.
 
-    Removes the rate.proficiency.set activity rows and the UserSkill
-    rows the route wrote for the authed account on the skills it touched
-    (tracked per call; seeded proficiency rows for other skills stay).
+    Removes the rate.proficiency.set activity rows, the UserSkill rows
+    the route wrote for the authed account, and any second user/step
+    created to prove per-user scoping (cascade drops its path + step).
     """
     yield
     db_session.query(ActivityLog).filter(
@@ -31,32 +34,81 @@ def purge_proficiency_rows(db_session):
             UserSkill.user_id == _veteran_id(db_session),
             UserSkill.skill_id.in_(list(_TOUCHED))).delete(
             synchronize_session=False)
+    if _TOUCHED_USERS:
+        db_session.query(User).filter(
+            User.id.in_(list(_TOUCHED_USERS))).delete(
+            synchronize_session=False)
     _TOUCHED.clear()
+    _TOUCHED_USERS.clear()
     db_session.commit()
 
 
-def _rate_veteran_step(db_session):
-    """(skill_id, step_id) of a seeded veteran step, else (None, None).
+def _veteran_steps(db_session, skill_id):
+    """The authed (veteran) user's PathSteps for a skill, if any.
 
-    The route updates every PathStep of a skill regardless of owner, so
-    any veteran step with a skill link lets us assert persistence.
+    The route scopes ladder updates to the current user, so these are
+    the only steps that should move.
     """
-    step = (db_session.query(PathStep)
-            .join(Path, PathStep.path_id == Path.id)
-            .filter(Path.user_id == _veteran_id(db_session),
-                    PathStep.skill_id.isnot(None))
-            .first())
-    if step is None:
+    query = (db_session.query(PathStep)
+             .join(Path, PathStep.path_id == Path.id)
+             .filter(Path.user_id == _veteran_id(db_session)))
+    if skill_id is None:
+        query = query.filter(PathStep.skill_id.isnot(None))
+    else:
+        query = query.filter(PathStep.skill_id == skill_id)
+    return query.all()
+
+
+def _rate_veteran_step(db_session):
+    """(skill_id, step_id) of a seeded veteran step, else (None, None)."""
+    steps = _veteran_steps(db_session, None)
+    if not steps:
         return None, None
-    _TOUCHED.add(step.skill_id)
-    return step.skill_id, step.id
+    skill_id = steps[0].skill_id
+    _TOUCHED.add(skill_id)
+    return skill_id, steps[0].id
+
+
+def _second_user_step(db_session, api_client, skill_id):
+    """A non-authed user's PathStep for skill_id (existing or created).
+
+    Returns the step plus None when an existing seed row was reused, or
+    a fresh user id when a second user/path/step had to be created (the
+    purge fixture deletes the created user via cascade).
+    """
+    from backend.repositories import learning_repository as lrepo
+
+    other = (db_session.query(PathStep)
+             .join(Path, PathStep.path_id == Path.id)
+             .filter(Path.user_id != _veteran_id(db_session),
+                     PathStep.skill_id == skill_id)
+             .first())
+    if other:
+        return other, None
+    email = f"other_{uuid.uuid4().hex[:8]}@test.com"
+    api_client.post("/api/auth/register", json={
+        "email": email, "password": "Other@123456"})
+    user = db_session.query(User).filter_by(email=email).first()
+    path = lrepo.create_path(db_session, user.id, "scoping path")
+    step = lrepo.create_step(db_session, path.id, 1, "shared skill step")
+    step.skill_id = skill_id
+    db_session.commit()
+    _TOUCHED_USERS.add(user.id)
+    return step, user.id
 
 
 def test_rate_proficiency_happy_path(api_client, auth_headers, db_session):
-    """PUT valid level → 200; user_skills + path_steps.current_level set."""
+    """PUT valid level → 200; user_skills + the caller's steps updated.
+
+    Also proves the ladder update is per-user: another user's step for
+    the same skill keeps its prior current_level.
+    """
     skill_id, step_id = _rate_veteran_step(db_session)
     if skill_id is None:
         pytest.skip("no seeded veteran step with a skill link")
+
+    other_step, _ = _second_user_step(db_session, api_client, skill_id)
+    other_before = other_step.current_level
 
     response = api_client.put(
         f"/api/learning/skills/{skill_id}/proficiency",
@@ -69,11 +121,13 @@ def test_rate_proficiency_happy_path(api_client, auth_headers, db_session):
         user_id=vid, skill_id=skill_id).first()
     assert us is not None
     assert us.proficiency_level == 3
-    assert db_session.query(PathStep).filter_by(
-        id=step_id).first().current_level == 3
-    for s in db_session.query(PathStep).filter(
-            PathStep.skill_id == skill_id).all():
+
+    for s in _veteran_steps(db_session, skill_id):
         assert s.current_level == 3
+
+    other_after = db_session.query(PathStep).filter_by(
+        id=other_step.id).first()
+    assert other_after.current_level == other_before
 
 
 @pytest.mark.parametrize("level", [-1, 6])
