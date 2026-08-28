@@ -27,6 +27,7 @@
   let showQuizRunner = $state(false);
   let quizTest = $state<any>(null);
   let quizStep = $state<any>(null);
+  let diagnostic = $state<any>(null);
   let skills = $derived((path?.steps ?? []).map((s: any) => s.skill).filter((s: any) => s && s.id).map((s: any) => ({ id: s.id, name: s.name })));
   let progress = $derived(path?.steps && path.steps.length
     ? path.steps.filter((s: any) => s.is_completed).length / path.steps.length
@@ -45,13 +46,28 @@
     const onReady = (e: Event) => void onAiTestReady((e as CustomEvent).detail);
     const onFailed = (e: Event) =>
       toastError((e as CustomEvent).detail?.error ?? t('practiceTest.testFailed'));
+    const onDiagnostic = (e: Event) => onAiDiagnostic((e as CustomEvent).detail);
+    const onProficiency = () => {
+      invalidate(['path']);
+      load();
+    };
     window.addEventListener('sse:ai_test_ready', onReady);
     window.addEventListener('sse:ai_test_failed', onFailed);
+    window.addEventListener('sse:ai_step_diagnostic', onDiagnostic);
+    window.addEventListener('sse:proficiency_adjusted', onProficiency);
     return () => {
       window.removeEventListener('sse:ai_test_ready', onReady);
       window.removeEventListener('sse:ai_test_failed', onFailed);
+      window.removeEventListener('sse:ai_step_diagnostic', onDiagnostic);
+      window.removeEventListener('sse:proficiency_adjusted', onProficiency);
     };
   });
+
+  async function onAiDiagnostic(detail: any) {
+    const d = detail ?? {};
+    if (!Array.isArray(d.weak_points) && !Array.isArray(d.topics_to_master)) return;
+    diagnostic = d;
+  }
 
   async function onAiTestReady(detail: any) {
     const { assessment_id: assessmentId, skill_id: skillId } = detail ?? {};
@@ -301,6 +317,7 @@
   onresult={onQuizResult}
   level={quizTest?.level ?? null}
   difficulty={quizTest?.difficulty ?? null}
+  diagnostic={diagnostic}
 />
 
 <style>

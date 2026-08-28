@@ -18,6 +18,7 @@
     onclose = () => {},
     level = null as number | null,
     difficulty = null as number | null,
+    diagnostic = null as any,
   }: any = $props();
 
   let selected = $state<Record<number, number>>({});
@@ -37,6 +38,13 @@
       explaining = false;
       explain = {};
       advice = '';
+    }
+  });
+
+  $effect(() => {
+    if (diagnostic && result) {
+      if (Array.isArray(diagnostic.weak_points)) result.weak_points = diagnostic.weak_points;
+      if (Array.isArray(diagnostic.topics_to_master)) result.topics_to_master = diagnostic.topics_to_master;
     }
   });
 
