@@ -139,31 +139,45 @@ def feature_flags_schema():
     return settings_schema.FLAG_SCHEMA
 
 
+def _apply_ai_enabled_side_effect(value: bool) -> None:
+    """Apply the AI enable/disable runtime side effects after persistence.
+
+    Called by the feature-flags PUT handler after a confirmed ai_enabled
+    flip; on true warms the engine (non-fatal — surfaces model/VRAM problems
+    immediately) and on false clears the failed-load latch so a later
+    re-enable retries cleanly."""
+    if value:
+        try:
+            llm_engine.warmup()
+        except Exception as exc:  # noqa: BLE001 — non-fatal toggle side-effect
+            logger.warning("feature-flags: AI warmup on enable failed: %s", exc)
+    else:
+        llm_engine.reset_load_failure()
+
+
 @router.put("/feature-flags")
 def update_feature_flags(payload: dict[str, Any]):
     """Validate and persist a bulk feature-flag update, then apply runtime
-    side effects and return the updated flat 13-key map.
+    side effects only on real value changes and return the updated 13-key map.
 
-    Called by PUT /api/admin/feature-flags from the admin page; gated by
-    the router-level require_admin dependency. Delegates validation to
-    settings_schema.validate_update (422 with per-key messages on error) and
-    persistence to settings_service.set_setting per cleaned key. On ai_enabled
-    change keeps the warmup-on-enable / reset_load_failure-on-disable
-    behavior; on rate_limiting change flips limiter.enabled."""
+    Called by PUT /api/admin/feature-flags from the admin page; gated by the
+    router-level require_admin dependency. Delegates validation to
+    settings_schema.validate_update; on error raises 422 with a readable
+    message summary plus one per-key field error (no silent drops). Persists
+    each cleaned key via settings_service.set_setting, then fires the
+    ai_enabled and rate_limiting side effects only when the runtime value
+    actually flipped (compared against the pre-change map)."""
+    prev = settings_schema.build_runtime_flags()
     cleaned, errors = settings_schema.validate_update(payload)
     if errors:
-        raise HTTPException(status_code=422, detail=errors)
+        detail = {"message": "; ".join(errors.values()), **errors}
+        raise HTTPException(status_code=422, detail=detail)
     for key, value in cleaned.items():
         settings_service.set_setting(key, value)
-    if "ai_enabled" in cleaned:
-        if cleaned["ai_enabled"]:
-            try:
-                llm_engine.warmup()
-            except Exception as exc:  # noqa: BLE001 — non-fatal toggle side-effect
-                logger.warning("feature-flags: AI warmup on enable failed: %s", exc)
-        else:
-            llm_engine.reset_load_failure()
-    if "rate_limiting" in cleaned:
+    if "ai_enabled" in cleaned and cleaned["ai_enabled"] != prev["ai_enabled"]:
+        _apply_ai_enabled_side_effect(cleaned["ai_enabled"])
+    if ("rate_limiting" in cleaned
+            and bool(cleaned["rate_limiting"]) != bool(prev["rate_limiting"])):
         limiter.enabled = bool(cleaned["rate_limiting"])
     return settings_schema.build_runtime_flags()
 
