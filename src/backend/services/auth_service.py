@@ -19,13 +19,10 @@ from backend.dto.auth import PasswordValidator, ProfileOut, RegisterInput
 from backend.entities.identity import User
 from backend.repositories import assess_repository, engagement_repository
 from backend.repositories import identity_repository
+from backend.services import settings_schema
 
 SECRET_KEY = os.getenv("SECRET_KEY", "a-secure-default-secret-key-for-development")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24h session timeout (unchanged)
-
-MAX_LOGIN_ATTEMPTS = 5
-LOGIN_LOCKOUT_MINUTES = 15
 
 _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 _PEPPER = os.getenv("PASSWORD_PEPPER", "")
@@ -62,8 +59,14 @@ def validate_password_strength(password: str) -> tuple[bool, str]:
 
 
 def create_access_token(data: dict) -> str:
-    """24h HS256 access token with jti; called by authenticate()."""
-    payload = {**data, "exp": datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+    """HS256 access token with jti; expiry = live session_timeout_hours flag.
+
+    Called by authenticate(); reads the session_timeout_hours flag at
+    issuance time (×60 minutes, schema default 24) so a runtime toggle
+    changes token lifespan without a restart. Decoded by decode_token.
+    """
+    hours = settings_schema.get_runtime_flag("session_timeout_hours")
+    payload = {**data, "exp": datetime.now(UTC) + timedelta(hours=hours),
                "type": "access", "jti": secrets.token_hex(16)}
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -126,20 +129,23 @@ class AuthService:
 
     @staticmethod
     def check_login_allowed(email: str) -> tuple[bool, str | None]:
-        """Lockout gate: True unless MAX_LOGIN_ATTEMPTS in window.
+        """Lockout gate: True unless the live attempt limit is exceeded.
 
-        Routers call this before authenticate() to map failures to 429;
-        authenticate() also enforces it defensively.
+        Reads account_lockout_attempts/lockout_minutes at call time (schema
+        defaults 5/15) so a runtime toggle applies immediately. Routers map
+        the failure to 429; authenticate() also enforces it defensively.
         """
+        max_attempts = settings_schema.get_runtime_flag("account_lockout_attempts")
+        window_minutes = settings_schema.get_runtime_flag("lockout_minutes")
         with _login_lock:
             now = datetime.now(UTC)
-            cutoff = now - timedelta(minutes=LOGIN_LOCKOUT_MINUTES)
+            cutoff = now - timedelta(minutes=window_minutes)
             attempts = [t for t in _login_attempts.get(email, []) if t > cutoff]
             _login_attempts[email] = attempts
-            locked = len(attempts) >= MAX_LOGIN_ATTEMPTS
+            locked = len(attempts) >= max_attempts
         if locked:
-            return False, (f"Account locked due to {MAX_LOGIN_ATTEMPTS} failed "
-                           f"attempts. Try again in {LOGIN_LOCKOUT_MINUTES} minutes.")
+            return False, (f"Account locked due to {max_attempts} failed "
+                           f"attempts. Try again in {window_minutes} minutes.")
         return True, None
 
     @staticmethod

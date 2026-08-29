@@ -13,22 +13,46 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
+from backend.services import settings_schema
+
 
 class PasswordValidator:
-    """Shared password policy (ported verbatim from old password_service)."""
+    """Shared password policy; reads the live password_policy flag per call."""
+
+    _DEFAULT_POLICY = {
+        "min_length": 8,
+        "require_uppercase": True,
+        "require_lowercase": True,
+        "require_digit": True,
+        "require_special_char": True,
+    }
+
+    @staticmethod
+    def _policy() -> dict:
+        """Resolve the effective password policy for this validation call.
+
+        Callee of validate; reads the live password_policy flag and merges
+        it over the in-module default so a partial stored policy keeps the
+        requirement booleans it omits. Callers: PasswordValidator.validate.
+        """
+        stored = settings_schema.get_runtime_flag("password_policy")
+        return {**PasswordValidator._DEFAULT_POLICY, **(stored or {})}
 
     @staticmethod
     def validate(v: str) -> str:
-        """Raise ValueError unless the password satisfies the full policy."""
-        if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters long")
-        if not re.search(r"[A-Z]", v):
+        """Raise ValueError unless the password satisfies the live policy."""
+        policy = PasswordValidator._policy()
+        if len(v) < policy["min_length"]:
+            raise ValueError(
+                f"Password must be at least {policy['min_length']} characters long")
+        if policy["require_uppercase"] and not re.search(r"[A-Z]", v):
             raise ValueError("Password must contain at least one uppercase letter")
-        if not re.search(r"[a-z]", v):
+        if policy["require_lowercase"] and not re.search(r"[a-z]", v):
             raise ValueError("Password must contain at least one lowercase letter")
-        if not re.search(r"\d", v):
+        if policy["require_digit"] and not re.search(r"\d", v):
             raise ValueError("Password must contain at least one digit")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>_\-\\[\]~`]", v):
+        if policy["require_special_char"] and not re.search(
+                r"[!@#$%^&*(),.?\":{}|<>_\-\\[\]~`]", v):
             raise ValueError("Password must contain at least one special character")
         if re.search(r"\s", v):
             raise ValueError("Password must not contain whitespace")

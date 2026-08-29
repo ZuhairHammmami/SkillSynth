@@ -38,7 +38,7 @@ from backend.middlewares.security import SecurityHeadersMiddleware
 from backend.repositories import identity_repository
 from backend.routers import admin, analytics, assessments, auth, catalog, catalog_admin
 from backend.routers import ai, evaluations_admin, learning, paths, realtime
-from backend.services import llm_engine, settings_service
+from backend.services import llm_engine, settings_schema, settings_service
 from backend.services.auth_service import decode_token, hash_password
 
 logging.basicConfig(level=logging.INFO,
@@ -63,8 +63,10 @@ def _public_stats(db: Session) -> dict:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Create the 15 tables, then auto-create the admin user when needed."""
+    """Create the 15 tables, mirror the rate_limiting flag onto slowapi,
+    then auto-create the admin user when needed."""
     Base.metadata.create_all(bind=engine)
+    limiter.enabled = bool(settings_schema.get_runtime_flag("rate_limiting"))
     admin_email = os.getenv("ADMIN_EMAIL", "admin@skillsynth.io")
     admin_pw = os.getenv("ADMIN_PASSWORD", "")
     db = SessionLocal()
@@ -201,6 +203,8 @@ async def sse_events(request: Request, token: str | None = None):
 
     Accepts the 24h access token (integer `user_id` claim) or the
     5-minute SSE token (numeric `sub`); mirrors realtime._extract_profile_id.
+    When real_time_updates is off the stream stays open but the generator
+    drops data frames (quiet-but-open).
     """
     raw = token or request.headers.get("Authorization", "").replace("Bearer ", "")
     if not raw:
@@ -216,8 +220,9 @@ async def sse_events(request: Request, token: str | None = None):
         if sub is None or not str(sub).isdigit():
             raise HTTPException(status_code=401, detail="Invalid token")
         user_id = int(sub)
+    quiet = not settings_schema.get_runtime_flag("real_time_updates")
     return StreamingResponse(
-        event_generator(int(user_id)),
+        event_generator(int(user_id), quiet=quiet),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "Connection": "keep-alive",
                  "X-Accel-Buffering": "no"})

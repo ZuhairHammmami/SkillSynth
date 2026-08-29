@@ -15,13 +15,15 @@ event_clients: dict[int, list] = defaultdict(list)
 admin_event_clients: list = []
 
 
-async def admin_event_generator(category: str | None = None) -> AsyncGenerator[str, None]:
+async def admin_event_generator(category: str | None = None,
+                                quiet: bool = False) -> AsyncGenerator[str, None]:
     """Stream admin-channel SSE frames, optionally filtered by category.
 
     Consumed by GET /admin/events/stream via routers/realtime. Frames use
     the named-event wire format (`event: <type>`) because the admin app
     subscribes with addEventListener(type, ...). Emits `connected` then
-    pings every 30s.
+    pings every 30s. When quiet is True (real_time_updates off) frames are
+    dropped at this seam but the stream stays open with pings.
     """
     queue: asyncio.Queue = asyncio.Queue()
     admin_event_clients.append(queue)
@@ -31,6 +33,8 @@ async def admin_event_generator(category: str | None = None) -> AsyncGenerator[s
             try:
                 data = await asyncio.wait_for(queue.get(), timeout=30)
                 if category and data.get("category") and data["category"] != category:
+                    continue
+                if quiet:
                     continue
                 yield f"event: {data['type']}\ndata: {json.dumps(data)}\n\n"
             except asyncio.TimeoutError:
@@ -42,11 +46,13 @@ async def admin_event_generator(category: str | None = None) -> AsyncGenerator[s
             admin_event_clients.remove(queue)
 
 
-async def event_generator(profile_id: int) -> AsyncGenerator[str, None]:
+async def event_generator(profile_id: int, quiet: bool = False) -> AsyncGenerator[str, None]:
     """Stream one user's SSE frames from their personal queue.
 
     Consumed by GET /api/events after token auth resolves profile_id;
-    publishes arrive through send_event. Pings keep proxies alive.
+    publishes arrive through send_event. Pings keep proxies alive. When
+    quiet is True (real_time_updates off) data frames are dropped at this
+    seam but the connection stays open with keep-alive pings.
     """
     queue: asyncio.Queue = asyncio.Queue()
     event_clients[profile_id].append(queue)
@@ -55,6 +61,8 @@ async def event_generator(profile_id: int) -> AsyncGenerator[str, None]:
         while True:
             try:
                 data = await asyncio.wait_for(queue.get(), timeout=30)
+                if quiet:
+                    continue
                 yield f"data: {json.dumps(data)}\n\n"
             except asyncio.TimeoutError:
                 yield "data: {\"type\": \"ping\"}\n\n"

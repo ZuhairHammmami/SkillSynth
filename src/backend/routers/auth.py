@@ -16,7 +16,7 @@ from backend.dto.auth import (
 )
 from backend.limiter import limiter
 from backend.policies.auth_policy import get_current_user
-from backend.services import auth_service
+from backend.services import auth_service, settings_schema
 
 router = APIRouter()
 
@@ -24,8 +24,14 @@ router = APIRouter()
 @router.post("/register", response_model=ProfileOut)
 @limiter.limit("5/minute")
 def register(request: Request, data: RegisterInput, db: Session = Depends(get_db)):
-    """Create a student account. Calls auth_service.register; consumed by
-    useAuthApi.useAuth().registerMutation on the register page."""
+    """Create a student account; 403 when registration is disabled.
+
+    Gates on the live registration_enabled flag (read per request), then
+    calls auth_service.register; consumed by useAuthApi.useAuth()
+    registerMutation on the register page."""
+    if not settings_schema.get_runtime_flag("registration_enabled"):
+        raise HTTPException(status_code=403,
+                            detail="Registration is currently disabled")
     user, error = auth_service.register(db, data)
     if error:
         raise HTTPException(status_code=400, detail=error)
