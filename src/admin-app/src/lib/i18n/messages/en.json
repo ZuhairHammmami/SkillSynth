@@ -916,7 +916,6 @@
       "subtitle": "System configuration",
       "on": "On",
       "off": "Off",
-      "updated": "Feature flag updated",
       "toggle": "Toggle {key}",
       "save": "Save changes",
       "discard": "Discard",
@@ -943,6 +942,16 @@
       "subtitle": "Operational console for the Adaptive Learning OS.",
       "signIn": "Sign in",
       "welcome": "Welcome back"
+    },
+    "validation": {
+      "required": "{field} is required",
+      "minMax": "{field} must be between {min} and {max}",
+      "minLen": "{field} must be at least {min} characters",
+      "maxLen": "{field} must be at most {max} characters",
+      "url": "{field} must be a valid URL",
+      "invalidEmail": "{field} must be a valid email address",
+      "hexColor": "{field} must be a valid hex color",
+      "minOptions": "Select at least {min} option(s)"
     }
   }
 }
