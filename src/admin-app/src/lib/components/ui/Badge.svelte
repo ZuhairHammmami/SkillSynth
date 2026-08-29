@@ -21,8 +21,8 @@
     white-space: nowrap;
   }
   .neutral { background: var(--paper-2); color: var(--ink-soft); border-color: var(--line-strong); }
-  .accent { background: var(--accent-soft); color: var(--accent-deep); border-color: var(--accent); }
+  .accent { background: var(--ochre-soft); color: var(--ochre-deep); border-color: var(--ochre); }
   .danger { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
   .ok { background: var(--ok-soft); color: var(--ok); border-color: var(--ok); }
-  .warn { background: color-mix(in srgb, var(--warn) 14%, var(--paper)); color: var(--warn); border-color: var(--warn); }
+  .warn { background: color-mix(in srgb, var(--warn) 14%, var(--card)); color: var(--warn); border-color: var(--warn); }
 </style>

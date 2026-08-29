@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- SkillSynth canonical mark (glyph). Master geometry:
+       ring/book  M16 28 C9 28 5 23 5 16 C5 11 9 7 16 7 C23 7 27 11 27 16 C27 23 23 28 16 28 Z
+       stem       16,27 → 16,13 ; leaf branch 16,18 → 11,12 / 21,12 ; seed at 16,9 r=2.2
+       All strokes 1.8, round caps/joins. Colors from palette.json. -->
+  <path d="M16 28C9 28 5 23 5 16c0-5 4-9 11-9s11 4 11 9c0 7-4 12-11 12z" stroke="#B5862E" stroke-width="1.8"/>
+  <path d="M16 27V13M16 18c-3-1-5-3-5-6M16 18c3-1 5-3 5-6" stroke="#5F6C50" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="16" cy="9" r="2.2" fill="#B5862E"/>
+</svg>

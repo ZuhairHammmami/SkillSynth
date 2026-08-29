@@ -32,7 +32,7 @@
   .panel-side { background: var(--paper-2); border-inline-end: 1px solid var(--line); padding: 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; justify-content: center; }
   .features { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.7rem; }
   .features li { display: flex; align-items: center; gap: 0.6rem; color: var(--ink-soft); }
-  .mark { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-deep); flex-shrink: 0; }
+  .mark { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ochre-soft); color: var(--ochre-deep); flex-shrink: 0; }
   .panel-form { display: flex; align-items: center; justify-content: center; padding: 2rem; }
   @media (max-width: 800px) { .split { grid-template-columns: 1fr; } .panel-side { display: none; } }
 </style>

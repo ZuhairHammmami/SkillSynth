@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SkillSynth — BACK panel display, 1200 x 1800 px = 6 x 9 in @ 200dpi.
+  Art authored in local back trim coords (432 x 648) scaled x2.777778.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1800" width="1200" height="1800">
+
+  <defs>
+    <g id="back-art">
+      <rect x="0" y="0" width="432" height="648" fill="#F3EDE1"/>
+      <g stroke="#CFC3AE" stroke-width="0.75" stroke-opacity="0.28">
+        <path d="M36,0 V648"/><path d="M72,0 V648"/><path d="M108,0 V648"/><path d="M144,0 V648"/><path d="M180,0 V648"/><path d="M216,0 V648"/><path d="M252,0 V648"/><path d="M288,0 V648"/><path d="M324,0 V648"/><path d="M360,0 V648"/><path d="M396,0 V648"/>
+        <path d="M0,36 H432"/><path d="M0,72 H432"/><path d="M0,108 H432"/><path d="M0,144 H432"/><path d="M0,180 H432"/><path d="M0,216 H432"/><path d="M0,252 H432"/><path d="M0,288 H432"/><path d="M0,324 H432"/><path d="M0,360 H432"/><path d="M0,396 H432"/><path d="M0,432 H432"/><path d="M0,468 H432"/><path d="M0,504 H432"/><path d="M0,540 H432"/><path d="M0,576 H432"/><path d="M0,612 H432"/>
+      </g>
+      <path d="M150,316 C 84,344 84,458 150,482" stroke="#B5862E" stroke-width="1.2" stroke-dasharray="4 3" stroke-linecap="round" fill="none"/>
+      <path d="M150,400 C 240,398 340,396 428,394" stroke="#B5862E" stroke-width="1.2" stroke-dasharray="4 3" stroke-linecap="round" fill="none"/>
+      <g font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="14.5" font-weight="400" fill="#4A4238" text-anchor="middle">
+        <text x="216" y="56">SkillSynth is an adaptive learning operating</text>
+        <text x="216" y="78">system. It maps your current skills against the</text>
+        <text x="216" y="100">role you want, then builds a growing path across</text>
+        <text x="216" y="122">the gaps it finds — guiding you step by step with</text>
+        <text x="216" y="144">assessments and real-time feedback, from what you</text>
+        <text x="216" y="166">know to what you&apos;ll know.</text>
+      </g>
+      <text x="216" y="210" text-anchor="middle" font-family="Noto Sans Arabic, El Messiri, sans-serif" font-size="14" font-weight="400" fill="#4A4238">منصة تعلّم تكيّفيّة تصنع لك مسارك من ما تعرفه إلى ما ستتعلمه.</text>
+      <!-- node 1: Adaptive Paths -->
+      <g transform="translate(122 282)">
+        <path d="M4 30 C 14 32 26 24 28 10" stroke="#B5862E" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M28 10 C 22 6 10 6 4 14" stroke="#B5862E" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M7 12 C 14 16 20 20 24 24" stroke="#B5862E" stroke-width="2" stroke-linecap="round" fill="none"/>
+      </g>
+      <text x="170" y="308" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="15" font-weight="600" fill="#2A2521">Adaptive Paths</text>
+      <!-- node 2: Assessments -->
+      <g transform="translate(122 380)">
+        <path d="M4 30 C 14 32 26 24 28 10" stroke="#7C8A6B" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M28 10 C 22 6 10 6 4 14" stroke="#7C8A6B" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M7 12 C 14 16 20 20 24 24" stroke="#7C8A6B" stroke-width="2" stroke-linecap="round" fill="none"/>
+      </g>
+      <text x="170" y="406" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="15" font-weight="600" fill="#2A2521">Assessments</text>
+      <!-- node 3: Real-time Guidance -->
+      <g transform="translate(122 478)">
+        <path d="M4 30 C 14 32 26 24 28 10" stroke="#5F6C50" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M28 10 C 22 6 10 6 4 14" stroke="#5F6C50" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M7 12 C 14 16 20 20 24 24" stroke="#5F6C50" stroke-width="2" stroke-linecap="round" fill="none"/>
+      </g>
+      <text x="170" y="504" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="15" font-weight="600" fill="#2A2521">Real-time Guidance</text>
+      <line x1="96" y1="580" x2="336" y2="580" stroke="#CFC3AE" stroke-width="1"/>
+      <g transform="translate(203 590) scale(0.8125)">
+        <path d="M16 28C9 28 5 23 5 16c0-5 4-9 11-9s11 4 11 9c0 7-4 12-11 12z" stroke="#B5862E" stroke-width="1.8" fill="none"/>
+        <path d="M16 27V13M16 18c-3-1-5-3-5-6M16 18c3-1 5-3 5-6" stroke="#5F6C50" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+        <circle cx="16" cy="9" r="2.2" fill="#B5862E"/>
+      </g>
+    </g>
+  </defs>
+
+  <g transform="scale(2.777778)">
+    <use href="#back-art"/>
+  </g>
+
+</svg>

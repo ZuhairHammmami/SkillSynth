@@ -14,9 +14,9 @@
       <circle cx="222" cy="124" r="4" fill="var(--ochre-deep)" />
     </g>
     <g transform="translate(70 150)">
-      <rect x="0" y="20" width="46" height="34" rx="3" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.6" />
+      <rect x="0" y="20" width="46" height="34" rx="3" fill="var(--card)" stroke="var(--ink)" stroke-width="1.6" />
       <path d="M0 20c0-10 46-10 46 0" stroke="var(--ink)" stroke-width="1.6" />
-      <path d="M10 32h26M10 40h18" stroke="var(--muted)" stroke-width="1.4" stroke-linecap="round" />
+      <path d="M10 32h26M10 40h18" stroke="var(--clay)" stroke-width="1.4" stroke-linecap="round" />
     </g>
     <circle cx="300" cy="60" r="22" fill="var(--ochre)" opacity="0.18" />
     <circle cx="300" cy="60" r="22" stroke="var(--ochre)" stroke-width="1.4" stroke-dasharray="3 5" />

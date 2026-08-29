@@ -49,7 +49,7 @@
     font-family: var(--font-body);
     font-size: 1rem;
     color: var(--ink);
-    background: var(--paper);
+    background: var(--card);
     border: 1px solid var(--line-strong);
     border-radius: var(--radius);
     padding: 0.7rem 0.8rem;
@@ -59,6 +59,6 @@
   .sel:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px var(--focus-glow); }
   .sel.invalid { border-color: var(--danger); }
   .sel.invalid:focus { box-shadow: 0 0 0 3px var(--danger-soft); }
-  .hint { display: block; color: var(--muted); font-size: 0.78rem; margin-top: 0.3rem; }
+  .hint { display: block; color: var(--clay); font-size: 0.78rem; margin-top: 0.3rem; }
   .err { display: block; color: var(--danger); font-size: 0.78rem; margin-top: 0.3rem; }
 </style>

@@ -84,13 +84,13 @@
   .a-block { margin-bottom: 0.7rem; }
   .a-block .muted { display: block; font-size: 0.8rem; margin-bottom: 0.3rem; }
   .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-  .chip { background: var(--accent-soft); color: var(--accent-deep); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.82rem; }
-  .chip.ok { background: color-mix(in srgb, #16a34a 18%, var(--paper)); color: #15803d; }
-  .chip.warn { background: color-mix(in srgb, #d97706 18%, var(--paper)); color: #b45309; }
+  .chip { background: var(--ochre-soft); color: var(--ochre-deep); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.82rem; }
+  .chip.ok { background: color-mix(in srgb, #5C7A5E 18%, var(--card)); color: #45604A; }
+  .chip.warn { background: color-mix(in srgb, #B45309 18%, var(--card)); color: #8A3E07; }
   .placement { list-style: none; margin: 0.2rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
   .placement li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
   .p-name { font-weight: 600; color: var(--ink); }
-  .p-level { color: var(--accent-deep); }
-  .p-weak { color: var(--muted); font-style: italic; }
+  .p-level { color: var(--ochre-deep); }
+  .p-weak { color: var(--clay); font-style: italic; }
   .center-spin { display: flex; justify-content: center; padding: 1.2rem; }
 </style>

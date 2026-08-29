@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <!-- SkillSynth social card (OG) 1200x630. Paper ground, hairline grid,
+       dashed grow-path with stacked leaf-stage dots rising to the sprout mark,
+       wordmark + tagline. All colors from palette.json. -->
+  <rect x="0" y="0" width="1200" height="630" fill="#FBF6EC"/>
+
+  <!-- hairline grid every 60 -->
+  <g stroke="#E4DAC8" stroke-width="1" stroke-opacity="0.45">
+    <path d="M60,0 V630"/><path d="M120,0 V630"/><path d="M180,0 V630"/><path d="M240,0 V630"/><path d="M300,0 V630"/><path d="M360,0 V630"/><path d="M420,0 V630"/><path d="M480,0 V630"/><path d="M540,0 V630"/><path d="M600,0 V630"/><path d="M660,0 V630"/><path d="M720,0 V630"/><path d="M780,0 V630"/><path d="M840,0 V630"/><path d="M900,0 V630"/><path d="M960,0 V630"/><path d="M1020,0 V630"/><path d="M1080,0 V630"/><path d="M1140,0 V630"/>
+    <path d="M0,60 H1200"/><path d="M0,120 H1200"/><path d="M0,180 H1200"/><path d="M0,240 H1200"/><path d="M0,300 H1200"/><path d="M0,360 H1200"/><path d="M0,420 H1200"/><path d="M0,480 H1200"/><path d="M0,540 H1200"/><path d="M0,600 H1200"/>
+  </g>
+
+  <!-- dashed grow-path + leaf-stage dots (ochre → sage → sage-deep) rising to the mark -->
+  <path d="M70,505 C 230,490 340,514 460,492 C 560,474 620,494 700,470" stroke="#B5862E" stroke-width="3" stroke-linecap="round" stroke-dasharray="9 7" fill="none"/>
+  <circle cx="240" cy="502" r="9" fill="#B5862E"/>
+  <circle cx="452" cy="494" r="13" fill="#7C8A6B"/>
+  <circle cx="676" cy="474" r="7" fill="#5F6C50"/>
+
+  <!-- sprout mark leading the path -->
+  <g transform="translate(712 412) scale(1.5)">
+    <path d="M16 28C9 28 5 23 5 16c0-5 4-9 11-9s11 4 11 9c0 7-4 12-11 12z" stroke="#B5862E" stroke-width="1.8" fill="none"/>
+    <path d="M16 27V13M16 18c-3-1-5-3-5-6M16 18c3-1 5-3 5-6" stroke="#5F6C50" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <circle cx="16" cy="9" r="2.2" fill="#B5862E"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="600" y="218" text-anchor="middle" font-family="Bricolage Grotesque, Public Sans, Noto Sans, sans-serif" font-size="96" font-weight="700" letter-spacing="-0.01em">
+    <tspan fill="#2A2521">Skill</tspan><tspan fill="#B5862E">Synth</tspan>
+  </text>
+
+  <!-- tagline -->
+  <g fill="#4A4238" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" text-anchor="middle">
+    <text x="600" y="286" font-size="30" font-weight="400">An Adaptive Learning OS</text>
+    <text x="600" y="330" font-size="30" font-weight="400">building your path from what you know</text>
+    <text x="600" y="374" font-size="30" font-weight="400">to what you&apos;ll know.</text>
+  </g>
+
+  <!-- Arabic accent with hand-drawn marker underline -->
+  <text x="600" y="420" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="34" font-weight="500" fill="#8A6520">مسارك</text>
+  <path d="M492,432 C 508,437 522,433 536,438 S 560,433 576,438 S 600,433 616,438 S 640,433 656,438 S 680,435 692,440" stroke="#B5862E" stroke-width="8" stroke-linecap="round" fill="none"/>
+</svg>

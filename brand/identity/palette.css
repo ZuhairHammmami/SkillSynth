@@ -1,0 +1,66 @@
+/* SkillSynth — "Warm Craft" identity tokens. Canonical source: palette.json.
+   Mirrors the app.css :root convention; drop-in replaceable.
+   Warm paper · ink · ochre · sage · hairline. No gradients/neon/glass.
+   RTL-first logical properties elsewhere; these are raw tokens. */
+
+:root {
+  /* Surfaces */
+  --paper: #FBF6EC;        /* page / canvas */
+  --paper-2: #F3EDE1;      /* subtle surface */
+  --card: #FFFDF7;         /* elevated card / input surface */
+  --ink: #2A2521;          /* primary text & headings */
+  --ink-soft: #4A4238;     /* secondary text */
+  --clay: #8A7B6C;         /* muted / helper text (large sizes only) */
+
+  /* Brand / accent — Warm Craft */
+  --ochre: #B5862E;        /* primary accent (display / mark) */
+  --ochre-deep: #8A6520;   /* accent text, links, buttons (AA) */
+  --ochre-soft: #F4EBD8;   /* accent surface tint */
+  --sage: #7C8A6B;         /* secondary accent (display / fields) */
+  --sage-deep: #5F6C50;    /* sprout stem + leaves, deep sage type (AA) */
+  --sage-soft: #EDF1E6;    /* secondary surface tint */
+
+  /* Status (warm) */
+  --ok: #5C7A5E;           --ok-deep: #45604A;  --ok-soft: #EAF0E7;
+  --warn: #B45309;         --warn-deep: #8A3E07; --warn-soft: #F9EEE1;
+  --danger: #A23B2E;       --danger-deep: #7C2D22; --danger-soft: #F6E7E4;
+
+  /* Line / hairline */
+  --line: #E4DAC8;
+  --line-strong: #CFC3AE;
+
+  /* Focus */
+  --ring: var(--ochre-deep);
+  --focus-glow: rgba(138, 101, 32, 0.22);
+
+  /* Legacy aliases (existing components keep working) */
+  --bg: var(--paper);
+  --accent: var(--ochre);        /* resolves prior blue-flip: aliases now yield ochre */
+  --accent-deep: var(--ochre-deep);
+  --accent-soft: var(--ochre-soft);
+  --muted: var(--clay);
+
+  /* Geometry (Warm Craft) */
+  --radius: 6px;
+  --radius-sm: 4px;
+  --radius-xs: 2px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(42, 37, 33, 0.06);
+  --shadow: 0 1px 3px rgba(42, 37, 33, 0.08), 0 1px 2px rgba(42, 37, 33, 0.04);
+  --hairline: 1px;
+  --stroke-hand: 1.8px;
+  --rail-w: 256px;
+  --maxw: 1180px;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+}
+
+::selection { background: var(--ochre); color: var(--card); }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: var(--radius-xs); }

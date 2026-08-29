@@ -20,7 +20,7 @@
     color: var(--ink-soft);
   }
   .neutral { background: var(--paper-2); color: var(--ink-soft); }
-  .accent { background: var(--accent); color: #fff; border-color: var(--accent-deep); }
+  .accent { background: var(--ochre); color: #fff; border-color: var(--ochre-deep); }
   .ok { background: var(--ok-soft); color: var(--ok); border-color: var(--ok); }
   .danger { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
   .warn { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); }

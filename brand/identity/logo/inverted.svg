@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 48" fill="none">
+  <!-- SkillSynth logo — inverted (light content on ink). For dark grounds:
+       ink/ochre-deep surfaces. Paper strokes read as the ground; ochre keeps
+       the seed + accent alive. -->
+  <rect x="0" y="0" width="256" height="48" fill="#2A2521"/>
+  <g transform="translate(0 0) scale(1.5)">
+    <path d="M16 28C9 28 5 23 5 16c0-5 4-9 11-9s11 4 11 9c0 7-4 12-11 12z" stroke="#FBF6EC" stroke-width="1.8"/>
+    <path d="M16 27V13M16 18c-3-1-5-3-5-6M16 18c3-1 5-3 5-6" stroke="#FBF6EC" stroke-width="1.8" stroke-linecap="round"/>
+    <circle cx="16" cy="9" r="2.2" fill="#B5862E"/>
+  </g>
+  <text x="60" y="37" font-family="Bricolage Grotesque, Public Sans, Noto Sans, sans-serif" font-size="34" font-weight="700" letter-spacing="-0.01em">
+    <tspan fill="#FBF6EC">Skill</tspan><tspan fill="#B5862E">Synth</tspan>
+  </text>
+</svg>

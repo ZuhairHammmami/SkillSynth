@@ -203,11 +203,11 @@
   .quiz-choice { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.4rem; }
   .enrich-row { display: flex; justify-content: flex-end; margin-bottom: 0.6rem; }
   .enriching { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--ink-soft); font-size: 0.9rem; }
-  .link { background: none; border: none; color: var(--accent-deep); cursor: pointer; font-family: var(--font-body); font-size: 0.9rem; text-decoration: underline; padding: 0.4rem 0; }
+  .link { background: none; border: none; color: var(--ochre-deep); cursor: pointer; font-family: var(--font-body); font-size: 0.9rem; text-decoration: underline; padding: 0.4rem 0; }
   .link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-glow); border-radius: var(--radius); }
   .q { border: 1px solid var(--line); border-radius: var(--radius); padding: 0.8rem; margin-bottom: 0.8rem; }
   .q-text { font-weight: 500; margin: 0 0 0.5rem; color: var(--ink); }
   .q-opts { display: grid; gap: 0.4rem; }
   .q-opt { display: flex; align-items: center; gap: 0.5rem; color: var(--ink-soft); cursor: pointer; }
-  .q-opt input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .q-opt input { width: 18px; height: 18px; accent-color: var(--ochre); }
 </style>

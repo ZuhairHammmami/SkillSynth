@@ -26,11 +26,11 @@
 </button>
 
 <style>
-  .card { text-align: start; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 1.1rem; cursor: pointer; display: flex; flex-direction: column; gap: 0.7rem; width: 100%; font-family: var(--font-body); color: var(--ink); transition: border-color 0.18s ease, box-shadow 0.18s ease; }
-  .card:hover { border-color: var(--accent); text-decoration: none; box-shadow: var(--shadow); }
-  .card:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-glow); border-color: var(--accent); }
+  .card { text-align: start; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 1.1rem; cursor: pointer; display: flex; flex-direction: column; gap: 0.7rem; width: 100%; font-family: var(--font-body); color: var(--ink); transition: border-color 0.18s ease, box-shadow 0.18s ease; }
+  .card:hover { border-color: var(--ochre); text-decoration: none; box-shadow: var(--shadow); }
+  .card:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-glow); border-color: var(--ochre); }
   .card:active { transform: translateY(1px); }
   .head { display: flex; flex-direction: column; gap: 0.4rem; }
   .head h3 { margin: 0; font-size: 1.15rem; }
-  .meta { display: flex; gap: 0.4rem; font-size: 0.82rem; color: var(--muted); }
+  .meta { display: flex; gap: 0.4rem; font-size: 0.82rem; color: var(--clay); }
 </style>

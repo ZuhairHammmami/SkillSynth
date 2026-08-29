@@ -17,7 +17,7 @@
 
 <style>
   .panel {
-    background: var(--paper);
+    background: var(--card);
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     padding: 1.25rem;

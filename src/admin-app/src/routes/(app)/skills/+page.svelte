@@ -158,7 +158,7 @@
       <Input bind:value={form.icon} placeholder="emoji or name" />
     </Field>
     <Field label={t('admin.skills.color')} error={colorKey ? t(colorKey, { field: t('admin.skills.color') }) : formErrors.color}>
-      <Input bind:value={form.color} placeholder="#5b8def" />
+      <Input bind:value={form.color} placeholder="#b5862e" />
     </Field>
   </div>
   <Field label={t('admin.skills.category')} error={catKey ? t(catKey, { field: t('admin.skills.category') }) : formErrors.category_id}>
@@ -199,9 +199,9 @@
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
   .grid-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
   .grid-table th, .grid-table td { text-align: start; padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--line); }
-  .grid-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .grid-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--clay); }
   .actions { display: flex; gap: 0.4rem; justify-content: flex-end; }
-  .muted { color: var(--muted); }
+  .muted { color: var(--clay); }
   .warn { color: var(--danger); font-size: 0.9rem; }
   .deps { margin: 0.4rem 0 0; padding-inline-start: 1.1rem; font-size: 0.88rem; color: var(--ink-soft); }
   .form-err { color: var(--danger); font-size: 0.85rem; margin: 0.2rem 0 0; }

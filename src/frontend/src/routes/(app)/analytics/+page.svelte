@@ -131,13 +131,13 @@
   .center-spin { display: flex; justify-content: center; padding: 3rem; }
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin-top: 1rem; }
   .big { font-family: var(--font-display); font-size: 2.2rem; color: var(--ochre-deep); line-height: 1; }
-  .big small { font-size: 1rem; color: var(--muted); }
+  .big small { font-size: 1rem; color: var(--clay); }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
   .wrap { display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .paths { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.9rem; }
   .phead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.3rem; gap: 1rem; }
   .pname { font-weight: 600; }
-  .pmut { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+  .pmut { font-size: 0.78rem; color: var(--clay); white-space: nowrap; }
   .err-state { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6rem; color: var(--danger); }
   @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
 </style>

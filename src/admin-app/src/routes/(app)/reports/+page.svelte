@@ -99,13 +99,13 @@
   .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.8rem; }
   .stat { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.8rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper-2); }
   .stat-v { font-size: 1.5rem; font-weight: 700; color: var(--ink); }
-  .stat-l { font-size: 0.8rem; color: var(--muted); }
+  .stat-l { font-size: 0.8rem; color: var(--clay); }
   .sub { margin: 1.2rem 0 0.5rem; font-size: 0.9rem; color: var(--ink-soft); }
   .mini { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
   .mini li { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.3rem 0; border-bottom: 1px dashed var(--line); }
-  .mini li span { color: var(--muted); }
+  .mini li span { color: var(--clay); }
   .kv { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
   .kv li { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.92rem; padding: 0.3rem 0; border-bottom: 1px dashed var(--line); }
-  .kv li span { color: var(--muted); }
+  .kv li span { color: var(--clay); }
   .err-box { background: var(--danger-soft); border: 1px solid var(--danger); color: var(--danger); padding: 1rem; border-radius: var(--radius); display: flex; flex-direction: column; gap: 0.6rem; }
 </style>

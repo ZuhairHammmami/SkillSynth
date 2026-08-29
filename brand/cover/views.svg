@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SkillSynth — Book Cover Presentation Sheet
+  White canvas, three trim-exact panels on card sub-cards.
+  BACK (20,20) 432x648 | FRONT (480,20) 432x648 | SPINE (940,20) 144x648
+  Preview only — not for print.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 700" width="1400" height="700">
+
+  <defs>
+    <!-- front-art authored in local trim coords: 432 x 648 -->
+    <g id="front-art">
+      <rect x="0" y="0" width="432" height="648" fill="#FBF6EC"/>
+      <g stroke="#E4DAC8" stroke-width="0.75" stroke-opacity="0.4">
+        <path d="M36,0 V648"/><path d="M72,0 V648"/><path d="M108,0 V648"/><path d="M144,0 V648"/><path d="M180,0 V648"/><path d="M216,0 V648"/><path d="M252,0 V648"/><path d="M288,0 V648"/><path d="M324,0 V648"/><path d="M360,0 V648"/><path d="M396,0 V648"/>
+        <path d="M0,36 H432"/><path d="M0,72 H432"/><path d="M0,108 H432"/><path d="M0,144 H432"/><path d="M0,180 H432"/><path d="M0,216 H432"/><path d="M0,252 H432"/><path d="M0,288 H432"/><path d="M0,324 H432"/><path d="M0,360 H432"/><path d="M0,396 H432"/><path d="M0,432 H432"/><path d="M0,468 H432"/><path d="M0,504 H432"/><path d="M0,540 H432"/><path d="M0,576 H432"/><path d="M0,612 H432"/>
+      </g>
+      <path d="M0,666 L0,592 C 60,578 120,586 168,576 C 216,566 250,570 300,556 C 340,546 390,550 432,538 L432,666 Z" fill="#7C8A6B"/>
+      <path d="M4,588 C 90,574 150,582 208,570 C 260,560 320,556 428,542" stroke="#B5862E" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="5 4" fill="none"/>
+      <path d="M200,574 C 236,548 276,546 288,506 C 300,468 268,444 282,404 C 294,366 316,352 316,324" stroke="#5F6C50" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <circle cx="304" cy="494" r="6.5" fill="#B5862E"/>
+      <circle cx="306" cy="404" r="10" fill="#7C8A6B"/>
+      <circle cx="322" cy="314" r="5.5" fill="#5F6C50"/>
+      <path d="M300,362 C 280,356 268,348 262,336" stroke="#5F6C50" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M300,356 C 316,350 326,342 330,330" stroke="#5F6C50" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <text x="216" y="145" text-anchor="middle" font-family="Bricolage Grotesque, Public Sans, Noto Sans, sans-serif" font-size="52" font-weight="700" letter-spacing="-0.01em">
+        <tspan fill="#2A2521">Skill</tspan><tspan fill="#B5862E">Synth</tspan>
+      </text>
+      <g fill="#4A4238" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="15" font-weight="500" text-anchor="middle">
+        <text x="216" y="196">An Adaptive Learning OS —</text>
+        <text x="216" y="220">building your path from</text>
+        <text x="216" y="244">what you know to what you&apos;ll know.</text>
+      </g>
+      <text x="216" y="286" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="27" font-weight="500" fill="#8A6520">مسارك</text>
+      <path d="M140,292 C 150,296 162,293 174,297 S 196,292 208,296 S 230,293 242,297 S 262,292 274,296 S 288,294 300,297" stroke="#B5862E" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <g transform="translate(12 30) scale(1.0625)">
+        <path d="M16 28C9 28 5 23 5 16c0-5 4-9 11-9s11 4 11 9c0 7-4 12-11 12z" stroke="#B5862E" stroke-width="1.8" fill="none"/>
+        <path d="M16 27V13M16 18c-3-1-5-3-5-6M16 18c3-1 5-3 5-6" stroke="#5F6C50" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+        <circle cx="16" cy="9" r="2.2" fill="#B5862E"/>
+      </g>
+    </g>
+
+    <!-- back-art authored in local trim coords: 432 x 648 -->
+    <g id="back-art">
+      <rect x="0" y="0" width="432" height="648" fill="#F3EDE1"/>
+      <g stroke="#CFC3AE" stroke-width="0.75" stroke-opacity="0.28">
+        <path d="M36,0 V648"/><path d="M72,0 V648"/><path d="M108,0 V648"/><path d="M144,0 V648"/><path d="M180,0 V648"/><path d="M216,0 V648"/><path d="M252,0 V648"/><path d="M288,0 V648"/><path d="M324,0 V648"/><path d="M360,0 V648"/><path d="M396,0 V648"/>
+        <path d="M0,36 H432"/><path d="M0,72 H432"/><path d="M0,108 H432"/><path d="M0,144 H432"/><path d="M0,180 H432"/><path d="M0,216 H432"/><path d="M0,252 H432"/><path d="M0,288 H432"/><path d="M0,324 H432"/><path d="M0,360 H432"/><path d="M0,396 H432"/><path d="M0,432 H432"/><path d="M0,468 H432"/><path d="M0,504 H432"/><path d="M0,540 H432"/><path d="M0,576 H432"/><path d="M0,612 H432"/>
+      </g>
+      <path d="M150,316 C 84,344 84,458 150,482" stroke="#B5862E" stroke-width="1.2" stroke-dasharray="4 3" stroke-linecap="round" fill="none"/>
+      <path d="M150,400 C 240,398 340,396 428,394" stroke="#B5862E" stroke-width="1.2" stroke-dasharray="4 3" stroke-linecap="round" fill="none"/>
+      <g font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="14.5" font-weight="400" fill="#4A4238" text-anchor="middle">
+        <text x="216" y="56">SkillSynth is an adaptive learning operating</text>
+        <text x="216" y="78">system. It maps your current skills against the</text>
+        <text x="216" y="100">role you want, then builds a growing path across</text>
+        <text x="216" y="122">the gaps it finds — guiding you step by step with</text>
+        <text x="216" y="144">assessments and real-time feedback, from what you</text>
+        <text x="216" y="166">know to what you&apos;ll know.</text>
+      </g>
+      <text x="216" y="210" text-anchor="middle" font-family="Noto Sans Arabic, El Messiri, sans-serif" font-size="14" font-weight="400" fill="#4A4238">منصة تعلّم تكيّفيّة تصنع لك مسارك من ما تعرفه إلى ما ستتعلمه.</text>
+      <!-- node 1: Adaptive Paths -->
+      <g transform="translate(122 282)">
+        <path d="M4 30 C 14 32 26 24 28 10" stroke="#B5862E" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M28 10 C 22 6 10 6 4 14" stroke="#B5862E" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M7 12 C 14 16 20 20 24 24" stroke="#B5862E" stroke-width="2" stroke-linecap="round" fill="none"/>
+      </g>
+      <text x="170" y="308" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="15" font-weight="600" fill="#2A2521">Adaptive Paths</text>
+      <!-- node 2: Assessments -->
+      <g transform="translate(122 380)">
+        <path d="M4 30 C 14 32 26 24 28 10" stroke="#7C8A6B" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M28 10 C 22 6 10 6 4 14" stroke="#7C8A6B" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M7 12 C 14 16 20 20 24 24" stroke="#7C8A6B" stroke-width="2" stroke-linecap="round" fill="none"/>
+      </g>
+      <text x="170" y="406" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="15" font-weight="600" fill="#2A2521">Assessments</text>
+      <!-- node 3: Real-time Guidance -->
+      <g transform="translate(122 478)">
+        <path d="M4 30 C 14 32 26 24 28 10" stroke="#5F6C50" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M28 10 C 22 6 10 6 4 14" stroke="#5F6C50" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M7 12 C 14 16 20 20 24 24" stroke="#5F6C50" stroke-width="2" stroke-linecap="round" fill="none"/>
+      </g>
+      <text x="170" y="504" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="15" font-weight="600" fill="#2A2521">Real-time Guidance</text>
+      <line x1="96" y1="580" x2="336" y2="580" stroke="#CFC3AE" stroke-width="1"/>
+      <g transform="translate(203 590) scale(0.8125)">
+        <path d="M16 28C9 28 5 23 5 16c0-5 4-9 11-9s11 4 11 9c0 7-4 12-11 12z" stroke="#B5862E" stroke-width="1.8" fill="none"/>
+        <path d="M16 27V13M16 18c-3-1-5-3-5-6M16 18c3-1 5-3 5-6" stroke="#5F6C50" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+        <circle cx="16" cy="9" r="2.2" fill="#B5862E"/>
+      </g>
+    </g>
+
+    <!-- spine-art authored in local trim coords: 144 x 648 -->
+    <g id="spine-art">
+      <text transform="translate(72 324) rotate(90)" text-anchor="middle" font-family="Bricolage Grotesque, Public Sans, Noto Sans, sans-serif" font-size="18" font-weight="700" fill="#2A2521">SkillSynth</text>
+      <g transform="translate(60 570) scale(0.75)">
+        <path d="M16 28C9 28 5 23 5 16c0-5 4-9 11-9s11 4 11 9c0 7-4 12-11 12z" stroke="#2A2521" stroke-width="1.8" fill="none"/>
+        <path d="M16 27V13M16 18c-3-1-5-3-5-6M16 18c3-1 5-3 5-6" stroke="#2A2521" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+        <circle cx="16" cy="9" r="2.2" fill="#2A2521"/>
+      </g>
+    </g>
+  </defs>
+
+  <!-- white canvas -->
+  <rect x="0" y="0" width="1400" height="700" fill="#FFFFFF"/>
+
+  <!-- back card -->
+  <rect x="12" y="12" width="448" height="664" rx="8" fill="#FFFDF7" stroke="#E4DAC8" stroke-width="1"/>
+  <use href="#back-art" transform="translate(20 20)"/>
+  <text x="236" y="666" text-anchor="middle" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="12" fill="#8A7B6C">BACK</text>
+
+  <!-- front card -->
+  <rect x="472" y="12" width="448" height="664" rx="8" fill="#FFFDF7" stroke="#E4DAC8" stroke-width="1"/>
+  <use href="#front-art" transform="translate(480 20)"/>
+  <text x="696" y="666" text-anchor="middle" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="12" fill="#8A7B6C">FRONT</text>
+
+  <!-- spine card -->
+  <rect x="932" y="12" width="160" height="664" rx="8" fill="#FFFDF7" stroke="#E4DAC8" stroke-width="1"/>
+  <use href="#spine-art" transform="translate(940 20)"/>
+  <text x="1012" y="666" text-anchor="middle" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="12" fill="#8A7B6C">SPINE</text>
+
+</svg>

@@ -30,14 +30,14 @@
     font-family: var(--font-body);
     font-size: 1rem;
     color: var(--ink);
-    background: var(--paper);
+    background: var(--card);
     border: 1px solid var(--line-strong);
     border-radius: var(--radius);
     padding: 0.6rem 0.7rem;
     resize: vertical;
     transition: border-color 0.18s ease, box-shadow 0.18s ease;
   }
-  .ta::placeholder { color: var(--muted); }
+  .ta::placeholder { color: var(--clay); }
   .ta:focus-visible {
     outline: none;
     border-color: var(--ring);

@@ -205,14 +205,14 @@
   .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .grid-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
   .grid-table th, .grid-table td { text-align: start; padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--line); }
-  .grid-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .grid-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--clay); }
   .actions { display: flex; gap: 0.4rem; justify-content: flex-end; }
-  .muted { color: var(--muted); }
+  .muted { color: var(--clay); }
   .small { font-size: 0.82rem; }
-  .hint { font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; }
+  .hint { font-size: 0.8rem; color: var(--clay); margin-top: 0.3rem; }
   .skill-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; max-height: 200px; overflow-y: auto; margin-top: 0.5rem; padding: 0.5rem; border: 1px solid var(--line-strong); border-radius: var(--radius); }
   .pick { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; min-height: 36px; padding: 0.25rem 0.4rem; border-radius: var(--radius); cursor: pointer; }
-  .pick.on { background: var(--accent-soft); color: var(--accent-deep); }
+  .pick.on { background: var(--ochre-soft); color: var(--ochre-deep); }
   .form-err { color: var(--danger); font-size: 0.85rem; margin: 0.2rem 0 0; }
   .warn { color: var(--danger); font-size: 0.9rem; }
   .deps { margin: 0.4rem 0 0; padding-inline-start: 1.1rem; font-size: 0.88rem; color: var(--ink-soft); }

@@ -1,51 +1,58 @@
-/* SkillSynth — "Accessible & Ethical" design system (navy / blue, high-contrast).
-   Hand-authored; no utility framework. Tokens drive every component.
-   Bilingual: Latin = Plus Jakarta Sans, Arabic = Noto Sans Arabic / El Messiri. */
+/* SkillSynth — "Warm Craft" identity (canonical).
+   Tokens mirror brand/identity/palette.css; faces per typography.md.
+   No legacy aliases — components use canonical names only.
+   Bilingual: Latin display Bricolage Grotesque, body Public Sans;
+   Arabic display El Messiri, body Noto Sans Arabic. RTL-first via logical props. */
 
 :root {
   /* Surfaces */
-  --bg: #F8FAFC;
-  --paper: #FFFFFF;        /* card / input surface */
-  --paper-2: #F1F5F9;      /* subtle surface */
-  --ink: #020617;          /* primary text & headings */
-  --ink-soft: #334155;     /* secondary text */
-  --muted: #475569;        /* muted / helper text */
-  --line: #E2E8F0;
-  --line-strong: #CBD5E1;
+  --paper: #FBF6EC;        /* page / canvas background */
+  --paper-2: #F3EDE1;      /* subtle surface / inset */
+  --card: #FFFDF7;         /* elevated card / input surface */
+  --bg: var(--paper);      /* app canvas (semantic) */
 
-  /* Brand / accent */
-  --accent: #0369A1;
-  --accent-deep: #024B73;
-  --accent-soft: #EFF6FB;
-  --ring: #0369A1;
-  --focus-glow: rgba(3, 105, 161, 0.22);
+  /* Text */
+  --ink: #2A2521;          /* primary text & headings */
+  --ink-soft: #4A4238;     /* secondary text */
+  --clay: #8A7B6C;         /* muted / helper text (large sizes only) */
 
-  /* Status */
-  --danger: #DC2626;
-  --danger-deep: #B91C1C;
-  --danger-soft: #FEF2F2;
-  --ok: #15803D;
-  --ok-soft: #ECFDF3;
-  --warn: #B45309;
-  --warn-soft: #FEF3E2;
+  /* Accent — Warm Craft */
+  --ochre: #B5862E;        /* primary accent (display / emphasis) */
+  --ochre-deep: #8A6520;   /* accent text, links, buttons (AA on paper) */
+  --ochre-soft: #F4EBD8;   /* accent surface tint */
 
-  /* Legacy aliases so existing components keep working */
-  --ochre: var(--accent);
-  --ochre-deep: var(--accent-deep);
-  --sage: #64748B;
-  --sage-deep: #334155;
-  --clay: var(--accent);
+  /* Secondary */
+  --sage: #7C8A6B;         /* secondary accent (display / fields) */
+  --sage-deep: #5F6C50;    /* sprout stem + leaves, deep sage type (AA) */
+  --sage-soft: #EDF1E6;    /* secondary surface tint */
+
+  /* Status (warm) */
+  --ok: #5C7A5E;           --ok-deep: #45604A;  --ok-soft: #EAF0E7;
+  --warn: #B45309;         --warn-deep: #8A3E07; --warn-soft: #F9EEE1;
+  --danger: #A23B2E;       --danger-deep: #7C2D22; --danger-soft: #F6E7E4;
+
+  /* Line / hairline */
+  --line: #E4DAC8;
+  --line-strong: #CFC3AE;
+
+  /* Focus */
+  --ring: var(--ochre-deep);
+  --focus-glow: rgba(138, 101, 32, 0.22);
 
   /* Type */
-  --font-display: 'Plus Jakarta Sans', 'El Messiri', ui-sans-serif, system-ui, sans-serif;
-  --font-body: 'Plus Jakarta Sans', 'Noto Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'El Messiri', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Public Sans', 'Noto Sans Arabic', ui-sans-serif, system-ui, sans-serif;
   --font-ar: 'Noto Sans Arabic', 'El Messiri', ui-sans-serif, system-ui, sans-serif;
 
   /* Geometry */
   --radius: 6px;
+  --radius-sm: 4px;
+  --radius-xs: 2px;
   --radius-lg: 12px;
-  --shadow-sm: 0 1px 2px rgba(2, 6, 23, 0.06);
-  --shadow: 0 1px 3px rgba(2, 6, 23, 0.08), 0 1px 2px rgba(2, 6, 23, 0.04);
+  --shadow-sm: 0 1px 2px rgba(42, 37, 33, 0.06);
+  --shadow: 0 1px 3px rgba(42, 37, 33, 0.08), 0 1px 2px rgba(42, 37, 33, 0.04);
+  --hairline: 1px;
+  --stroke-hand: 1.8px;
   --rail-w: 256px;
   --maxw: 1180px;
 
@@ -83,20 +90,20 @@ h1, h2, h3, h4 {
   margin: 0 0 0.4em;
 }
 
-a { color: var(--accent-deep); text-decoration: none; }
+a { color: var(--ochre-deep); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-::selection { background: var(--accent); color: #fff; }
+::selection { background: var(--ochre); color: var(--card); }
 
 /* Layout helpers (logical properties for RTL). */
 .container { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: var(--space-5); }
 .stack { display: flex; flex-direction: column; gap: var(--space-4); }
 .row { display: flex; align-items: center; gap: var(--space-3); }
 .between { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
-.muted { color: var(--muted); }
+.muted { color: var(--clay); }
 .dashed-rule { border: 0; border-block-start: 1px dashed var(--line-strong); margin-block: var(--space-5); }
 
-:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 2px; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: var(--radius-xs); }
 
 * { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 *::-webkit-scrollbar { width: 8px; height: 8px; }
