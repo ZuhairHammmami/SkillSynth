@@ -1,4 +1,5 @@
-<!-- Analytics dashboard. -->
+<!-- Comprehensive analytics dashboard: KPIs, this-week activity, path progress,
+     strengths vs weaknesses, knowledge gaps, and skill mastery. -->
 <script lang="ts">
   import { apiFetch, ApiError } from '$lib/api/client';
   import { query } from '$lib/query';
@@ -8,21 +9,26 @@
   import Button from '$lib/components/ui/Button.svelte';
   import ProgressMeter from '$lib/components/ProgressMeter.svelte';
   import TopSkills from '$lib/components/TopSkills.svelte';
+  import ActivityBarChart from '$lib/components/ActivityBarChart.svelte';
   import Icon from '$lib/icons/Icon.svelte';
   import { error as toastError } from '$lib/components/ui/toast';
   import { t } from '$lib/i18n';
 
   let dash = $state<any>(null);
   let growth = $state<any>(null);
+  let analysis = $state<any>(null);
+  let history = $state<any>(null);
   let loading = $state(true);
   let loadError = $state('');
   async function load() {
     loading = true;
     loadError = '';
     try {
-      [dash, growth] = await Promise.all([
+      [dash, growth, analysis, history] = await Promise.all([
         query(['analyticsDashboard'], () => apiFetch('/analytics/dashboard')),
-        query(['skillGrowth'], () => apiFetch('/analytics/skill-growth'))
+        query(['skillGrowth'], () => apiFetch('/analytics/skill-growth')),
+        query(['skillAnalysis'], () => apiFetch('/learning/analysis')),
+        query(['learningHistory'], () => apiFetch('/analytics/learning-history'))
       ]);
     } catch (e) {
       loadError = e instanceof ApiError ? e.detail : t('analytics.loadError');
@@ -57,21 +63,55 @@
     <Panel title={t('analyticsPage.learningVelocity')}>
       <div class="big">{Math.round(dash?.learning_velocity ?? 0)}<small>{t('units.perWeek')}</small></div>
     </Panel>
+    <Panel title={t('analyticsPage.learningHours')}>
+      <div class="big">{Math.round(dash?.learning_hours ?? 0)}<small>{t('units.hoursShort')}</small></div>
+    </Panel>
   </div>
 
   <div class="grid2">
-    <Panel title={t('analyticsPage.pathsOverview')}>
-      <ul class="kpis">
-        <li><span>{t('dashboardPage.yourPaths')}</span><strong>{dash?.paths_count ?? 0}</strong></li>
-        <li><span>{t('dashboardPage.completed')}</span><strong>{dash?.completed_steps ?? 0}</strong></li>
-        <li><span>{t('dashboardPage.learningHours')}</span><strong>{Math.round(dash?.learning_hours ?? 0)}{t('units.hoursShort')}</strong></li>
+    <Panel title={t('analyticsPage.thisWeek')}>
+      <ActivityBarChart data={history?.daily_activity ?? []} />
+    </Panel>
+    <Panel title={t('analyticsPage.knowledgeGaps')}>
+      {#if growth?.knowledge_gaps?.length}
+        <div class="wrap">{#each growth.knowledge_gaps as g}<Badge tone="warn">{g}</Badge>{/each}</div>
+      {:else}
+        <p class="muted">{t('analyticsPage.noKnowledgeGaps')}</p>
+      {/if}
+    </Panel>
+  </div>
+
+  <Panel title={t('analyticsPage.pathsOverview')}>
+    {#if dash?.path_progress?.length}
+      <ul class="paths">
+        {#each dash.path_progress as p}
+          <li>
+            <div class="phead">
+              <span class="pname">{p.path_title}</span>
+              <span class="pmut">{p.completed_steps}/{p.total_steps} · {p.percentage}%</span>
+            </div>
+            <ProgressMeter value={p.percentage} />
+          </li>
+        {/each}
       </ul>
+    {:else}
+      <p class="muted">{t('analyticsPage.noPaths')}</p>
+    {/if}
+  </Panel>
+
+  <div class="grid2">
+    <Panel title={t('analyticsPage.strengths')}>
+      {#if analysis?.strengths?.length}
+        <div class="wrap">{#each analysis.strengths as s}<Badge tone="ok">{s.skill_name}</Badge>{/each}</div>
+      {:else}
+        <p class="muted">{t('analyticsPage.noStrengths')}</p>
+      {/if}
     </Panel>
     <Panel title={t('analyticsPage.weaknesses')}>
-      {#if dash?.weaknesses?.length}
-        <div class="weak">{#each dash.weaknesses as w}<Badge tone="accent">{w}</Badge>{/each}</div>
+      {#if analysis?.weaknesses?.length}
+        <div class="wrap">{#each analysis.weaknesses as w}<Badge tone="accent">{w.skill_name}</Badge>{/each}</div>
       {:else}
-        <p class="muted">{t('analyticsPage.weaknessNote')}</p>
+        <p class="muted">{t('analyticsPage.noWeaknesses')}</p>
       {/if}
     </Panel>
   </div>
@@ -89,13 +129,15 @@
 
 <style>
   .center-spin { display: flex; justify-content: center; padding: 3rem; }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin-top: 1rem; }
   .big { font-family: var(--font-display); font-size: 2.2rem; color: var(--ochre-deep); line-height: 1; }
   .big small { font-size: 1rem; color: var(--muted); }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
-  .kpis { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
-  .kpis li { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--line); padding-bottom: 0.4rem; }
-  .weak { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .wrap { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .paths { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.9rem; }
+  .phead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.3rem; gap: 1rem; }
+  .pname { font-weight: 600; }
+  .pmut { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
   .err-state { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6rem; color: var(--danger); }
   @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
 </style>

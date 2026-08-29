@@ -770,11 +770,19 @@
     "subtitle": "Insights into your learning journey.",
     "completion": "Completion Rate",
     "masteredSkills": "Mastered Skills",
-    "weaknesses": "Areas to Improve",
     "learningVelocity": "Learning Velocity",
-    "pathsOverview": "Paths Overview",
-    "practiceTest": "Practice Test",
-    "weaknessNote": "Skills with the lowest scores need the most attention."
+    "learningHours": "Learning Hours",
+    "thisWeek": "This Week",
+    "noActivity": "No activity this week yet.",
+    "pathsOverview": "Path Progress",
+    "noPaths": "No learning paths yet.",
+    "strengths": "Strengths",
+    "weaknesses": "Areas to Improve",
+    "noStrengths": "No strengths identified yet.",
+    "noWeaknesses": "No weaknesses identified yet.",
+    "knowledgeGaps": "Knowledge Gaps",
+    "noKnowledgeGaps": "No knowledge gaps — you're on track!",
+    "practiceTest": "Skill Mastery"
   },
   "validation": {
     "passwordsNoMatch": "Passwords do not match"

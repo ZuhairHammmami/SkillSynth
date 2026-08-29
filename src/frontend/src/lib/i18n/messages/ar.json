@@ -770,11 +770,19 @@
     "subtitle": "رؤى حول رحلتك التعليمية.",
     "completion": "معدل الإكمال",
     "masteredSkills": "المهارات المتقنة",
-    "weaknesses": "مجالات تحتاج تحسينًا",
     "learningVelocity": "سرعة التعلّم",
-    "pathsOverview": "نظرة عامة على المسارات",
-    "practiceTest": "اختبار تدريبي",
-    "weaknessNote": "المهارات الأقل درجة تحتاج اهتمامًا أكبر."
+    "learningHours": "ساعات التعلّم",
+    "thisWeek": "هذا الأسبوع",
+    "noActivity": "لا نشاط هذا الأسبوع بعد.",
+    "pathsOverview": "تقدّم المسارات",
+    "noPaths": "لا توجد مسارات تعليمية بعد.",
+    "strengths": "نقاط القوة",
+    "weaknesses": "مجالات تحتاج تحسينًا",
+    "noStrengths": "لم يتم تحديد نقاط قوة بعد.",
+    "noWeaknesses": "لم يتم تحديد نقاط ضعف بعد.",
+    "knowledgeGaps": "الفجوات المعرفية",
+    "noKnowledgeGaps": "لا توجد فجوات معرفية — أنت على المسار الصحيح!",
+    "practiceTest": "إتقان المهارات"
   },
   "validation": {
     "passwordsNoMatch": "كلمتا المرور غير متطابقتين"
