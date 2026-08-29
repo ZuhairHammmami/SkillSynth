@@ -22,8 +22,10 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
-# Node
+# Node / SvelteKit
 node_modules/
+.svelte-kit/
+build/
 .next/
 
 # IDE
@@ -43,7 +45,6 @@ docs/
 # Reports
 PHASE_A/
 PHASE_B/
-*.md
 
 # Tools
 tools/
@@ -53,13 +54,17 @@ tests/
 
 # Scripts (not needed in container)
 start.sh
-seed_v2.py
+seed_v3.py
+seed_v4.py
 
 # Frontend specific (not needed for backend build)
 src/frontend/node_modules/
+src/frontend/.svelte-kit/
+src/frontend/build/
 src/frontend/.next/
-src/frontend/public/
 src/admin-app/node_modules/
+src/admin-app/.svelte-kit/
+src/admin-app/build/
 src/admin-app/.next/
 
 # Migrations source

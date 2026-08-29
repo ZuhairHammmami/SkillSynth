@@ -24,10 +24,10 @@ cd src/frontend && pnpm dev
 cd src/admin-app && pnpm dev
 
 # Seed database
-PYTHONPATH=src python seed_v3.py    # 15-table seed (~1109 rows, FK-gated, idempotent)
+PYTHONPATH=src python seed_v4.py    # 15-table seed (~1109 rows, FK-gated, idempotent)
 
 # Tests
-PYTHONPATH=src python -m pytest tests/ -q    # 199 tests, isolated temp DB
+PYTHONPATH=src python -m pytest tests/ -q    # 305 tests, isolated temp DB
 
 # Optional SS-AI (local LLM; off by default)
 # Model file: src/data/Llama-3.2-3B-Instruct-Q6_K.gguf (working format-following model; see ADR-015)
@@ -37,10 +37,10 @@ AI_ENABLED=true PYTHONPATH=src python run.py
 
 **Verification**  
 ```
-cd src/frontend && pnpm type-check   # tsc --noEmit
-cd src/frontend && pnpm lint         # next lint (zero warnings)
-cd src/frontend && pnpm build        # type-check + next build
-cd src/admin-app && pnpm type-check && pnpm build
+cd src/frontend && pnpm check    # svelte-check (0 errors / 0 warnings)
+cd src/admin-app && pnpm check   # svelte-check
+cd src/frontend && pnpm build    # SvelteKit build (adapter-node)
+cd src/admin-app && pnpm build
 PYTHONPATH=src python -m pytest tests/ -q
 PYTHONPATH=src python tools/verify_schema.py   # prints SCHEMA MATCH on success
 ```
@@ -48,9 +48,9 @@ PYTHONPATH=src python tools/verify_schema.py   # prints SCHEMA MATCH on success
 **Architecture Overview**  
 | Layer | Tech | Location |
 |-------|------|----------|
-| **Backend** | FastAPI + SQLAlchemy (Clean Architecture) | `src/backend/` — 8 layers; 68 operations across 54 paths (8 routers) |
-| **Frontend (student)** | Next.js 14 + React 18 + Tailwind + shadcn/ui | `src/frontend/` :3000 — src/{app,shared,i18n,types} + middleware.ts, bilingual ar/en |
-| **Admin** | Separate Next.js app (English-only) | `src/admin-app/` :3001 — own layout, nav, state |
+| **Backend** | FastAPI + SQLAlchemy (Clean Architecture) | `src/backend/` — 8 layers; 88 operations across 69 paths (8 routers) |
+| **Frontend (student)** | SvelteKit + Svelte 5 + TypeScript (adapter-node) | `src/frontend/` :3000 — src/{lib,routes}, bilingual ar/en, RTL-first |
+| **Admin** | Separate SvelteKit app (English-only) | `src/admin-app/` :3001 — own layout, nav, state |
 | **Database** | SQLite (dev) / PostgreSQL (prod) | `skillsynth.db` — 15 domain tables, strict 3NF (one documented JSON exception); canonical DDL at `src/migrations/003_reduced_schema.sql` |
 | **Documentation** | SS-EDS | `docs/` — 50 live sections (51 numbered slots, 28 retired) + root index |
 
@@ -60,7 +60,7 @@ PYTHONPATH=src python tools/verify_schema.py   # prints SCHEMA MATCH on success
 | **SS-EDS Documentation** | ✅ 50 section dirs with INDEX.md | 00-principles through 51-ai-integration; slot 28 retired with its feature |
 | **Backend Clean Architecture** | ✅ All files <300 lines | 8 layers, 8 routers, 0 circular imports; commands/queries/cache/infrastructure/ removed with the features they served (ADR-013) |
 | **Database 15-table 3NF** | ✅ Canonical DDL + verifier | `src/migrations/003_reduced_schema.sql`, `tools/verify_schema.py` → SCHEMA MATCH (compares tables/columns/PKs/FKs/ON DELETE/uniques) |
-| **Frontend Redesign** | ✅ Linear/Notion style, no gradients/neon | Bilingual ar/en RTL-first, 560 i18n leaf keys parity, error boundaries (`app/error.tsx`, `global-error.tsx`) |
+| **Frontend Redesign** | ✅ Linear/Notion style, no gradients/neon | Bilingual ar/en RTL-first, 709 i18n leaf keys parity, error boundaries (`+error.svelte`, `+layout.svelte`) |
 | **Admin Application** | ✅ Separate app at `src/admin-app` :3001 | Full CRUD dialogs (users/skills/resources/categories/job-roles) incl. PUTs and force-delete flow, change-password functional, Feature Flags page (read-only); roles UI removed |
 | **Localization** | ✅ 100% bilingual AR/EN | 0 hardcoded strings, dynamic RTL/LTR |
 | **Learning Engine** | ✅ Deterministic, topological sort | Prerequisites graph (skill_prerequisites), gap analysis, wizard scoring → user_skills |
@@ -68,7 +68,7 @@ PYTHONPATH=src python tools/verify_schema.py   # prints SCHEMA MATCH on success
 | **Performance** | ✅ Cache, compression | 30s TTL inline cache on `/api/public/stats`; compression middleware |
 | **Security** | ✅ OWASP Top 10 | Rate limiting, CSRF, CSP, HSTS, activity_log audit trail |
 | **Referential Integrity** | ✅ Write-time guards (ADR-014) | FK validation→400 naming bad ref; rename-uniqueness (case-insensitive)→409; category/prerequisite cycle guards→400; restricted deletes skills/categories/job_roles→409 `{"detail":{"message","dependents"}}` unless `?force=true`; IntegrityError→409 safety net in main.py |
-| **QA** | ✅ 199/199 tests passed ×2 | Isolated temp SQLite DB per run; dev DB never touched |
+| **QA** | ✅ 305/305 tests passed ×2 | Isolated temp SQLite DB per run; dev DB never touched |
 
 **Backend Layer Structure (`src/backend/`)**  
 ```
@@ -93,7 +93,7 @@ Note: `mappers/`, `validators/`, `commands/`, `queries/`, `cache/`, `infrastruct
 | **Auth** | JWT Bearer token 24h (stateless; no sessions table), account lockout (5 attempts), binary `is_admin` role gate |
 | **Design system** | No neon, gradients, glassmorphism. Linear/Notion/Stripe style |
 | **Function style** | No function > 40 lines; **every function carries a docstring stating its single purpose and its caller/callee relationships** (user-mandated) |
-| **File size limit** | No file > 300 lines (seed_v3.py is the documented exception — data module) |
+| **File size limit** | No file > 300 lines (seed_v4.py is the documented exception — data module) |
 | **Database** | 15 domain tables, strict 3NF; JSON columns limited to the 4 documented exceptions (assessment_questions.options, path_steps.resource_ids/assessment_ids, activity_log.data) |
 | **Bounded autonomy** | AI proficiency review adjusts −1/0/+1 ONLY at confidence==high, clamped 0..5, audited in activity_log + SSE `proficiency_adjusted`; deterministic scoring/topo-sort never overwritten (ADR-015) |
 
@@ -109,11 +109,13 @@ Note: `mappers/`, `validators/`, `commands/`, `queries/`, `cache/`, `infrastruct
 **API Surface (dev mode)**  
 | Endpoint | Notes |
 |----------|-------|
-| *(total)* | 68 OpenAPI operations across 54 paths (8 routers): Admin 30 ops/19 paths · Paths & Progress 10/8 · Auth 8/7 · Analytics 4/4 · Assessments 3/3 · Learning Engine 4/4 · AI 3/3 · Real-time 2/2 · untagged utility ops 4 (`/`, `/api/events` alias, `/api/public/stats`, `/api/wizard-options`) |
+| *(total)* | 88 OpenAPI operations across 69 paths (8 routers): Admin 37 ops/21 paths · Learning Engine 7/7 · AI + wizard 6/6 · Analytics 5/5 · Catalog browse 5/5 · Paths & Progress 8/6 · Auth 9/8 · Assessments 4/4 · Real-time 4/4 · untagged utility ops 3 (`/`, `/api/public/stats`, `/api/wizard-options`) + `/api/events` SSE alias |
 | `/api/auth/*` | register, token, me (GET/PUT), change-password, forgot/reset (stateless signed token), sse-token, csrf |
 | `/api/generate-path/` + `/api/learning/*` | Path generation (wizard scoring), graph, gaps; `/api/learning/generate` alias |
 | `/api/wizard/analysis` + `/api/ai/*` | Two-phase wizard: PURE analysis before path creation; AI quiz/test/explain behind `AI_ENABLED` gate (503 when off); quizzes ephemeral via SSE, practice tests persist as `[AI] <Skill> — adaptive` (ADR-015) |
 | `/api/paths/` + `/api/steps/*` | Path CRUD, step complete/undo, progress dashboard |
+| `/api/catalog/skills/{id}` + `/api/catalog/roles` | Learner catalog: skill detail with prerequisite/recommended strips; lean role list |
+| `/api/generate-path/skill/{id}` | Per-skill path generation (reuses prerequisite topo-sort); duplicate/mastered → 409 |
 | `/api/assessments/*` | Questions per skill and per role (`/api/assessments/role/{job_role_title}`), submit → results + user_skills |
 | `/api/analytics/*` | dashboard (incl. mastered_skills, learning_velocity), skill-growth, path-progress, learning-history |
 | `/api/admin/*` | Users/skills/categories/resources/job-roles CRUD (GET/POST/PUT/DELETE; skills/categories/job-roles deletes restricted → 409 unless `?force=true`) + assessments list/delete + events feed + reports/aggregated + system-health + backups + db-inspector + feature flags |

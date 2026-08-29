@@ -1,0 +1,16 @@
+# SvelteKit build outputs (rebuilt in image)
+node_modules/
+.svelte-kit/
+build/
+.dev/
+# Env / secrets are supplied at runtime
+.env
+.env.local
+.env.*.local
+# VCS / CI
+.git/
+.gitignore
+# Tests/docs not needed in image
+tests/
+docs/
+src/data/

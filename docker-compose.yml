@@ -1,9 +1,12 @@
 # ============================================================================
 # SkillSynth — Docker Compose
 # ============================================================================
-# Start all services: docker compose up -d
+# Start all services: docker compose up -d --build
 # Stop all services:  docker compose down
 # View logs:          docker compose logs -f
+#
+# Defaults to a SQLite-backed local stack (MODE=dev). For PostgreSQL/Supabase
+# production, set MODE=prod and DATABASE_URL in .env.
 # ============================================================================
 
 services:
@@ -15,19 +18,21 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - MODE=prod
+      # SQLite dev stack by default; set MODE=prod + DATABASE_URL in .env for Postgres.
+      - MODE=${MODE:-dev}
       - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
       - DATABASE_URL=${DATABASE_URL:-}
+      - DB_PATH=${DB_PATH:-/app/data/skillsynth.db}
       - SENDGRID_API_KEY=${SENDGRID_API_KEY:-}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@skillsynth.io}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
     env_file:
       - .env
     volumes:
+      # Directory-level volume so SQLite WAL/journal files (-wal/-shm) persist too.
       - skillsynth-data:/app/data
-      - ./skillsynth.db:/app/skillsynth.db
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/').status==200 else 1)"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -40,11 +45,11 @@ services:
     build:
       context: src/frontend
       dockerfile: Dockerfile
+      args:
+        PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:-http://localhost:8000/api}
     container_name: skillsynth-frontend
     ports:
       - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
     depends_on:
       backend:
         condition: service_healthy
@@ -56,11 +61,11 @@ services:
     build:
       context: src/admin-app
       dockerfile: Dockerfile
+      args:
+        PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:-http://localhost:8000/api}
     container_name: skillsynth-admin
     ports:
       - "3001:3001"
-    environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
     depends_on:
       backend:
         condition: service_healthy

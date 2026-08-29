@@ -1,5 +1,5 @@
 # ============================================================================
-# SkillSynth Frontend — SvelteKit adapter-node Dockerfile
+# SkillSynth Admin — SvelteKit adapter-node Dockerfile
 # ============================================================================
 
 # --- Stage 1: Dependencies ---
@@ -43,9 +43,9 @@ COPY --from=builder /app/node_modules ./node_modules
 
 USER nodejs
 
-ENV PORT=3000
+ENV PORT=3001
 ENV HOST=0.0.0.0
 
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["node", "build"]

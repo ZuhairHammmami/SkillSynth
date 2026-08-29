@@ -22,8 +22,10 @@ if APP_MODE == "prod" and DATABASE_URL_PROD:
         echo=False,
     )
 else:
-    PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    DB_PATH = os.path.join(PROJECT_ROOT, "skillsynth.db")
+    DB_PATH = os.getenv("DB_PATH") or os.path.join(
+        os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')),
+        "skillsynth.db",
+    )
     SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH}"
     engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 
