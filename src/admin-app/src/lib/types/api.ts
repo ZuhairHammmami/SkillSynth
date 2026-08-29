@@ -120,12 +120,28 @@ export interface JobRole {
   career_field?: string;
   skill_ids?: number[];
 }
+export interface AdminAssessmentQuestion {
+  id: number;
+  assessment_id?: number;
+  position?: number;
+  prompt: string;
+  options?: string[];
+  correct_index?: number;
+  [key: string]: any;
+}
 export interface Assessment {
   id: number;
   title: string;
-  type?: string;
+  skill_id?: number | null;
+  skill_name?: string | null;
+  description?: string | null;
+  assessment_type?: string | null;
   passing_score?: number;
+  question_count?: number;
+  questions?: AdminAssessmentQuestion[];
+  type?: string;
   time_limit?: number;
+  [key: string]: any;
 }
 export interface EventLog {
   id: number;

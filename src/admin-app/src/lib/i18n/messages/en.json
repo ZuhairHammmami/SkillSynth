@@ -519,7 +519,8 @@
     "hoursCount": "{count}h",
     "completePercent": "{pct}% complete",
     "stepProgress": "{completed}/{total}",
-    "continue": "Continue"
+    "continue": "Continue",
+    "errorLoading": "Failed to load your learning path."
   },
   "pathDetailPage": {
     "notFound": "Path not found.",
@@ -561,7 +562,9 @@
     "signingIn": "Signing in...",
     "noAccount": "Don't have an account?",
     "createOne": "Create one",
-    "errorLoginFailed": "Login failed. Please try again."
+    "errorLoginFailed": "Login failed. Please try again.",
+    "success": "Signed in successfully",
+    "forgot": "Forgot password?"
   },
   "registerPage": {
     "title": "Create your account",
@@ -578,7 +581,8 @@
     "create": "Create account",
     "hasAccount": "Already have an account?",
     "signIn": "Sign in",
-    "errorFailed": "Registration failed. Please try again."
+    "errorFailed": "Registration failed. Please try again.",
+    "success": "Account created. Please sign in."
   },
   "forgotPasswordPage": {
     "title": "Forgot password?",
@@ -591,7 +595,10 @@
     "checkEmailTitle": "Check your email",
     "checkEmailDesc": "If an account with that email exists, we've sent a password reset link.",
     "devResetNote": "Dev mode: no email is sent. Use this link to reset your password (valid 30 min):",
-    "devResetLink": "Open reset link"
+    "devResetLink": "Open reset link",
+    "success": "If that account exists, a reset link is on its way.",
+    "devLink": "Use dev reset link",
+    "back": "Back to login"
   },
   "resetPasswordPage": {
     "title": "Set new password",
@@ -606,7 +613,9 @@
     "invalidTitle": "Invalid link",
     "invalidDesc": "This reset link is invalid or has expired.",
     "requestNew": "Request a new link",
-    "errorFailed": "Reset failed. Please try again."
+    "errorFailed": "Reset failed. Please try again.",
+    "success": "Password updated. Please sign in.",
+    "badToken": "This reset link is invalid or expired."
   },
   "dashboardPage": {
     "title": "Dashboard",
@@ -627,7 +636,9 @@
     "completed": "completed",
     "noPaths": "No learning paths yet.",
     "level": "Level",
-    "createFirstPath": "Create your first path"
+    "createFirstPath": "Create your first path",
+    "errorTitle": "Something went wrong",
+    "errorDesc": "We couldn't load this view. Please try again."
   },
   "adminDashboard": {
     "title": "Admin Dashboard",
@@ -669,5 +680,249 @@
     "noWeaknesses": "No weaknesses detected yet",
     "analysisFailed": "Analysis failed",
     "close": "Close"
+  },
+  "validation": {
+    "passwordsNoMatch": "Passwords do not match"
+  },
+  "forgotPasswordForm": {
+    "email": "Email",
+    "submit": "Send reset link"
+  },
+  "resetPasswordForm": {
+    "password": "New password",
+    "submit": "Update password"
+  },
+  "admin": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "categories": "Categories",
+      "skills": "Skills",
+      "resources": "Resources",
+      "jobRoles": "Job Roles",
+      "assessments": "Assessments",
+      "paths": "Paths",
+      "reports": "Reports",
+      "systemHealth": "System Health",
+      "settings": "Settings",
+      "auditLogs": "Audit Logs",
+      "backups": "Backups",
+      "dbInspector": "DB Inspector",
+      "featureFlags": "Feature Flags"
+    },
+    "common": {
+      "id": "ID",
+      "name": "Name",
+      "email": "Email",
+      "title": "Title",
+      "admin": "Admin",
+      "administrator": "Administrator",
+      "yes": "Yes",
+      "no": "No",
+      "add": "Add",
+      "forceDelete": "Force delete",
+      "saved": "Saved",
+      "deleted": "Deleted",
+      "saveFailed": "Save failed",
+      "deleteFailed": "Delete failed",
+      "failedLoad": "Failed to load {entity}",
+      "noResults": "No results found",
+      "noActivity": "No recent activity.",
+      "confirmForce": "This {entity} still has related records. Force delete to remove them:",
+      "deleteConfirm": "Delete {name}? This cannot be undone.",
+      "completed": "Completed",
+      "inProgress": "In progress",
+      "event": "event",
+      "readOnly": "{key} (read-only)",
+      "databaseStatus": "Database status",
+      "apiVersion": "API version",
+      "totalUsers": "Total users",
+      "totalPaths": "Total paths",
+      "totalAssessments": "Total assessments",
+      "owner": "Owner",
+      "created": "Created",
+      "file": "File",
+      "size": "Size",
+      "download": "Download",
+      "type": "Type",
+      "language": "Language",
+      "skill": "Skill",
+      "parent": "Parent",
+      "description": "Description",
+      "difficulty": "Difficulty",
+      "hours": "Hours",
+      "category": "Category",
+      "passing": "Passing",
+      "tables": "Tables",
+      "rowsLabel": "Rows",
+      "columns": "Columns",
+      "table": "Table",
+      "refresh": "Refresh",
+      "switchLanguage": "Switch language",
+      "loginFailed": "Login failed",
+      "password": "Password",
+      "checkFields": "Please fix the highlighted fields."
+    },
+    "users": {
+      "title": "Users",
+      "panel": "Platform users",
+      "add": "Add user",
+      "edit": "Edit user",
+      "delete": "Delete user",
+      "empty": "No users yet.",
+      "fullName": "Full name",
+      "passwordEdit": "Password (leave blank to keep)",
+      "grantAdmin": "Grant admin access"
+    },
+    "categories": {
+      "title": "Categories",
+      "panel": "Skill categories",
+      "add": "Add category",
+      "edit": "Edit category",
+      "delete": "Delete category",
+      "empty": "No categories yet."
+    },
+    "skills": {
+      "title": "Skills",
+      "panel": "Skill catalog",
+      "add": "Add skill",
+      "edit": "Edit skill",
+      "delete": "Delete skill",
+      "empty": "No skills yet.",
+      "difficultyLabel": "Difficulty (1-10)",
+      "estHours": "Est. hours",
+      "icon": "Icon",
+      "color": "Color",
+      "category": "Category"
+    },
+    "resources": {
+      "title": "Resources",
+      "panel": "Learning resources",
+      "add": "Add resource",
+      "edit": "Edit resource",
+      "delete": "Delete resource",
+      "empty": "No resources yet.",
+      "fieldTitle": "Title",
+      "url": "URL",
+      "type": "Type",
+      "language": "Language",
+      "author": "Author / Platform",
+      "linkedSkill": "Linked skill",
+      "free": "Free",
+      "official": "Official"
+    },
+    "jobRoles": {
+      "title": "Job Roles",
+      "panel": "Career roles",
+      "add": "Add job role",
+      "edit": "Edit job role",
+      "delete": "Delete job role",
+      "empty": "No job roles yet.",
+      "careerField": "Career field",
+      "description": "Description",
+      "skillIds": "Skill IDs (comma-separated)",
+      "available": "Available: {skills}",
+      "searchSkills": "Search skills",
+      "noSkills": "No skills match your search.",
+      "selected": "{count} skills selected"
+    },
+    "assessments": {
+      "title": "Assessments",
+      "panel": "Assessment catalog",
+      "add": "Add assessment",
+      "edit": "Edit assessment",
+      "delete": "Delete assessment",
+      "deleteConfirm": "Delete assessment #{id}? This cannot be undone.",
+      "empty": "No assessments.",
+      "deleted": "Assessment deleted",
+      "skillLabel": "Skill (optional)",
+      "titleField": "Title",
+      "typeField": "Type",
+      "passingScore": "Passing score (0-100)",
+      "questionCount": "{n} questions",
+      "questions": "Questions",
+      "questionsTitle": "Questions for assessment #{id}",
+      "addQuestion": "Add question",
+      "editQuestion": "Edit question",
+      "deleteQuestion": "Delete question",
+      "deleteQuestionConfirm": "Delete question #{id}? This cannot be undone.",
+      "prompt": "Prompt",
+      "options": "Options (one per line)",
+      "correctIndex": "Correct option index (0-based)",
+      "positionLabel": "Position",
+      "noQuestions": "No questions yet.",
+      "reorderHint": "Reorder with the up/down buttons."
+    },
+    "paths": {
+      "title": "Paths",
+      "empty": "No paths."
+    },
+    "health": {
+      "title": "System Health",
+      "databaseConnected": "Connected",
+      "databaseDown": "Unavailable",
+      "details": "Details"
+    },
+    "settings": {
+      "title": "Settings",
+      "language": "Language",
+      "account": "Account"
+    },
+    "reports": {
+      "aggregated": "Aggregated",
+      "systemHealth": "System health",
+      "serviceStatus": "Service status",
+      "hoursLearned": "Total hours learned",
+      "avgCompletion": "Avg completion rate",
+      "assessmentAttempts": "Assessment attempts",
+      "avgScore": "Avg assessment score",
+      "mostActive": "Most active users",
+      "steps": "{n} steps",
+      "platformWide": "Platform-wide metrics",
+      "title": "Reports"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "platformOverview": "Platform overview",
+      "aggregatedMetrics": "Aggregated metrics",
+      "systemHealth": "System health",
+      "serviceStatus": "Service status",
+      "activity": "Activity",
+      "liveStream": "Live event stream",
+      "noActivity": "No recent activity."
+    },
+    "auditLogs": {
+      "title": "Audit Logs",
+      "activityLog": "Activity log",
+      "subtitle": "Chronological audit trail",
+      "noActivity": "No activity recorded."
+    },
+    "backups": {
+      "title": "Backups",
+      "snapshotHint": "Database snapshots of skillsynth.db.",
+      "create": "Create backup",
+      "empty": "No backups yet.",
+      "created": "Backup created"
+    },
+    "dbInspector": {
+      "title": "DB Inspector",
+      "summary": "{database} — {count} tables · {size} · integrity {integrity}",
+      "ok": "OK",
+      "fail": "FAIL",
+      "empty": "No tables."
+    },
+    "flags": {
+      "title": "Feature flags",
+      "subtitle": "System configuration",
+      "on": "On",
+      "off": "Off",
+      "updated": "Feature flag updated",
+      "toggle": "Toggle {key}"
+    },
+    "login": {
+      "subtitle": "Operational console for the Adaptive Learning OS.",
+      "signIn": "Sign in",
+      "welcome": "Welcome back"
+    }
   }
 }

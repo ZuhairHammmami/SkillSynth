@@ -94,7 +94,9 @@
     "signingIn": "جارٍ تسجيل الدخول...",
     "noAccount": "ليس لديك حساب؟",
     "createOne": "إنشاء حساب",
-    "errorLoginFailed": "فشل تسجيل الدخول. حاول مرة أخرى."
+    "errorLoginFailed": "فشل تسجيل الدخول. حاول مرة أخرى.",
+    "success": "تم تسجيل الدخول بنجاح",
+    "forgot": "نسيت كلمة المرور؟"
   },
   "registerPage": {
     "title": "أنشئ حسابك",
@@ -111,7 +113,8 @@
     "create": "إنشاء حساب",
     "hasAccount": "لديك حساب بالفعل؟",
     "signIn": "تسجيل الدخول",
-    "errorFailed": "فشل التسجيل. حاول مرة أخرى."
+    "errorFailed": "فشل التسجيل. حاول مرة أخرى.",
+    "success": "تم إنشاء الحساب. سجّل الدخول."
   },
   "forgotPasswordPage": {
     "title": "نسيت كلمة المرور؟",
@@ -124,7 +127,10 @@
     "checkEmailTitle": "تحقق من بريدك الإلكتروني",
     "checkEmailDesc": "إذا كان هناك حساب بهذا البريد الإلكتروني، لقد أرسلنا رابط إعادة تعيين كلمة المرور.",
     "devResetNote": "وضع التطوير: لا يتم إرسال بريد إلكتروني. استخدم هذا الرابط لإعادة تعيين كلمة المرور (صالح لمدة 30 دقيقة):",
-    "devResetLink": "فتح رابط إعادة التعيين"
+    "devResetLink": "فتح رابط إعادة التعيين",
+    "success": "إذا كان الحساب موجودًا، فقد أُرسل رابط إعادة التعيين.",
+    "devLink": "استخدام رابط المطوّر",
+    "back": "العودة إلى تسجيل الدخول"
   },
   "resetPasswordPage": {
     "title": "تعيين كلمة مرور جديدة",
@@ -139,7 +145,9 @@
     "invalidTitle": "رابط غير صالح",
     "invalidDesc": "رابط إعادة التعيين غير صالح أو منتهي الصلاحية.",
     "requestNew": "طلب رابط جديد",
-    "errorFailed": "فشلت إعادة التعيين. حاول مرة أخرى."
+    "errorFailed": "فشلت إعادة التعيين. حاول مرة أخرى.",
+    "success": "تم تحديث كلمة المرور. سجّل الدخول.",
+    "badToken": "رابط إعادة التعيين غير صالح أو منتهٍ."
   },
   "studentLayout": {
     "dashboard": "لوحة التحكم",
@@ -168,7 +176,9 @@
     "completed": "مكتمل",
     "noPaths": "لا توجد مسارات تعلم بعد.",
     "createFirstPath": "أنشئ مسارك الأول",
-    "level": "المستوى"
+    "level": "المستوى",
+    "errorTitle": "حدث خطأ ما",
+    "errorDesc": "تعذّر تحميل هذه الصفحة. حاول مرة أخرى."
   },
   "adminDashboard": {
     "title": "لوحة الإدارة",
@@ -343,7 +353,8 @@
     "stepProgress": "{completed}/{total}",
     "stepsCount": "{count} خطوات",
     "subtitle": "رحلاتك التعليمية المخصصة.",
-    "title": "مساراتي التعليمية"
+    "title": "مساراتي التعليمية",
+    "errorLoading": "تعذّر تحميل مسار التعلّم."
   },
   "loginForm": {
     "createAccount": "إنشاء حساب",
@@ -669,5 +680,249 @@
     "noWeaknesses": "لا توجد نقاط ضعف مكتشفة بعد",
     "analysisFailed": "فشل التحليل",
     "close": "إغلاق"
+  },
+  "validation": {
+    "passwordsNoMatch": "كلمتا المرور غير متطابقتين"
+  },
+  "forgotPasswordForm": {
+    "email": "البريد الإلكتروني",
+    "submit": "إرسال رابط إعادة التعيين"
+  },
+  "resetPasswordForm": {
+    "password": "كلمة المرور الجديدة",
+    "submit": "تحديث كلمة المرور"
+  },
+  "admin": {
+    "nav": {
+      "dashboard": "لوحة التحكم",
+      "users": "المستخدمون",
+      "categories": "الفئات",
+      "skills": "المهارات",
+      "resources": "المصادر",
+      "jobRoles": "الوظائف",
+      "assessments": "التقييمات",
+      "paths": "المسارات",
+      "reports": "التقارير",
+      "systemHealth": "صحة النظام",
+      "settings": "الإعدادات",
+      "auditLogs": "سجلات التدقيق",
+      "backups": "النسخ الاحتياطية",
+      "dbInspector": "فاحص قاعدة البيانات",
+      "featureFlags": "ميزات النظام"
+    },
+    "common": {
+      "id": "المعرف",
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "title": "العنوان",
+      "admin": "مسؤول",
+      "administrator": "مسؤول النظام",
+      "yes": "نعم",
+      "no": "لا",
+      "add": "إضافة",
+      "forceDelete": "حذف إجباري",
+      "saved": "تم الحفظ",
+      "deleted": "تم الحذف",
+      "saveFailed": "فشل الحفظ",
+      "deleteFailed": "فشل الحذف",
+      "failedLoad": "تعذر تحميل {entity}",
+      "noResults": "لا توجد نتائج",
+      "noActivity": "لا يوجد نشاط حديث.",
+      "confirmForce": "لا يزال لهذا {entity} سجلات مرتبطة. الحذف الإجباري سيزيلها:",
+      "deleteConfirm": "حذف {name}؟ لا يمكن التراجع.",
+      "completed": "مكتمل",
+      "inProgress": "قيد التقدم",
+      "event": "حدث",
+      "readOnly": "{key} (للقراءة فقط)",
+      "databaseStatus": "حالة قاعدة البيانات",
+      "apiVersion": "إصدار الواجهة",
+      "totalUsers": "إجمالي المستخدمين",
+      "totalPaths": "إجمالي المسارات",
+      "totalAssessments": "إجمالي التقييمات",
+      "owner": "المالك",
+      "created": "أُنشئ",
+      "file": "الملف",
+      "size": "الحجم",
+      "download": "تنزيل",
+      "type": "النوع",
+      "language": "اللغة",
+      "skill": "المهارة",
+      "parent": "الأصل",
+      "description": "الوصف",
+      "difficulty": "الصعوبة",
+      "hours": "الساعات",
+      "category": "الفئة",
+      "passing": "النجاح",
+      "tables": "الجداول",
+      "rowsLabel": "الصفوف",
+      "columns": "الأعمدة",
+      "table": "الجدول",
+      "refresh": "تحديث",
+      "switchLanguage": "تبديل اللغة",
+      "loginFailed": "فشل تسجيل الدخول",
+      "password": "كلمة المرور",
+      "checkFields": "يرجى تصحيح الحقول المميزة."
+    },
+    "users": {
+      "title": "المستخدمون",
+      "panel": "مستخدمو المنصة",
+      "add": "إضافة مستخدم",
+      "edit": "تعديل مستخدم",
+      "delete": "حذف مستخدم",
+      "empty": "لا يوجد مستخدمون بعد.",
+      "fullName": "الاسم الكامل",
+      "passwordEdit": "كلمة المرور (اتركها فارغة للإبقاء)",
+      "grantAdmin": "منح صلاحية المسؤول"
+    },
+    "categories": {
+      "title": "الفئات",
+      "panel": "فئات المهارات",
+      "add": "إضافة فئة",
+      "edit": "تعديل فئة",
+      "delete": "حذف فئة",
+      "empty": "لا توجد فئات بعد."
+    },
+    "skills": {
+      "title": "المهارات",
+      "panel": "كتالوج المهارات",
+      "add": "إضافة مهارة",
+      "edit": "تعديل مهارة",
+      "delete": "حذف مهارة",
+      "empty": "لا توجد مهارات بعد.",
+      "difficultyLabel": "الصعوبة (1-10)",
+      "estHours": "الساعات التقديرية",
+      "icon": "الأيقونة",
+      "color": "اللون",
+      "category": "الفئة"
+    },
+    "resources": {
+      "title": "المصادر",
+      "panel": "مصادر التعلم",
+      "add": "إضافة مصدر",
+      "edit": "تعديل مصدر",
+      "delete": "حذف مصدر",
+      "empty": "لا توجد مصادر بعد.",
+      "fieldTitle": "العنوان",
+      "url": "الرابط",
+      "type": "النوع",
+      "language": "اللغة",
+      "author": "المؤلف / المنصة",
+      "linkedSkill": "المهارة المرتبطة",
+      "free": "مجاني",
+      "official": "رسمي"
+    },
+    "jobRoles": {
+      "title": "الوظائف",
+      "panel": "الوظائف المهنية",
+      "add": "إضافة وظيفة",
+      "edit": "تعديل وظيفة",
+      "delete": "حذف وظيفة",
+      "empty": "لا توجد وظائف بعد.",
+      "careerField": "المجال المهني",
+      "description": "الوصف",
+      "skillIds": "معرفات المهارات (مفصولة بفواصل)",
+      "available": "متاح: {skills}",
+      "searchSkills": "ابحث عن المهارات",
+      "noSkills": "لا توجد مهارات مطابقة لبحثك.",
+      "selected": "تم تحديد {count} مهارة"
+    },
+    "assessments": {
+      "title": "التقييمات",
+      "panel": "كتالوج التقييمات",
+      "add": "إضافة تقييم",
+      "edit": "تعديل تقييم",
+      "delete": "حذف تقييم",
+      "deleteConfirm": "حذف التقييم #{id}؟ لا يمكن التراجع.",
+      "empty": "لا توجد تقييمات.",
+      "deleted": "تم حذف التقييم",
+      "skillLabel": "المهارة (اختياري)",
+      "titleField": "العنوان",
+      "typeField": "النوع",
+      "passingScore": "درجة النجاح (0-100)",
+      "questionCount": "{n} سؤال",
+      "questions": "الأسئلة",
+      "questionsTitle": "أسئلة التقييم #{id}",
+      "addQuestion": "إضافة سؤال",
+      "editQuestion": "تعديل سؤال",
+      "deleteQuestion": "حذف سؤال",
+      "deleteQuestionConfirm": "حذف السؤال #{id}؟ لا يمكن التراجع.",
+      "prompt": "النص",
+      "options": "الخيارات (خيار لكل سطر)",
+      "correctIndex": "فهرس الإجابة الصحيحة (يبدأ من 0)",
+      "positionLabel": "الترتيب",
+      "noQuestions": "لا توجد أسئلة بعد.",
+      "reorderHint": "أعد الترتيب بزرّي الأعلى/الأسفل."
+    },
+    "paths": {
+      "title": "المسارات",
+      "empty": "لا توجد مسارات."
+    },
+    "health": {
+      "title": "صحة النظام",
+      "databaseConnected": "متصل",
+      "databaseDown": "غير متاح",
+      "details": "التفاصيل"
+    },
+    "settings": {
+      "title": "الإعدادات",
+      "language": "اللغة",
+      "account": "الحساب"
+    },
+    "reports": {
+      "aggregated": "مجمّع",
+      "systemHealth": "صحة النظام",
+      "serviceStatus": "حالة الخدمة",
+      "hoursLearned": "إجمالي الساعات المكتسبة",
+      "avgCompletion": "متوسط معدل الإكمال",
+      "assessmentAttempts": "محاولات التقييم",
+      "avgScore": "متوسط درجات التقييم",
+      "mostActive": "الأكثر نشاطاً",
+      "steps": "{n} خطوة",
+      "platformWide": "مقاييس على نطاق المنصة",
+      "title": "التقارير"
+    },
+    "dashboard": {
+      "title": "لوحة التحكم",
+      "platformOverview": "نظرة عامة على المنصة",
+      "aggregatedMetrics": "مقاييس مجمّعة",
+      "systemHealth": "صحة النظام",
+      "serviceStatus": "حالة الخدمة",
+      "activity": "النشاط",
+      "liveStream": "بث الأحداث المباشر",
+      "noActivity": "لا يوجد نشاط حديث."
+    },
+    "auditLogs": {
+      "title": "سجلات التدقيق",
+      "activityLog": "سجل النشاط",
+      "subtitle": "سجل تدقيق زمني",
+      "noActivity": "لا يوجد نشاط مسجل."
+    },
+    "backups": {
+      "title": "النسخ الاحتياطية",
+      "snapshotHint": "لقاحات قاعدة البيانات من skillsynth.db.",
+      "create": "إنشاء نسخة احتياطية",
+      "empty": "لا توجد نسخ احتياطية بعد.",
+      "created": "تم إنشاء النسخة الاحتياطية"
+    },
+    "dbInspector": {
+      "title": "فاحص قاعدة البيانات",
+      "summary": "{database} — {count} جدول · {size} · السلامة {integrity}",
+      "ok": "سليمة",
+      "fail": "معطوبة",
+      "empty": "لا توجد جداول."
+    },
+    "flags": {
+      "title": "ميزات النظام",
+      "subtitle": "إعدادات النظام",
+      "on": "مفعّل",
+      "off": "معطّل",
+      "updated": "تم تحديث الميزة",
+      "toggle": "تبديل {key}"
+    },
+    "login": {
+      "subtitle": "وحدة التحكم التشغيلية لنظام التعلّم التكيفي.",
+      "signIn": "تسجيل الدخول",
+      "welcome": "مرحباً بعودتك"
+    }
   }
 }
