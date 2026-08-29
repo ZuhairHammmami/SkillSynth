@@ -7,10 +7,14 @@
   import { error as toastError, success } from '$lib/components/ui/toast';
   import { t } from '$lib/i18n';
   import { ApiError } from '$lib/api/client';
+  import { email as validateEmail } from '$lib/validation';
 
   let email = $state('');
   let loading = $state(false);
   let devLink = $state('');
+
+  const emailKey = $derived(email.trim() ? validateEmail(email) : null);
+  const emailValid = $derived(validateEmail(email) === null);
 
   async function submit(e: Event) {
     e.preventDefault();
@@ -30,8 +34,8 @@
 <form class="card" onsubmit={submit}>
   <h1>{t('forgotPasswordPage.title')}</h1>
   <p class="muted">{t('forgotPasswordPage.subtitle')}</p>
-  <Input label={t('forgotPasswordForm.email')} type="email" bind:value={email} required />
-  <Button type="submit" {loading} disabled={loading || !email}>{t('forgotPasswordForm.submit')}</Button>
+  <Input label={t('forgotPasswordForm.email')} type="email" bind:value={email} required error={emailKey ? t(emailKey) : ''} />
+  <Button type="submit" {loading} disabled={loading || !emailValid}>{t('forgotPasswordForm.submit')}</Button>
   {#if devLink}
     <p class="dev"><a href={devLink}>{t('forgotPasswordPage.devLink')}</a></p>
   {/if}

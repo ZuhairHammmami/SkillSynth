@@ -5,9 +5,9 @@
   import Panel from '$lib/components/ui/Panel.svelte';
   import Button from '$lib/components/ui/Button.svelte';
   import Input from '$lib/components/ui/Input.svelte';
-  import Field from '$lib/components/ui/Field.svelte';
   import { success, error as toastError } from '$lib/components/ui/toast';
   import { t } from '$lib/i18n';
+  import { name as validateName, email as validateEmail, password as validatePassword } from '$lib/validation';
 
   let name = $state($authStore.user?.full_name ?? '');
   let email = $state($authStore.user?.email ?? '');
@@ -18,27 +18,39 @@
   let confirm = $state('');
   let savingPw = $state(false);
 
+  const nameKey = $derived(name.trim() ? validateName(name) : null);
+  const emailKey = $derived(email.trim() ? validateEmail(email) : null);
+  const profileValid = $derived(validateName(name) === null && validateEmail(email) === null);
+
+  const curValid = $derived(cur.trim() !== '');
+  const newValid = $derived(validatePassword(next) === null);
+  const confirmKey = $derived(
+    confirm ? (confirm !== next ? 'validation.passwordsNoMatch' : null) : null
+  );
+  const confirmValid = $derived(next === confirm && confirm !== '');
+  const pwValid = $derived(curValid && newValid && confirmValid);
+
   async function saveProfile() {
     savingProfile = true;
     try {
       await updateProfile({ full_name: name, email });
-      success('Profile saved');
+      success(t('updateProfile.updateSuccess'));
     } catch (e) {
-      toastError(e instanceof ApiError ? e.detail : 'Save failed');
+      toastError(e instanceof ApiError ? e.detail : t('updateProfile.updateError'));
     } finally {
       savingProfile = false;
     }
   }
 
   async function savePassword() {
-    if (next !== confirm) { toastError('Passwords do not match'); return; }
+    if (!pwValid) return;
     savingPw = true;
     try {
       await changePassword(cur, next);
       cur = next = confirm = '';
-      success('Password updated');
+      success(t('updateProfile.updateSuccess'));
     } catch (e) {
-      toastError(e instanceof ApiError ? e.detail : 'Update failed');
+      toastError(e instanceof ApiError ? e.detail : t('updateProfile.updateError'));
     } finally {
       savingPw = false;
     }
@@ -49,30 +61,25 @@
 <p class="muted">{t('profilePage.subtitle')}</p>
 
 <Panel>
-  <Field label={t('profilePage.name')}>
-    <Input bind:value={name} />
-  </Field>
-  <Field label={t('profilePage.email')}>
-    <Input type="email" bind:value={email} />
-  </Field>
-  <Button onclick={saveProfile} disabled={savingProfile}>{t('common.save')}</Button>
+  <div class="stack">
+    <Input label={t('profilePage.name')} bind:value={name} error={nameKey ? t(nameKey) : ''} />
+    <Input label={t('profilePage.email')} type="email" bind:value={email} error={emailKey ? t(emailKey) : ''} />
+    <Button onclick={saveProfile} disabled={!profileValid || savingProfile}>{t('common.save')}</Button>
+  </div>
 </Panel>
 
 <Panel>
   <h3>{t('profilePage.changePassword')}</h3>
-  <Field label={t('profilePage.currentPassword')}>
-    <Input type="password" bind:value={cur} />
-  </Field>
-  <Field label={t('profilePage.newPassword')}>
-    <Input type="password" bind:value={next} />
-  </Field>
-  <Field label={t('profilePage.confirmPassword')}>
-    <Input type="password" bind:value={confirm} />
-  </Field>
-  <Button onclick={savePassword} disabled={savingPw}>{t('common.save')}</Button>
+  <div class="stack">
+    <Input label={t('profilePage.currentPassword')} type="password" bind:value={cur} />
+    <Input label={t('profilePage.newPassword')} type="password" bind:value={next} hint={t('registerForm.passwordHint')} />
+    <Input label={t('profilePage.confirmPassword')} type="password" bind:value={confirm} error={confirmKey ? t(confirmKey) : ''} />
+    <Button onclick={savePassword} disabled={!pwValid || savingPw}>{t('common.save')}</Button>
+  </div>
 </Panel>
 
 <style>
   h1 { margin-bottom: 0.2rem; }
   h3 { margin-top: 0; }
+  .stack { display: flex; flex-direction: column; gap: 1rem; }
 </style>

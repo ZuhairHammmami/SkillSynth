@@ -7,11 +7,20 @@
   import { error as toastError, success } from '$lib/components/ui/toast';
   import { t } from '$lib/i18n';
   import { ApiError } from '$lib/api/client';
+  import { name as validateName, email as validateEmail, password as validatePassword } from '$lib/validation';
 
   let fullName = $state('');
   let email = $state('');
   let password = $state('');
   let loading = $state(false);
+
+  const nameKey = $derived(fullName.trim() ? validateName(fullName) : null);
+  const emailKey = $derived(email.trim() ? validateEmail(email) : null);
+  const pwKey = $derived(password ? validatePassword(password) : null);
+  const nameValid = $derived(validateName(fullName) === null);
+  const emailValid = $derived(validateEmail(email) === null);
+  const pwValid = $derived(validatePassword(password) === null);
+  const valid = $derived(nameValid && emailValid && pwValid);
 
   async function submit(e: Event) {
     e.preventDefault();
@@ -31,10 +40,10 @@
 <form class="card" onsubmit={submit}>
   <h1>{t('registerPage.title')}</h1>
   <p class="muted">{t('registerPage.subtitle')}</p>
-  <Input label={t('registerForm.name')} bind:value={fullName} placeholder={t('registerForm.namePlaceholder')} />
-  <Input label={t('registerForm.email')} type="email" bind:value={email} required />
-  <Input label={t('registerForm.password')} type="password" bind:value={password} required />
-  <Button type="submit" {loading} disabled={loading || !email || !password}>{t('registerForm.submit')}</Button>
+  <Input label={t('registerForm.nameLabel')} bind:value={fullName} placeholder={t('registerForm.namePlaceholder')} error={nameKey ? t(nameKey) : ''} />
+  <Input label={t('registerForm.emailLabel')} type="email" bind:value={email} required error={emailKey ? t(emailKey) : ''} />
+  <Input label={t('registerForm.passwordLabel')} type="password" bind:value={password} required hint={t('registerForm.passwordHint')} error={pwKey ? t(pwKey) : ''} />
+  <Button type="submit" {loading} disabled={loading || !valid}>{t('registerForm.createButton')}</Button>
   <div class="links"><a href="/login">{t('registerPage.hasAccount')}</a></div>
 </form>
 

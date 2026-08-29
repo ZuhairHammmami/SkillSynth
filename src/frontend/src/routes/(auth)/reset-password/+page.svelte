@@ -8,16 +8,23 @@
   import { error as toastError, success } from '$lib/components/ui/toast';
   import { t } from '$lib/i18n';
   import { ApiError } from '$lib/api/client';
+  import { password as validatePassword } from '$lib/validation';
 
   const token = $derived($page.url.searchParams.get('token') || '');
 
   let password = $state('');
   let loading = $state(false);
   let bad = $state(false);
+  let touched = $state(false);
+
+  const pwKey = $derived(touched && password ? validatePassword(password) : null);
+  const valid = $derived(validatePassword(password) === null);
 
   async function submit(e: Event) {
     e.preventDefault();
     if (!token) { bad = true; return; }
+    touched = true;
+    if (!valid) return;
     loading = true;
     try {
       await resetPassword(token, password);
@@ -35,8 +42,8 @@
   <h1>{t('resetPasswordPage.title')}</h1>
   <p class="muted">{t('resetPasswordPage.subtitle')}</p>
   {#if bad}<p class="form-err">{t('resetPasswordPage.badToken')}</p>{/if}
-  <Input label={t('resetPasswordForm.password')} type="password" bind:value={password} required />
-  <Button type="submit" {loading} disabled={loading || !password}>{t('resetPasswordForm.submit')}</Button>
+  <Input label={t('resetPasswordForm.password')} type="password" bind:value={password} required hint={t('registerForm.passwordHint')} error={pwKey ? t(pwKey) : ''} />
+  <Button type="submit" {loading} disabled={loading || !valid || !touched}>{t('resetPasswordForm.submit')}</Button>
 </form>
 
 <style>

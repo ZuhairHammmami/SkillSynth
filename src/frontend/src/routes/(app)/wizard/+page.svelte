@@ -10,6 +10,7 @@
   import Icon from '$lib/icons/Icon.svelte';
   import { error as toastError, success } from '$lib/components/ui/toast';
   import { t } from '$lib/i18n';
+  import { weeklyHours as validateWeeklyHours } from '$lib/validation';
   import QuizStep from './QuizStep.svelte';
   import ReviewStep from './ReviewStep.svelte';
 
@@ -32,6 +33,7 @@
   let language = $state('en');
   let analysis = $state<any>(null);
   let analysisError = $state('');
+  let generateError = $state('');
 
   let aiEnabled = $state<boolean | null>(null);
   let quizMode = $state<'quiz' | 'self' | null>(null);
@@ -56,11 +58,8 @@
 
   $effect(() => {
     apiFetch('/ai/status')
-      .then((d) => {
-        aiEnabled = !!(d && d.ai_enabled);
-        if (!aiEnabled) quizMode = 'self';
-      })
-      .catch(() => { aiEnabled = false; quizMode = 'self'; });
+      .then((d) => { aiEnabled = !!(d && d.ai_enabled); })
+      .catch(() => { aiEnabled = false; });
   });
 
   let fields = $derived(!options ? [] : Object.keys(options.career_fields ?? {}));
@@ -72,26 +71,29 @@
       !search || r.title.toLowerCase().includes(search.toLowerCase()))
   );
   let submitAnswers = $derived(answers);
+  const hoursError = $derived(validateWeeklyHours(String(weeklyHours), 1, 80));
+  const hoursValid = $derived(validateWeeklyHours(String(weeklyHours), 1, 80) === null);
   let stepValid = $derived(
     step === 0 ? !!field :
     step === 1 ? !!goal :
+    step === 2 ? (quizMode !== null) :
     true
   );
 
   /**
-   * Loads the assessment questions for the chosen role and seeds the self-assessment
-   * answer map, preserving any previously chosen levels for skills that persist.
+   * Loads the assessment questions for the chosen role and merges the role's
+   * skills into the shared answer map, keeping any self-assessment levels the
+   * user already chose for skills that persist across loads.
    */
   async function loadSkills() {
     if (!goal) return;
     skillsLoading = true;
     skillsError = '';
-    roleSkills = [];
     try {
       const qs: any[] = await apiFetch('/assessments/role/' + encodeURIComponent(goal));
       const names = Array.from(new Set((qs ?? []).map((q) => q.skill).filter(Boolean)));
-      const next: Record<string, number> = {};
-      for (const n of names) next[n] = answers[n] ?? 0;
+      const next: Record<string, number> = { ...answers };
+      for (const n of names) if (!(n in next)) next[n] = 0;
       roleSkills = names;
       answers = next;
     } catch (e) {
@@ -128,36 +130,32 @@
     if (next < totalSteps) step = next;
   }
 
-  /**
-   * Runs the read-only analysis (non-blocking) and then generates the personalized
-   * learning path, navigating to it on success or surfacing an error toast.
-   */
+  /** Generates the personalized learning path, navigating on success or surfacing failures inline + toast. */
   async function generate() {
     if (!goal) { toastError(t('wizard.goalSubtitle')); return; }
     generating = true;
-    try {
-      analysis = await apiFetch('/wizard/analysis', {
-        method: 'POST',
-        body: { goal, weekly_hours: weeklyHours, answers: submitAnswers }
-      });
-    } catch (e) {
-      analysisError = e instanceof ApiError ? e.detail : t('wizard.analysisFailed');
-    }
+    generateError = '';
+    const weeklyHoursInt = Math.floor(Number(weeklyHours)) || 0;
+    const sendAnswers = (roleSkills.length === 0 && goal)
+      ? { ...submitAnswers, [goal]: overall }
+      : submitAnswers;
     try {
       const path = await apiFetch('/generate-path/', {
         method: 'POST',
         body: {
           goal,
-          weekly_hours: weeklyHours,
+          weekly_hours: weeklyHoursInt,
           preferences: { is_free: isFree, format, language },
-          answers: submitAnswers
+          answers: sendAnswers
         }
       });
       success(t('wizard.successMessage'));
       goto('/learn/' + path.id);
       return;
     } catch (e) {
-      toastError(e instanceof ApiError ? e.detail : t('wizard.errorMessage'));
+      const msg = e instanceof ApiError ? e.detail : t('wizard.errorMessage');
+      generateError = msg;
+      toastError(msg);
     } finally {
       generating = false;
     }
@@ -193,7 +191,7 @@
   {:else if step === 1}
     <Panel>
       <p class="sub">{t('wizard.step2Subtitle')}</p>
-      <Input label={t('wizard.searchRoles')} bind:value={search} placeholder={t('wizard.searchRoles')} />
+      <Input label={t('wizard.searchRoles')} bind:value={search} placeholder={t('wizard.searchRoles')} hint={t('wizard.searchHint')} />
       {#if optionsLoading}
         <div class="center-spin"><Spinner /></div>
       {:else if optionsError}
@@ -214,7 +212,7 @@
 
   {:else if step === 2}
     <Panel>
-      {#if aiEnabled && quizMode === null || quizMode === 'quiz'}
+      {#if quizMode === null || quizMode === 'quiz'}
         <QuizStep bind:quizMode {goal} {aiEnabled} {weeklyHours}
           bind:answers bind:roleSkills bind:analysis
           onComplete={() => (step = 3)} />
@@ -248,7 +246,7 @@
     <Panel>
       <p class="sub">{t('wizard.step4Subtitle')}</p>
       <div class="stack">
-        <Input label={t('wizard.weeklyHours')} type="number" min={1} max={80} bind:value={weeklyHours} />
+        <Input label={t('wizard.weeklyHours')} type="number" min={1} max={80} bind:value={weeklyHours} error={hoursError ? t(hoursError) : ''} />
         <Select label={t('wizard.formatLabel')} bind:value={format} options={(options?.preferences?.formats ?? ['any', 'video', 'article', 'course']).map((f: string) => ({ value: f, label: f }))} />
         <Select label={t('wizard.languageLabel')} bind:value={language} options={(options?.preferences?.languages ?? ['en', 'ar']).map((l: string) => ({ value: l, label: l }))} />
         <label class="check"><input type="checkbox" bind:checked={isFree} /> {t('wizard.freeContentLabel')}</label>
@@ -262,11 +260,12 @@
 </div>
 
 <div class="nav">
+  {#if generateError}<p class="err-state"><Icon name="alert" size={18} /> {generateError}</p>{/if}
   <Button variant="ghost" onclick={() => step > 0 && step--} disabled={step === 0 || generating}>{t('wizard.back')}</Button>
   {#if step < totalSteps - 1 && !(step === 2 && quizMode === 'quiz')}
     <Button onclick={goNext} disabled={!stepValid || generating}>{t('wizard.next')}</Button>
   {:else if step >= totalSteps - 1}
-    <Button onclick={generate} disabled={generating}>
+    <Button onclick={generate} disabled={generating || !hoursValid}>
       {#if generating}<Spinner />{:else}<Icon name="sparkles" size={16} />{/if}
       {generating ? t('wizard.generating') : t('wizard.generateButton')}
     </Button>

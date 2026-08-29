@@ -7,11 +7,19 @@
   import { error as toastError, success } from '$lib/components/ui/toast';
   import { t } from '$lib/i18n';
   import { ApiError } from '$lib/api/client';
+  import { email as validateEmail } from '$lib/validation';
 
   let email = $state('');
   let password = $state('');
   let loading = $state(false);
   let err = $state('');
+  let pwTouched = $state(false);
+
+  const emailKey = $derived(email.trim() ? validateEmail(email) : null);
+  const pwKey = $derived(pwTouched && !password ? 'validation.required' : null);
+  const emailValid = $derived(validateEmail(email) === null);
+  const pwValid = $derived(password.trim() !== '');
+  const valid = $derived(emailValid && pwValid);
 
   async function submit(e: Event) {
     e.preventDefault();
@@ -35,9 +43,9 @@
   <h1>{t('loginPage.title')}</h1>
   <p class="muted">{t('loginPage.subtitle')}</p>
   {#if err}<p class="form-err">{err}</p>{/if}
-  <Input label={t('loginForm.email')} type="email" bind:value={email} placeholder="you@example.com" required />
-  <Input label={t('loginForm.password')} type="password" bind:value={password} placeholder="••••••••" required />
-  <Button type="submit" {loading} disabled={loading || !email || !password}>{t('loginForm.submit')}</Button>
+  <Input label={t('loginForm.emailLabel')} type="email" bind:value={email} placeholder="you@example.com" required error={emailKey ? t(emailKey) : ''} />
+  <Input label={t('loginForm.passwordLabel')} type="password" bind:value={password} placeholder="••••••••" required onblur={() => (pwTouched = true)} error={pwKey ? t(pwKey) : ''} />
+  <Button type="submit" {loading} disabled={loading || !valid}>{t('loginForm.signIn')}</Button>
   <div class="links">
     <a href="/forgot-password">{t('loginPage.forgot')}</a>
     <a href="/register">{t('loginPage.noAccount')}</a>
