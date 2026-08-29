@@ -19,6 +19,7 @@ class WizardRoleInfo(BaseModel):
     title: str
     description: Optional[str] = None
     career_field: str = "Other"
+    skills: List[str] = []
 
 
 class WizardPreferencesOptions(BaseModel):

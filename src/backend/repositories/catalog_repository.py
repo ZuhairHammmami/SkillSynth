@@ -252,6 +252,20 @@ def get_job_role_skill_ids(db: Session, job_role_id: int) -> list[int]:
     return [sid for (sid,) in rows]
 
 
+def get_job_role_skill_names(db: Session, job_role_id: int) -> list[str]:
+    """Required-skill names for one role, ordered by mapping insertion.
+
+    Called by wizard_service.wizard_options to preview a field's skills
+    in the frontend combobox; joins JobRoleSkill -> Skill.name."""
+    return [
+        name for (name,) in db.query(Skill.name)
+        .join(JobRoleSkill, JobRoleSkill.skill_id == Skill.id)
+        .filter(JobRoleSkill.job_role_id == job_role_id)
+        .order_by(JobRoleSkill.skill_id)
+        .all()
+    ]
+
+
 def get_path_skill_ids(db: Session) -> list[int]:
     """Every skill id mapped to any job role; most-requested report.
 

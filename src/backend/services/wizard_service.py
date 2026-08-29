@@ -15,13 +15,16 @@ def wizard_options(db: Session) -> dict:
 
     Called by routers/paths.get_wizard_options; keeps the historical
     'Other' fallback for null career_field and the fixed format/language
-    literals the frontend selects from."""
+    literals the frontend selects from. Each role entry carries its
+    required-skill names (skills key) for the frontend searchable
+    career-field combobox."""
     flat_roles: list[dict] = []
     career_fields: dict[str, list[dict]] = {}
     for role in repo.get_all_job_roles(db):
         field = role.career_field or "Other"
         entry = {"title": role.title, "description": role.description,
-                 "career_field": field}
+                 "career_field": field,
+                 "skills": repo.get_job_role_skill_names(db, role.id)}
         flat_roles.append(entry)
         career_fields.setdefault(field, []).append(entry)
     return {
