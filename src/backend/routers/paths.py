@@ -138,10 +138,13 @@ def _locale_from_request(request: Request) -> str:
 @router.post("/steps/{step_id}/test")
 def step_test(step_id: int, request: Request, db: Session = Depends(get_db),
               current_user=Depends(get_current_user)):
-    """Generate a targeted step test synchronously. Calls
-    step_test_service.generate_step_test (AI quiz, seeded fallback); consumed
-    by the learn-page QuizRunner (additive endpoint). The response is enriched
-    with top-level `difficulty` and `level` (the level used = step.current_level)
+    """Generate a targeted step test synchronously from the seeded bank.
+
+    Calls step_test_service.generate_step_test (bank-first, deterministic, no
+    LLM on the request path); AI quiz enrichment, when opted in, runs on a
+    background thread and streams ai_step_quiz_ready over SSE. Consumed by the
+    learn-page QuizRunner (additive endpoint). The response is enriched with
+    top-level `difficulty` and `level` (the level used = step.current_level)
     for the learn-page to display calibration."""
     payload, error, status = step_test_service.generate_step_test(
         db, current_user.id, step_id, _locale_from_request(request))

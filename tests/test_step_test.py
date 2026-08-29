@@ -265,6 +265,8 @@ def test_grade_applies_high_confidence_review(db_session, monkeypatch):
     db_session.expire_all()
     assert result["next_level"] == formula
     assert st._proficiency(db_session, user_id, skill.id) == min(5, formula + 1)
+    ladder_step = db_session.query(PathStep).get(step.id)
+    assert ladder_step.current_level == min(5, formula + 1)
     audit = db_session.query(ActivityLog).filter_by(
         action="ai_proficiency_review").order_by(
         ActivityLog.id.desc()).first()

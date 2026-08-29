@@ -49,45 +49,59 @@ def ai_enrich_job(user_id: int, step_id: int, skill_id: int,
         db.close()
 
 
+def _apply_adjustment(db, user_id: int, skill_id: int, verdict: dict) -> None:
+    """Persist user_skills, audit + step ladder, emit proficiency_adjusted SSE.
+
+    Callee of review_and_adjust on an applied (bounded ±1) verdict; writes the
+    ai_proficiency_review audit row and syncs the caller's step current_level.
+    """
+    from backend.events.publisher import send_event
+    from backend.repositories import (
+        assess_repository as arepo, engagement_repository,
+        learning_repository as lrepo,
+    )
+    arepo.upsert_user_skill(db, user_id, skill_id, verdict["final_level"])
+    db.commit()
+    engagement_repository.write(
+        db, "audit", "ai_proficiency_review", user_id=user_id,
+        entity_type="skill", entity_id=skill_id,
+        data={"delta": verdict["delta"], "rationale": verdict["rationale"],
+              "final_level": verdict["final_level"]})
+    lrepo.update_step_current_level_for_skill(
+        db, user_id, skill_id, verdict["final_level"])
+    send_event(user_id, "proficiency_adjusted",
+               {"skill_id": skill_id, "delta": verdict["delta"],
+                "rationale": verdict["rationale"]})
+
+
 def review_and_adjust(user_id: int, skill_id: int, correct: int, total: int,
                       difficulty: int, attempt_no: int, level_now: int,
-                      topics: list, locale: str, assessment_id: int) -> None:
-    """Own-session reviewer: ±1 adjustment + audit + diagnostic SSE.
+                      topics: list, locale: str) -> None:
+    """Own-session reviewer: ladder sync + audit + diagnostic SSE.
 
     Spawned by step_test_service._queue_review after a deterministic grade.
-    Delegates the verdict to assess_service.review_level; on applied
-    verdicts only upserts user_skills in its own session, writes the
-    ai_proficiency_review row and emits proficiency_adjusted SSE. Then runs
-    analyze_diagnostic and emits ai_step_diagnostic SSE with any refined
-    weak_points / topics_to_master for the already-shown result.
+    Delegates the verdict to assess_service.review_level; on applied verdicts
+    calls _apply_adjustment (user_skills + step ladder + audit +
+    proficiency_adjusted SSE, bounded ±1 per ADR-015), then runs
+    analyze_diagnostic and emits ai_step_diagnostic SSE. On failure rolls
+    back and emits proficiency_review_failed SSE.
     """
     from backend.database import SessionLocal
     from backend.events.publisher import send_event
-    from backend.repositories import (
-        assess_repository as arepo, catalog_repository,
-        engagement_repository,
-    )
     from backend.services import assess_service
     db = SessionLocal()
     try:
         verdict = assess_service.review_level(
             correct, total, difficulty, attempt_no, level_now)
         if verdict.get("applied"):
-            arepo.upsert_user_skill(db, user_id, skill_id,
-                                    verdict["final_level"])
-            db.commit()
-            engagement_repository.write(
-                db, "audit", "ai_proficiency_review", user_id=user_id,
-                entity_type="skill", entity_id=skill_id,
-                data={"delta": verdict["delta"],
-                      "rationale": verdict["rationale"],
-                      "final_level": verdict["final_level"]})
-            send_event(user_id, "proficiency_adjusted",
-                       {"skill_id": skill_id,
-                        "delta": verdict["delta"],
-                        "rationale": verdict["rationale"]})
+            _apply_adjustment(db, user_id, skill_id, verdict)
         _emit_diagnostic(db, user_id, skill_id, correct, total, level_now,
                          topics, locale)
+    except Exception as exc:  # noqa: BLE001 — reported over SSE
+        db.rollback()
+        logger.warning("step review job failed: %s", exc)
+        send_event(user_id, "proficiency_review_failed",
+                   {"skill_id": skill_id, "error": str(exc)[:200]})
     finally:
         db.close()
 

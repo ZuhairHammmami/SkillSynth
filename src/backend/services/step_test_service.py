@@ -180,7 +180,7 @@ def _resources_for(db, step) -> list[dict]:
 
 
 def _queue_review(user_id, skill_id, correct, total, next_level,
-                  difficulty, attempt_no, topics, locale, assessment_id):
+                  difficulty, attempt_no, topics, locale):
     """Spawn the bounded post-submit review off the request path.
 
     Caller: _grade after its commit; callee: step_jobs.review_and_adjust via
@@ -189,7 +189,7 @@ def _queue_review(user_id, skill_id, correct, total, next_level,
     """
     _spawn_review(lambda: step_jobs.review_and_adjust(
         user_id, skill_id, correct, total, difficulty, attempt_no,
-        next_level, topics, locale, assessment_id))
+        next_level, topics, locale))
 
 
 def _grade(db: Session, user_id: int, ctx, data, locale: str):
@@ -227,7 +227,7 @@ def _grade(db: Session, user_id: int, ctx, data, locale: str):
     if settings_service.is_ai_enabled() and _engine_ready():
         attempt_no = len(arepo.results_for_user(db, user_id))
         _queue_review(user_id, skill.id, correct, total, next_level,
-                      difficulty, attempt_no, topics, locale, assessment_id)
+                      difficulty, attempt_no, topics, locale)
     return result, None, None
 
 

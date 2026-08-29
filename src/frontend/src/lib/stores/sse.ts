@@ -45,6 +45,7 @@ export function connectSSE(): void {
     'path_generated', 'assessment_completed', 'ai_quiz_ready',
     'ai_quiz_failed', 'ai_test_ready', 'ai_test_failed',
     'ai_step_quiz_ready', 'ai_step_diagnostic', 'proficiency_adjusted',
+    'proficiency_review_failed',
     'connected', 'ping'
   ];
   frames.forEach((f) => {
