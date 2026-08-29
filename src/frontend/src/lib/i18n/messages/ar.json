@@ -179,7 +179,10 @@
     "createFirstPath": "أنشئ مسارك الأول",
     "level": "المستوى",
     "errorTitle": "حدث خطأ ما",
-    "errorDesc": "تعذّر تحميل هذه الصفحة. حاول مرة أخرى."
+    "errorDesc": "تعذّر تحميل هذه الصفحة. حاول مرة أخرى.",
+    "completionsThisWeek": "{count} إنجاز هذا الأسبوع",
+    "inProgress": "{count} قيد التقدم",
+    "viewAnalytics": "عرض التحليلات"
   },
   "adminDashboard": {
     "title": "لوحة الإدارة",

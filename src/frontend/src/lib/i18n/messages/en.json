@@ -700,7 +700,10 @@
     "level": "Level",
     "createFirstPath": "Create your first path",
     "errorTitle": "Something went wrong",
-    "errorDesc": "We couldn't load this view. Please try again."
+    "errorDesc": "We couldn't load this view. Please try again.",
+    "completionsThisWeek": "{count} completions this week",
+    "inProgress": "{count} in progress",
+    "viewAnalytics": "View analytics"
   },
   "adminDashboard": {
     "title": "Admin Dashboard",
