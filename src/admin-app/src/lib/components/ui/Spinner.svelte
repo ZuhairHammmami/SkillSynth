@@ -6,7 +6,7 @@
   .spinner {
     width: 1.4rem; height: 1.4rem; border-radius: 50%;
     border: 2px solid var(--line-strong);
-    border-top-color: var(--accent);
+    border-top-color: var(--ochre);
     display: inline-block;
     animation: spin 0.7s linear infinite;
   }

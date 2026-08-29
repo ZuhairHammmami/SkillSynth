@@ -57,13 +57,13 @@
   .md { padding: 0.6rem 1.1rem; font-size: 0.95rem; }
   .lg { padding: 0.8rem 1.5rem; font-size: 1.05rem; }
 
-  .primary { background: var(--accent); color: #fff; border-color: var(--accent-deep); }
-  .primary:hover:not(:disabled) { background: var(--accent-deep); }
-  .ghost { background: var(--paper); color: var(--ink-soft); border-color: var(--line-strong); }
+  .primary { background: var(--ochre); color: #fff; border-color: var(--ochre-deep); }
+  .primary:hover:not(:disabled) { background: var(--ochre-deep); }
+  .ghost { background: var(--card); color: var(--ink-soft); border-color: var(--line-strong); }
   .ghost:hover:not(:disabled) { background: var(--paper-2); color: var(--ink); }
-  .destructive { background: var(--danger); color: #fff; border-color: var(--danger); }
-  .destructive:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 82%, black); border-color: color-mix(in srgb, var(--danger) 82%, black); }
-  .link { background: transparent; color: var(--accent-deep); border-color: transparent; padding-inline: 0.25rem; min-width: 0; }
+  .destructive { background: var(--danger); color: #fff; border-color: var(--danger-deep); }
+  .destructive:hover:not(:disabled) { background: var(--danger-deep); border-color: var(--danger-deep); }
+  .link { background: transparent; color: var(--ochre-deep); border-color: transparent; padding-inline: 0.25rem; min-width: 0; }
   .link:hover:not(:disabled) { text-decoration: underline; }
 
   .spinner {

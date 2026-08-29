@@ -70,8 +70,8 @@
   .head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
   .label { display: flex; flex-direction: column; gap: 0.15rem; }
   .k { font-weight: 600; color: var(--ink); }
-  .type { font-size: 0.75rem; color: var(--muted); }
+  .type { font-size: 0.75rem; color: var(--clay); }
   .value { margin-top: 0.4rem; font-size: 0.85rem; color: var(--ink-soft); word-break: break-word; }
-  .desc { margin: 0.4rem 0 0; font-size: 0.82rem; color: var(--muted); }
+  .desc { margin: 0.4rem 0 0; font-size: 0.82rem; color: var(--clay); }
   .err { display: block; color: var(--danger); font-size: 0.78rem; margin-top: 0.3rem; }
 </style>

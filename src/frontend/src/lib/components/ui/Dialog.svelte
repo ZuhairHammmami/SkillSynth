@@ -62,18 +62,18 @@
 
 <style>
   .overlay {
-    position: fixed; inset: 0; background: rgba(2, 6, 23, 0.5);
+    position: fixed; inset: 0; background: rgba(42, 37, 33, 0.5);
     display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 50;
   }
   .dialog {
-    background: var(--paper); border: 1px solid var(--line-strong);
+    background: var(--card); border: 1px solid var(--line-strong);
     border-radius: var(--radius-lg); max-width: 540px; width: 100%;
-    max-height: 90vh; overflow: auto; box-shadow: 0 18px 50px rgba(2, 6, 23, 0.25);
+    max-height: 90vh; overflow: auto; box-shadow: 0 18px 50px rgba(42, 37, 33, 0.25);
   }
   .dialog:focus { outline: none; }
   .d-head { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.2rem; border-bottom: 1px solid var(--line); }
   .d-head h3 { margin: 0; font-size: 1.15rem; }
-  .x { background: transparent; border: 1px solid var(--line-strong); border-radius: var(--radius); cursor: pointer; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
+  .x { background: transparent; border: 1px solid var(--line-strong); border-radius: var(--radius); cursor: pointer; color: var(--clay); display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
   .x:hover { color: var(--ink); background: var(--paper-2); }
   .d-body { padding: 1.2rem; }
   .d-foot { padding: 1rem 1.2rem; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 0.6rem; }

@@ -199,11 +199,11 @@
   .check { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.92rem; min-height: 44px; }
   .grid-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
   .grid-table th, .grid-table td { text-align: start; padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--line); }
-  .grid-table th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
-  .grid-table a.link { color: var(--accent-deep); text-decoration: none; }
+  .grid-table th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--clay); }
+  .grid-table a.link { color: var(--ochre-deep); text-decoration: none; }
   .grid-table a.link:hover { text-decoration: underline; }
   .actions { display: flex; gap: 0.4rem; justify-content: flex-end; }
-  .muted { color: var(--muted); }
+  .muted { color: var(--clay); }
   .warn { color: var(--danger); font-size: 0.9rem; }
   .deps { margin: 0.4rem 0 0; padding-inline-start: 1.1rem; font-size: 0.88rem; color: var(--ink-soft); }
   .form-err { color: var(--danger); font-size: 0.85rem; margin: 0.2rem 0 0; }

@@ -16,10 +16,10 @@
   }
   .toast {
     padding: 0.7rem 1rem; border-radius: var(--radius); font-size: 0.9rem; font-weight: 500;
-    border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink);
-    box-shadow: 0 6px 24px rgba(2, 6, 23, 0.12);
+    border: 1px solid var(--line-strong); background: var(--card); color: var(--ink);
+    box-shadow: 0 6px 24px rgba(42, 37, 33, 0.12);
   }
   .success { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); }
   .error { border-color: var(--danger); background: var(--danger-soft); color: var(--danger); }
-  .info { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-deep); }
+  .info { border-color: var(--ochre); background: var(--ochre-soft); color: var(--ochre-deep); }
 </style>

@@ -20,5 +20,5 @@
   .ss-table :global(td) { padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
   .ss-table :global(tr:last-child td) { border-bottom: none; }
   .ss-table :global(tbody tr:nth-child(even)) { background: var(--paper-2); }
-  .ss-table :global(tbody tr:hover) { background: var(--accent-soft); }
+  .ss-table :global(tbody tr:hover) { background: var(--ochre-soft); }
 </style>

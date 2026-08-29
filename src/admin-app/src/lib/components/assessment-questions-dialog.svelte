@@ -172,11 +172,11 @@
   .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .grid-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
   .grid-table th, .grid-table td { text-align: start; padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--line); }
-  .grid-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .grid-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--clay); }
   .actions { display: flex; gap: 0.4rem; justify-content: flex-end; align-items: center; }
-  .muted { color: var(--muted); }
-  .hint { color: var(--muted); font-size: 0.8rem; margin: 0 0 0.5rem; }
+  .muted { color: var(--clay); }
+  .hint { color: var(--clay); font-size: 0.8rem; margin: 0 0 0.5rem; }
   .form-err { color: var(--danger); font-size: 0.85rem; margin: 0.2rem 0 0; }
   .prompt-cell { max-width: 22rem; }
-  .idx { color: var(--muted); }
+  .idx { color: var(--clay); }
 </style>

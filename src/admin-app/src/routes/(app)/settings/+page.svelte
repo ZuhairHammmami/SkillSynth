@@ -41,6 +41,6 @@
   .langs { display: flex; gap: 0.6rem; flex-wrap: wrap; }
   .info { display: grid; gap: 0.6rem; margin: 0; }
   .info > div { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--line); padding-bottom: 0.5rem; }
-  .info dt { color: var(--muted); font-size: 0.85rem; }
+  .info dt { color: var(--clay); font-size: 0.85rem; }
   .info dd { margin: 0; font-weight: 600; }
 </style>

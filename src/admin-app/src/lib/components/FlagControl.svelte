@@ -85,13 +85,13 @@
   .field { margin-top: 0.5rem; max-width: 560px; }
   .ctl {
     width: 100%; font-family: var(--font-body); font-size: 0.95rem; color: var(--ink);
-    background: var(--paper); border: 1px solid var(--line-strong); border-radius: var(--radius);
+    background: var(--card); border: 1px solid var(--line-strong); border-radius: var(--radius);
     padding: 0.55rem 0.7rem; min-height: 40px; box-sizing: border-box;
   }
   textarea.ctl { resize: vertical; font-family: var(--font-mono, monospace); }
   .ctl:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px var(--focus-glow); }
   .ctl[aria-invalid='true'] { border-color: var(--danger); }
-  .hint { display: block; color: var(--muted); font-size: 0.78rem; margin-top: 0.25rem; }
+  .hint { display: block; color: var(--clay); font-size: 0.78rem; margin-top: 0.25rem; }
 
   .object-group { margin-top: 0.5rem; max-width: 560px; }
   .og-label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--ink-soft); margin-bottom: 0.5rem; }
@@ -104,7 +104,7 @@
   .switch input { opacity: 0; width: 0; height: 0; }
   .switch input:focus-visible + .track { outline: 2px solid var(--ring); outline-offset: 2px; }
   .track { position: absolute; inset: 0; background: var(--line-strong); border-radius: 999px; transition: background 0.15s; }
-  .track::before { content: ''; position: absolute; inset-inline-start: 3px; top: 3px; width: 18px; height: 18px; background: var(--paper); border-radius: 50%; transition: inset-inline-start 0.15s; }
-  .switch input:checked + .track { background: var(--accent); }
+  .track::before { content: ''; position: absolute; inset-inline-start: 3px; top: 3px; width: 18px; height: 18px; background: var(--card); border-radius: 50%; transition: inset-inline-start 0.15s; }
+  .switch input:checked + .track { background: var(--ochre); }
   .switch input:checked + .track::before { inset-inline-start: 23px; }
 </style>

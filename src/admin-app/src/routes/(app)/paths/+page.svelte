@@ -87,7 +87,7 @@
   .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .tbl { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
   .tbl th, .tbl td { text-align: start; padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--line); }
-  .tbl th { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
-  .empty { color: var(--muted); text-align: center; }
+  .tbl th { color: var(--clay); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  .empty { color: var(--clay); text-align: center; }
   .err-box { background: var(--danger-soft); border: 1px solid var(--danger); color: var(--danger); padding: 1rem; border-radius: var(--radius); display: flex; flex-direction: column; gap: 0.6rem; }
 </style>

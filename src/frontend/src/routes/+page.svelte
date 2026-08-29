@@ -133,7 +133,7 @@
 <style>
   .top { padding-block: 1.2rem; flex-wrap: wrap; gap: 0.75rem; }
   .hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 2rem; align-items: center; min-height: 70vh; }
-  .kicker { display: inline-block; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-deep); }
+  .kicker { display: inline-block; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ochre-deep); }
   .brandmark { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; margin: 0.3rem 0; }
   .brandname { font-family: var(--font-display); font-size: clamp(2.6rem, 6vw, 4rem); line-height: 1; margin: 0; color: var(--ink); }
   .brandname em { font-style: normal; color: var(--ochre-deep); }
@@ -143,15 +143,15 @@
   .center { text-align: center; }
   .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
   .features h3 { font-size: 1.05rem; margin: 0.5rem 0 0.3rem; }
-  .ficon { color: var(--accent); }
+  .ficon { color: var(--ochre); }
   .stats-band { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; border-block: 1px solid var(--line); padding-block: 2rem; }
   .stat { text-align: center; display: flex; flex-direction: column; gap: 0.2rem; }
-  .stat strong { font-family: var(--font-display); font-size: 2rem; color: var(--accent-deep); }
-  .stat span { font-size: 0.85rem; color: var(--muted); }
+  .stat strong { font-family: var(--font-display); font-size: 2rem; color: var(--ochre-deep); }
+  .stat span { font-size: 0.85rem; color: var(--clay); }
   .how { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem; margin-top: 1.5rem; }
-  .num { display: inline-flex; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; }
+  .num { display: inline-flex; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: 50%; background: var(--ochre); color: #fff; font-weight: 700; }
   .quotes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
-  blockquote { margin: 0; background: var(--paper-2); border: 1px solid var(--line); border-inline-start: 3px solid var(--accent); border-radius: var(--radius); padding: 1rem 1.2rem; }
+  blockquote { margin: 0; background: var(--paper-2); border: 1px solid var(--line); border-inline-start: 3px solid var(--ochre); border-radius: var(--radius); padding: 1rem 1.2rem; }
   blockquote footer { margin-top: 0.6rem; font-size: 0.85rem; }
   .cta { text-align: center; background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 3rem 1.5rem; }
   .cta h2 { font-size: 2rem; }

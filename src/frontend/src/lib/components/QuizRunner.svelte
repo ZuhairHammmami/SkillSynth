@@ -231,33 +231,33 @@
 
 <style>
   .stack { display: flex; flex-direction: column; gap: 1rem; }
-  .level-note { font-size: 0.85rem; color: var(--accent-deep); }
+  .level-note { font-size: 0.85rem; color: var(--ochre-deep); }
   .level-note .tag { margin-inline-start: 0.4rem; }
-  .muted { color: var(--muted); }
+  .muted { color: var(--clay); }
   .small { font-size: 0.82rem; }
   .q { border: 1px solid var(--line); border-radius: var(--radius); padding: 0.8rem; margin: 0; }
   .qtext { font-weight: 600; margin: 0.2rem 0 0.5rem; }
-  .tag { display: inline-block; font-size: 0.72rem; color: var(--accent-deep); border: 1px solid var(--line); border-radius: 999px; padding: 0.05rem 0.5rem; }
+  .tag { display: inline-block; font-size: 0.72rem; color: var(--ochre-deep); border: 1px solid var(--line); border-radius: 999px; padding: 0.05rem 0.5rem; }
   .opts { display: flex; flex-direction: column; gap: 0.35rem; }
   .opts.review { list-style: none; padding: 0; margin: 0.3rem 0 0; }
   .opt { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.5rem; border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; }
-  .opt.sel { border-color: var(--accent-deep); background: var(--paper-2); }
+  .opt.sel { border-color: var(--ochre-deep); background: var(--paper-2); }
   .opts.review li { padding: 0.3rem 0.5rem; border-radius: var(--radius); border: 1px solid var(--line); }
-  .opts.review li.correct { border-color: var(--sage); background: color-mix(in srgb, var(--sage) 14%, var(--paper)); }
-  .opts.review li.wrong { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, var(--paper)); }
+  .opts.review li.correct { border-color: var(--sage); background: color-mix(in srgb, var(--sage) 14%, var(--card)); }
+  .opts.review li.wrong { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, var(--card)); }
   .pill { font-size: 0.7rem; margin-inline-start: 0.4rem; padding: 0 0.35rem; border-radius: 999px; }
   .pill.ok { color: var(--sage); }
   .pill.bad { color: var(--danger); }
   .banner { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.7rem 0.9rem; border-radius: var(--radius); }
-  .banner.pass { border: 1px solid var(--sage); background: color-mix(in srgb, var(--sage) 12%, var(--paper)); }
-  .banner.fail { border: 1px solid var(--danger); background: color-mix(in srgb, var(--danger) 10%, var(--paper)); }
+  .banner.pass { border: 1px solid var(--sage); background: color-mix(in srgb, var(--sage) 12%, var(--card)); }
+  .banner.fail { border: 1px solid var(--danger); background: color-mix(in srgb, var(--danger) 10%, var(--card)); }
   .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
   .panel { border: 1px solid var(--line); border-radius: var(--radius); padding: 0.7rem; }
   .panel h4 { margin: 0 0 0.4rem; font-size: 0.9rem; }
   .panel ul { margin: 0; padding-inline-start: 1.1rem; }
-  .why { font-size: 0.85rem; color: var(--muted); border-inline-start: 3px solid var(--line-strong); padding-inline-start: 0.6rem; }
+  .why { font-size: 0.85rem; color: var(--clay); border-inline-start: 3px solid var(--line-strong); padding-inline-start: 0.6rem; }
   .res { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-  .chip { display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none; font-size: 0.82rem; color: var(--accent-deep); border: 1px solid var(--line); border-radius: 999px; padding: 0.15rem 0.6rem; background: var(--paper-2); }
+  .chip { display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none; font-size: 0.82rem; color: var(--ochre-deep); border: 1px solid var(--line); border-radius: 999px; padding: 0.15rem 0.6rem; background: var(--paper-2); }
   .actions { display: flex; justify-content: flex-end; }
   .err { color: var(--danger); }
 </style>

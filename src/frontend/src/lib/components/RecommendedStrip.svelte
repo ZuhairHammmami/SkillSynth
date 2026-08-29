@@ -46,12 +46,12 @@
   .chips { display: flex; gap: 0.6rem; overflow-x: auto; padding-block: 0.15rem; }
   .chip {
     flex-shrink: 0; display: inline-flex; flex-direction: column; align-items: flex-start;
-    gap: 0.3rem; text-align: start; background: var(--paper);
+    gap: 0.3rem; text-align: start; background: var(--card);
     border: 1px solid var(--line); border-radius: var(--radius);
     padding: 0.6rem 0.8rem; cursor: pointer; font-family: var(--font-body); color: var(--ink);
     min-width: 150px; transition: border-color 0.18s ease, background 0.18s ease;
   }
-  .chip:hover { border-color: var(--accent); background: var(--accent-soft); }
-  .chip:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-glow); border-color: var(--accent); }
+  .chip:hover { border-color: var(--ochre); background: var(--ochre-soft); }
+  .chip:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-glow); border-color: var(--ochre); }
   .chip-meta { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; }
 </style>

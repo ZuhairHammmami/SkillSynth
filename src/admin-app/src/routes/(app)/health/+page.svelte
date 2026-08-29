@@ -83,9 +83,9 @@
   .c { padding: 3rem 0; text-align: center; }
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; }
   .stat { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: var(--radius); }
-  .k { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .k { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--clay); }
   .v { font-size: 1.1rem; font-weight: 700; }
-  .v.ok { color: var(--ok, #15803d); }
+  .v.ok { color: var(--ok, #5C7A5E); }
   .v.bad { color: var(--danger); }
   .details { margin-top: 1.2rem; }
   .details h3 { font-size: 0.9rem; margin-bottom: 0.4rem; }

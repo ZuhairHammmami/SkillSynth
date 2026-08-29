@@ -65,9 +65,9 @@
   .feed li { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.6rem 0; border-block-end: 1px solid var(--line); }
   .feed li:first-child { padding-block-start: 0; }
   .feed li:last-child { border-block-end: 0; padding-block-end: 0; }
-  .dot { width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; background: var(--accent-soft);
-    color: var(--accent-deep); display: inline-flex; align-items: center; justify-content: center; margin-block-start: 0.1rem; }
+  .dot { width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; background: var(--ochre-soft);
+    color: var(--ochre-deep); display: inline-flex; align-items: center; justify-content: center; margin-block-start: 0.1rem; }
   .body { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
   .text { font-size: 0.9rem; color: var(--ink); }
-  .time { font-size: 0.72rem; color: var(--muted); }
+  .time { font-size: 0.72rem; color: var(--clay); }
 </style>

@@ -89,7 +89,7 @@
   .feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; max-height: 70vh; overflow: auto; }
   .feed li { display: flex; align-items: center; gap: 0.6rem; font-size: 0.88rem; padding: 0.4rem 0; border-bottom: 1px dashed var(--line); }
   .feed .act { color: var(--ink); font-weight: 600; text-transform: capitalize; }
-  .feed .meta { color: var(--muted); margin-inline-start: auto; font-size: 0.8rem; }
-  .feed .empty { color: var(--muted); }
+  .feed .meta { color: var(--clay); margin-inline-start: auto; font-size: 0.8rem; }
+  .feed .empty { color: var(--clay); }
   .err-box { background: var(--danger-soft); border: 1px solid var(--danger); color: var(--danger); padding: 1rem; border-radius: var(--radius); display: flex; flex-direction: column; gap: 0.6rem; }
 </style>

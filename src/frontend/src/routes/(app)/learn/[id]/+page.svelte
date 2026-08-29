@@ -322,21 +322,21 @@
   .big { font-family: var(--font-display); font-size: 1.8rem; color: var(--ochre-deep); }
   .section-title { margin-top: 2rem; font-size: 1.3rem; }
   .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
-  .steps li { display: flex; gap: 0.8rem; align-items: flex-start; padding: 0.8rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); }
+  .steps li { display: flex; gap: 0.8rem; align-items: flex-start; padding: 0.8rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); }
   .steps li.done { border-inline-start: 3px solid var(--sage); }
   .toggle { flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--paper-2); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: var(--ochre-deep); }
   .toggle:disabled { opacity: 0.6; }
   .body { display: flex; flex-direction: column; gap: 0.2rem; }
-  .obj { margin: 0.3rem 0 0; padding-inline-start: 1.1rem; color: var(--muted); font-size: 0.85rem; }
+  .obj { margin: 0.3rem 0 0; padding-inline-start: 1.1rem; color: var(--clay); font-size: 0.85rem; }
   .res { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.3rem; }
-  .chip { display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none; font-size: 0.82rem; color: var(--accent-deep); border: 1px solid var(--line); border-radius: 999px; padding: 0.15rem 0.6rem; background: var(--paper-2); }
+  .chip { display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none; font-size: 0.82rem; color: var(--ochre-deep); border: 1px solid var(--line); border-radius: 999px; padding: 0.15rem 0.6rem; background: var(--paper-2); }
   .dep { margin: 0.5rem 0 0; padding-inline-start: 1.2rem; color: var(--danger); }
-  .ladder { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem; font-size: 0.8rem; color: var(--muted); }
-  .ladder-label { font-weight: 600; color: var(--accent-deep); }
+  .ladder { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem; font-size: 0.8rem; color: var(--clay); }
+  .ladder-label { font-weight: 600; color: var(--ochre-deep); }
   .ladder-dots { display: inline-flex; gap: 0.25rem; }
   .dot { width: 10px; height: 10px; padding: 0; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--paper-2); cursor: pointer; }
   .dot:disabled { opacity: 0.6; cursor: default; }
-  .dot.reached { border-color: var(--sage); background: color-mix(in srgb, var(--sage) 30%, var(--paper)); }
-  .dot.active { background: var(--accent-deep); border-color: var(--accent-deep); }
+  .dot.reached { border-color: var(--sage); background: color-mix(in srgb, var(--sage) 30%, var(--card)); }
+  .dot.active { background: var(--ochre-deep); border-color: var(--ochre-deep); }
   .ladder-val { font-family: var(--font-display); color: var(--ochre-deep); font-weight: 600; }
 </style>

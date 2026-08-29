@@ -158,7 +158,7 @@
   .paths-head { display: flex; align-items: center; gap: 1rem; }
   .paths-head .section-title { margin-top: 2rem; flex: 1; }
   .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
-  .link { background: none; border: none; padding: 0; font: inherit; color: var(--accent-deep); cursor: pointer; text-decoration: underline; }
+  .link { background: none; border: none; padding: 0; font: inherit; color: var(--ochre-deep); cursor: pointer; text-decoration: underline; }
   .err-state { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6rem; color: var(--danger); }
-  .err-state .muted { color: var(--muted); }
+  .err-state .muted { color: var(--clay); }
 </style>

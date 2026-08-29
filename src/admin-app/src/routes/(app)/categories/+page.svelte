@@ -168,9 +168,9 @@
   .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .grid-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
   .grid-table th, .grid-table td { text-align: start; padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--line); }
-  .grid-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .grid-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--clay); }
   .actions { display: flex; gap: 0.4rem; justify-content: flex-end; }
-  .muted { color: var(--muted); }
+  .muted { color: var(--clay); }
   .warn { color: var(--danger); font-size: 0.9rem; }
   .deps { margin: 0.4rem 0 0; padding-inline-start: 1.1rem; font-size: 0.88rem; color: var(--ink-soft); }
   .form-err { color: var(--danger); font-size: 0.85rem; margin: 0.2rem 0 0; }

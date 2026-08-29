@@ -212,7 +212,7 @@
 
 <style>
   .toolbar { display: flex; justify-content: flex-end; margin-bottom: 1rem; }
-  .muted { color: var(--muted); }
+  .muted { color: var(--clay); }
   .warn { color: var(--danger); font-size: 0.9rem; }
   .deps { margin: 0.4rem 0 0; padding-inline-start: 1.1rem; font-size: 0.88rem; color: var(--ink-soft); }
   .err-box { background: var(--danger-soft); border: 1px solid var(--danger); color: var(--danger); padding: 1rem; border-radius: var(--radius); display: flex; flex-direction: column; gap: 0.6rem; }

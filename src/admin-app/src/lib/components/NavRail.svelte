@@ -75,17 +75,17 @@
     display: flex; align-items: center; gap: 0.65rem; padding: 0.6rem 0.7rem; min-height: 44px;
     color: var(--ink-soft); border-radius: var(--radius); font-weight: 600; font-size: 0.92rem; position: relative;
   }
-  .nav-item:hover { background: var(--accent-soft); text-decoration: none; color: var(--ink); }
+  .nav-item:hover { background: var(--ochre-soft); text-decoration: none; color: var(--ink); }
   .marker { width: 6px; height: 6px; border-radius: 50%; background: var(--line-strong); transition: background 0.15s; }
-  .nav-item.active { color: var(--accent-deep); background: var(--accent-soft); }
-  .nav-item.active .marker { background: var(--accent); }
+  .nav-item.active { color: var(--ochre-deep); background: var(--ochre-soft); }
+  .nav-item.active .marker { background: var(--ochre); }
   .nav-item:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
   .foot { border-top: 1px dashed var(--line-strong); padding-top: 0.8rem; display: flex; align-items: center; justify-content: space-between; }
   .who { display: flex; align-items: center; gap: 0.6rem; overflow: hidden; }
   .foot-actions { display: flex; align-items: center; gap: 0.5rem; }
-  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-deep); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--ochre-soft); color: var(--ochre-deep); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
   .meta { display: flex; flex-direction: column; line-height: 1.2; overflow: hidden; }
   .meta small { font-size: 0.7rem; }
-  .logout { background: transparent; border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 0.35rem; cursor: pointer; color: var(--muted); display: inline-flex; }
+  .logout { background: transparent; border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 0.35rem; cursor: pointer; color: var(--clay); display: inline-flex; }
   .logout:hover { color: var(--danger); border-color: var(--danger); }
 </style>

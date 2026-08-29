@@ -38,6 +38,6 @@
   .col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; min-width: 0; }
   .track { width: 100%; max-width: 42px; display: flex; align-items: flex-end; justify-content: center;
     background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--radius); }
-  .bar { width: 100%; background: var(--accent-deep); border-radius: var(--radius); transition: height 0.4s ease; }
-  .lbl { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
+  .bar { width: 100%; background: var(--ochre-deep); border-radius: var(--radius); transition: height 0.4s ease; }
+  .lbl { font-size: 0.7rem; color: var(--clay); white-space: nowrap; }
 </style>

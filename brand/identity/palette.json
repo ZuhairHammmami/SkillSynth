@@ -1,0 +1,43 @@
+{
+  "schema": "skillsynth.brand/palette/1.0.0",
+  "identity": "Warm Craft",
+  "note": "Canonical color system for SkillSynth. Every brand asset, cover, and UI surface derives from these named roles — no invented colors. Hex values are authoritative. Contrast ratios use WCAG 2.1 relative luminance.",
+  "roles": {
+    "paper":       { "hex": "#FBF6EC", "usage": "Page / canvas background, light surfaces", "forTextOn": { "ink": "AAA", "ink-soft": "AAA", "ochre-deep": "AA", "sage-deep": "AA", "danger": "AA", "warning": "AA", "success": "AA" } },
+    "paper-2":     { "hex": "#F3EDE1", "usage": "Subtle surface: back covers, inset panels, soft dividers", "forTextOn": { "ink": "AAA", "ink-soft": "AAA", "ochre-deep": "AA", "sage-deep": "AA" } },
+    "card":        { "hex": "#FFFDF7", "usage": "Derived: elevated surface (cards, inputs) lifted off paper", "forTextOn": { "ink": "AAA", "ink-soft": "AAA", "ochre-deep": "AA" } },
+    "ink":         { "hex": "#2A2521", "usage": "Primary text, headings, monochrome glyph strokes", "on": { "paper": 14.08, "paper-2": 13.0, "card": 14.08 } },
+    "ink-soft":    { "hex": "#4A4238", "usage": "Secondary text, captions, strong hairlines", "on": { "paper": 9.16, "paper-2": 8.47, "card": 9.16 } },
+    "clay":        { "hex": "#8A7B6C", "usage": "Muted helper text (large sizes only), placeholder tone", "on": { "paper": 3.8, "paper-2": 3.51 }, "note": "Below AA for small text — decorative/muted use is display-size only" },
+    "ochre":       { "hex": "#B5862E", "usage": "Primary accent: mark ring, seed dot, stage dots, large display accents, hairlines, focus ring base", "on": { "paper": 3.04, "ink": 4.63 }, "note": "Display/large-text or decoration only on paper — not small body text" },
+    "ochre-deep":  { "hex": "#8A6520", "usage": "Accent text (AA on paper), wordmark 'Synth', buttons, links, marker underlines, ochre covers rendered readable", "on": { "paper": 4.92, "paper-2": 4.55, "card": 5.21 } },
+    "sage":        { "hex": "#7C8A6B", "usage": "Secondary accent: serene fields, leaf-stage mid tone, sage band, display accents", "on": { "paper": 3.42, "ink": 4.12 }, "note": "Decorative/display only — sage-deep for text on light" },
+    "sage-deep":   { "hex": "#5F6C50", "usage": "Sprout stem + leaves, status-critical sage text (AA), deep sage type", "on": { "paper": 5.2, "paper-2": 4.81 } },
+    "ok":          { "hex": "#5C7A5E", "usage": "Status success (warm green)", "on": { "paper": 4.43 }, "note": "AA boundary — prefer ink-soft or sage-deep for critical copy; ok for large + UI" },
+    "ok-deep":     { "hex": "#45604A", "usage": "Derived: success text for AA compliance", "on": { "paper": 6.3 } },
+    "ok-soft":     { "hex": "#EAF0E7", "usage": "Derived: success surface tint of paper", "on": {} },
+    "warning":     { "hex": "#B45309", "usage": "Status warning (warm amber) — derived warm, AA on paper", "on": { "paper": 4.66 } },
+    "warning-deep":{ "hex": "#8A3E07", "usage": "Derived: warning text on paper-2 / interactive states", "on": { "paper-2": 5.0 } },
+    "warning-soft":{ "hex": "#F9EEE1", "usage": "Derived: warning surface tint", "on": {} },
+    "danger":      { "hex": "#A23B2E", "usage": "Status destructive (warm brick)", "on": { "paper": 6.09 } },
+    "danger-deep": { "hex": "#7C2D22", "usage": "Derived: destructive text on paper-2, destructive buttons", "on": { "paper-2": 6.6 } },
+    "danger-soft": { "hex": "#F6E7E4", "usage": "Derived: destructive surface tint", "on": {} },
+    "line":        { "hex": "#E4DAC8", "usage": "Hairline border / grid / route dashes on paper", "on": { "paper": 1.29 }, "note": "Decorative only — never text" },
+    "line-strong": { "hex": "#CFC3AE", "usage": "Stronger hairline: focus borders, larger grid lines, rule underlines", "on": { "paper": 1.7 }, "note": "Decorative only — never text" },
+    "ring":        { "hex": "#8A6520", "usage": "Focus ring (=ochre-deep, exported for app parity)" },
+    "focus-glow":  { "hex": "rgba(138, 101, 32, 0.22)", "usage": "Focus glow (thin + subtle only — no neon)" }
+  },
+  "contrast-policy": {
+    "body-small-text-aa": ["ink", "ink-soft", "ochre-deep", "sage-deep", "danger", "warning", "success"],
+    "display-large-or-decoration": ["ochre", "sage", "clay", "line", "line-strong"],
+    "inverted-on-ink": { "paper": "AAA", "ochre": "AA", "sage": "AA (large)" },
+    "inverted-on-ochre-deep": { "paper": "AA", "white": "AA" }
+  },
+  "geometry": {
+    "stroke": 1.8,
+    "stroke-style": "hand-drawn, round caps/joins",
+    "radius": { "min": "2px", "max": "6px" },
+    "hairline": "1px",
+    "banned": ["gradients", "neon", "glassmorphism", "drop-shadow-on-light-text"]
+  }
+}

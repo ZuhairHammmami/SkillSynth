@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Master construction grid for the SkillSynth mark. The glyph is drawn over
+       its governing geometry: 4-unit minor grid, 8-unit major grid, vertical axis
+       at x=16, ellipse guide for the ring, and dashed guides at the seed (y=9),
+       leaf branch (y=18) and base (y=28). Annotation text is not part of the mark. -->
+
+  <!-- Minor grid 4u -->
+  <g stroke="#E4DAC8" stroke-width="0.35" stroke-opacity="0.55">
+    <line x1="0" y1="4" x2="32" y2="4"/><line x1="0" y1="8" x2="32" y2="8"/>
+    <line x1="0" y1="12" x2="32" y2="12"/><line x1="0" y1="16" x2="32" y2="16"/>
+    <line x1="0" y1="20" x2="32" y2="20"/><line x1="0" y1="24" x2="32" y2="24"/>
+    <line x1="0" y1="28" x2="32" y2="28"/>
+    <line x1="4" y1="0" x2="4" y2="32"/><line x1="8" y1="0" x2="8" y2="32"/>
+    <line x1="12" y1="0" x2="12" y2="32"/><line x1="16" y1="0" x2="16" y2="32"/>
+    <line x1="20" y1="0" x2="20" y2="32"/><line x1="24" y1="0" x2="24" y2="32"/>
+    <line x1="28" y1="0" x2="28" y2="32"/>
+  </g>
+
+  <!-- Major grid 8u -->
+  <g stroke="#CFC3AE" stroke-width="0.6" stroke-opacity="0.7">
+    <line x1="0" y1="8" x2="32" y2="8"/><line x1="0" y1="16" x2="32" y2="16"/>
+    <line x1="0" y1="24" x2="32" y2="24"/>
+    <line x1="8" y1="0" x2="8" y2="32"/><line x1="16" y1="0" x2="16" y2="32"/>
+    <line x1="24" y1="0" x2="24" y2="32"/>
+  </g>
+
+  <!-- Vertical axis + construction guides -->
+  <g stroke="#8A7B6C" stroke-width="0.55" stroke-dasharray="1.6 1.6" opacity="0.8">
+    <line x1="16" y1="0" x2="16" y2="32"/>
+    <line x1="16" y1="9" x2="30" y2="9"/>   <!-- seed axis -->
+    <line x1="2" y1="18" x2="16" y2="18"/> <!-- leaf branch -->
+    <line x1="2" y1="28" x2="4" y2="28"/>  <!-- base -->
+  </g>
+
+  <!-- Ring ellipse guide -->
+  <ellipse cx="16" cy="17.5" rx="11" ry="10.5" stroke="#B5862E" stroke-width="0.5" stroke-opacity="0.5" stroke-dasharray="1.4 1.4"/>
+
+  <!-- Seed center cross -->
+  <g stroke="#8A6520" stroke-width="0.5" opacity="0.8">
+    <line x1="14.4" y1="9" x2="17.6" y2="9"/>
+    <line x1="16" y1="7.4" x2="16" y2="10.6"/>
+  </g>
+
+  <!-- The glyph, locked -->
+  <path d="M16 28C9 28 5 23 5 16c0-5 4-9 11-9s11 4 11 9c0 7-4 12-11 12z" stroke="#B5862E" stroke-width="1.8"/>
+  <path d="M16 27V13M16 18c-3-1-5-3-5-6M16 18c3-1 5-3 5-6" stroke="#5F6C50" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="16" cy="9" r="2.2" fill="#B5862E"/>
+
+  <!-- Glyph control points -->
+  <g fill="#4A4238">
+    <circle cx="16" cy="5.5" r="0.9" /><circle cx="16" cy="27" r="0.9" />
+    <circle cx="16" cy="18" r="0.9" /><circle cx="11" cy="12" r="0.9" /><circle cx="21" cy="12" r="0.9" />
+  </g>
+
+  <!-- Annotations -->
+  <g font-family="Public Sans, Noto Sans, sans-serif" font-size="1.5" fill="#8A7B6C">
+    <text x="17.4" y="10.8">seed · 16,9 · r 2.2</text>
+    <text x="17.4" y="19">branch · 16,18</text>
+    <text x="0.4" y="5">ring · ellipse (16,17.5) rx11 ry10.5</text>
+    <text x="0.4" y="26.4">stem · 16,13 → 16,27</text>
+  </g>
+</svg>

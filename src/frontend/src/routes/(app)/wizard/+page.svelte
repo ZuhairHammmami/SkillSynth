@@ -274,24 +274,24 @@
 
 <style>
   .stepper { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; }
-  .st { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--muted); }
+  .st { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--clay); }
   .st.active { color: var(--ink); font-weight: 600; }
   .dot { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line-strong); display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; }
-  .st.active .dot { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .st.done .dot { background: var(--accent-deep); color: #fff; border-color: var(--accent-deep); }
+  .st.active .dot { background: var(--ochre); color: #fff; border-color: var(--ochre); }
+  .st.done .dot { background: var(--ochre-deep); color: #fff; border-color: var(--ochre-deep); }
   .sub { margin: 0 0 0.8rem; color: var(--ink-soft); }
   .roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.6rem; margin-top: 0.8rem; }
-  .role { text-align: start; border: 1px solid var(--line); background: var(--paper); border-radius: var(--radius); padding: 0.7rem 0.9rem; cursor: pointer; display: flex; flex-direction: column; gap: 0.2rem; font-family: var(--font-body); color: var(--ink); min-height: 44px; transition: border-color 0.18s ease, background 0.18s ease; }
-  .role.sel { border-color: var(--accent); background: var(--accent-soft); }
-  .role:hover { border-color: var(--accent); }
+  .role { text-align: start; border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); padding: 0.7rem 0.9rem; cursor: pointer; display: flex; flex-direction: column; gap: 0.2rem; font-family: var(--font-body); color: var(--ink); min-height: 44px; transition: border-color 0.18s ease, background 0.18s ease; }
+  .role.sel { border-color: var(--ochre); background: var(--ochre-soft); }
+  .role:hover { border-color: var(--ochre); }
   .check { display: flex; align-items: center; gap: 0.5rem; color: var(--ink-soft); min-height: 44px; }
-  .check input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .check input { width: 18px; height: 18px; accent-color: var(--ochre); }
   .check:focus-within { outline: none; box-shadow: 0 0 0 3px var(--focus-glow); border-radius: var(--radius); }
   .stack { display: flex; flex-direction: column; gap: 1rem; }
   .level-row { display: grid; grid-template-columns: 1fr 2fr auto; align-items: center; gap: 0.8rem; padding: 0.4rem 0; }
   .level-name { color: var(--ink); font-weight: 500; }
-  .level-val { width: 1.5rem; text-align: center; font-weight: 600; color: var(--accent-deep); }
-  .range { accent-color: var(--accent); }
+  .level-val { width: 1.5rem; text-align: center; font-weight: 600; color: var(--ochre-deep); }
+  .range { accent-color: var(--ochre); }
   .err-state { display: flex; align-items: center; gap: 0.5rem; color: var(--danger); margin-top: 0.8rem; }
   .nav { display: flex; justify-content: space-between; margin-top: 1.2rem; }
   .center-spin { display: flex; justify-content: center; padding: 1.2rem; }
