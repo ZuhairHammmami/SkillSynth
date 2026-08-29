@@ -234,7 +234,7 @@
 
   <div class="stats">
     <Panel title={t('pathDetailPage.progress')}><ProgressMeter value={progress * 100} /></Panel>
-    <Panel title={t('pathDetailPage.duration')}><div class="big">{Math.round((path.steps ?? []).reduce((a: number, s: any) => a + (s.duration_hours ?? 0), 0))}h</div></Panel>
+    <Panel title={t('pathDetailPage.duration')}><div class="big">{path.total_estimated_hours ?? 0}{t('units.hoursShort')}</div>{#if path.total_estimated_weeks}<div class="muted">{path.total_estimated_weeks} {t('units.weeks')}</div>{/if}</Panel>
     <Panel title={t('pathDetailPage.skillsTitle')}><div class="big">{(path.steps ?? []).length}</div></Panel>
   </div>
 
@@ -261,10 +261,10 @@
             <span class="ladder-val">{stepLevel}</span>
           </div>
           <small class="muted">
-            {step.duration_hours ?? 0}h
-            {#if step.skill?.name} · {step.skill.name}{/if}
-            {#if step.skill?.difficulty_level} · {t('pathDetailPage.skillLevel')}: {step.skill.difficulty_level}{/if}
-            {#if step.current_topic} · {t('pathDetailPage.currentTopic')}: <strong>{step.current_topic}</strong>{/if}
+            {#if step.duration_hours}{step.duration_hours}{t('units.hoursShort')}{/if}
+            {#if step.skill?.name}{#if step.duration_hours} · {/if}{step.skill.name}{/if}
+            {#if step.skill?.difficulty_level}{#if step.duration_hours || step.skill?.name} · {/if}{t('pathDetailPage.skillLevel')}: {step.skill.difficulty_level}{/if}
+            {#if step.current_topic}{#if step.duration_hours || step.skill?.name || step.skill?.difficulty_level} · {/if}{t('pathDetailPage.currentTopic')}: <strong>{step.current_topic}</strong>{/if}
           </small>
           {#if (step.learning_objectives ?? []).length}
             <ul class="obj">

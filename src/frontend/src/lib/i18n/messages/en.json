@@ -796,6 +796,7 @@
     "step": "step",
     "hoursShort": "h",
     "perWeek": "/wk",
+    "weeks": "weeks",
     "completed": "Completed",
     "learning": "Learning",
     "mastered": "Mastered"
