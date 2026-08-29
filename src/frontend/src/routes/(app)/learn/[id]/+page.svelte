@@ -13,7 +13,6 @@
   import Icon from '$lib/icons/Icon.svelte';
   import ProgressMeter from '$lib/components/ProgressMeter.svelte';
   import { success, error as toastError, info } from '$lib/components/ui/toast';
-  import TakeQuizDialog from '$lib/components/TakeQuizDialog.svelte';
   import QuizRunner from '$lib/components/QuizRunner.svelte';
   import { t } from '$lib/i18n';
 
@@ -23,12 +22,10 @@
   let busyStep = $state<number | null>(null);
   let showDelete = $state(false);
   let dependents = $state<Record<string, number> | null>(null);
-  let showQuiz = $state(false);
   let showQuizRunner = $state(false);
   let quizTest = $state<any>(null);
   let quizStep = $state<any>(null);
   let diagnostic = $state<any>(null);
-  let skills = $derived((path?.steps ?? []).map((s: any) => s.skill).filter((s: any) => s && s.id).map((s: any) => ({ id: s.id, name: s.name })));
   let progress = $derived(path?.steps && path.steps.length
     ? path.steps.filter((s: any) => s.is_completed).length / path.steps.length
     : 0);
@@ -83,12 +80,6 @@
     } catch (e) {
       toastError(e instanceof ApiError ? e.detail : t('common.error'));
     }
-  }
-
-  function handlePracticeTestStart(test: any) {
-    quizTest = test;
-    quizStep = null;
-    showQuizRunner = true;
   }
 
   async function submitPracticeTest(assessmentId: number, answers: Record<number, number>) {
@@ -239,7 +230,6 @@
       <Badge tone="accent">{path.goal_job_role ?? path.goal ?? ''}</Badge>
     </div>
     <Button variant="destructive" onclick={() => doDelete(false)}><Icon name="trash" size={16} />{t('pathDetailPage.deleteConfirm')}</Button>
-    <Button onclick={() => (showQuiz = true)}><Icon name="sparkles" size={16} />{t('wizard.assessmentTitle')}</Button>
   </div>
 
   <div class="stats">
@@ -306,8 +296,6 @@
     <Button variant="destructive" onclick={() => doDelete(true)}>{t('common.forceDelete')}</Button>
   {/snippet}
 </Dialog>
-
-<TakeQuizDialog bind:open={showQuiz} {skills} onstart={handlePracticeTestStart} />
 
 <QuizRunner
   bind:open={showQuizRunner}
