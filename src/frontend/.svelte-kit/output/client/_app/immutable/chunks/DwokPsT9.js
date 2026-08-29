@@ -1,1 +1,0 @@
-import{w as u}from"./8Ug7qMRS.js";const o=u([]);let i=0;function r(s,c){const e=++i;o.update(t=>[...t,{id:e,type:s,message:c}]),setTimeout(()=>o.update(t=>t.filter(a=>a.id!==e)),4200)}const p=s=>r("success",s),d=s=>r("error",s);export{d as e,p as s,o as t};

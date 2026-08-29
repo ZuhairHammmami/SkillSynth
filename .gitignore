@@ -86,3 +86,10 @@ Thumbs.db
 
 # SS-AI model artifacts (3GB GGUF binaries stay local)
 src/data/*.gguf
+src/data/settings.json
+
+# SvelteKit generated
+src/frontend/.svelte-kit/
+src/frontend/build/
+src/admin-app/.svelte-kit/
+src/admin-app/build/
