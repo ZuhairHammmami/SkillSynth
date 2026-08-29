@@ -25,6 +25,21 @@ def _build_role(db, skills):
     return role
 
 
+def _teardown(db, user, role, skills):
+    """Delete the isolated rows this module inserts into the shared test DB.
+
+    Run at the end of each test so exact-count schema checks (and any other
+    suite reading the shared session-scoped DB) see a stable seed. Deleting
+    the user cascades its paths/path_steps/step_progress and user_skills;
+    the role cascades job_role_skills; each skill cascades its remaining
+    edges and SET NULLs assessment/path_step references.
+    """
+    db.delete(user)
+    catalog_repository.delete_job_role(db, role.id)
+    for skill in skills:
+        catalog_repository.delete_skill(db, skill.id)
+
+
 def test_self_assessment_excludes_mastered_and_persists(db_session):
     """Self-report {A:5,B:2,C:0} excludes A, keeps B/C, persists A=5."""
     cat = catalog_repository.get_all_categories(db_session)[0]
@@ -32,18 +47,21 @@ def test_self_assessment_excludes_mastered_and_persists(db_session):
     a = catalog_repository.create_skill(db_session, SkillCreate(name="A", **base))
     b = catalog_repository.create_skill(db_session, SkillCreate(name="B", **base))
     c = catalog_repository.create_skill(db_session, SkillCreate(name="C", **base))
-    _build_role(db_session, [a, b, c])
+    skills = [a, b, c]
+    role = _build_role(db_session, skills)
     user = _make_user(db_session, "selfassess@test.io")
+    try:
+        result, error = learning_service.generate_path(
+            db_session, user,
+            GeneratePathIn(goal="SelfAssessRole", weekly_hours=10,
+                           preferences={}, answers={"A": 5, "B": 2, "C": 0}))
 
-    result, error = learning_service.generate_path(
-        db_session, user,
-        GeneratePathIn(goal="SelfAssessRole", weekly_hours=10,
-                       preferences={}, answers={"A": 5, "B": 2, "C": 0}))
-
-    assert error is None
-    step_ids = {s["skill_id"] for s in result["steps"]}
-    assert a.id not in step_ids
-    assert b.id in step_ids and c.id in step_ids
-    us = db_session.query(UserSkill).filter_by(
-        user_id=user.id, skill_id=a.id).first()
-    assert us is not None and us.proficiency_level == 5
+        assert error is None
+        step_ids = {s["skill_id"] for s in result["steps"]}
+        assert a.id not in step_ids
+        assert b.id in step_ids and c.id in step_ids
+        us = db_session.query(UserSkill).filter_by(
+            user_id=user.id, skill_id=a.id).first()
+        assert us is not None and us.proficiency_level == 5
+    finally:
+        _teardown(db_session, user, role, skills)
