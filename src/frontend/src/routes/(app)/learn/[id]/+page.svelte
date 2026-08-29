@@ -129,14 +129,18 @@
         await apiFetch(`/steps/${step.id}/undo-complete`, { method: 'POST' });
         step.is_completed = false;
         path = { ...path, progress };
-        await invalidate(['dashboard']);
+        await invalidate(['analyticsDashboard']);
+        await invalidate(['learningHistory']);
+        await invalidate(['paths']);
       } else if (step.skill) {
         await openStepQuiz(step);
       } else {
         await apiFetch(`/steps/${step.id}/complete`, { method: 'POST' });
         step.is_completed = true;
         path = { ...path, progress };
-        await invalidate(['dashboard']);
+        await invalidate(['analyticsDashboard']);
+        await invalidate(['learningHistory']);
+        await invalidate(['paths']);
       }
     } catch (e) {
       toastError(e instanceof ApiError ? e.detail : 'Update failed');
@@ -169,7 +173,9 @@
     await apiFetch(`/steps/${step.id}/complete`, { method: 'POST' });
     step.is_completed = true;
     path = { ...path, progress };
-    await invalidate(['dashboard']);
+    await invalidate(['analyticsDashboard']);
+    await invalidate(['learningHistory']);
+    await invalidate(['paths']);
     info(t('learn.noTest'));
   }
 
@@ -185,7 +191,9 @@
       if (res?.passed) {
         quizStep.is_completed = true;
         path = { ...path, progress };
-        invalidate(['dashboard']);
+        invalidate(['analyticsDashboard']);
+        invalidate(['learningHistory']);
+        invalidate(['paths']);
         success(t('learn.levelUp'));
       } else {
         info(t('learn.tryAgainLower'));
@@ -193,7 +201,6 @@
     } else {
       info(t('practiceTest.testReady'));
       invalidate(['analyticsDashboard']);
-      invalidate(['dashboard']);
     }
     try {
       await load();

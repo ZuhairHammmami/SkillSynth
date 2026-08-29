@@ -76,8 +76,8 @@ export async function updateProfile(patch: { full_name?: string; email?: string 
 export function logout(): void {
   deleteCookie('authToken');
   invalidate(['paths']);
-  invalidate(['dashboard']);
   invalidate(['analyticsDashboard']);
+  invalidate(['learningHistory']);
   invalidate(['skillGrowth']);
   authStore.set({ user: null, loading: false, initialized: true });
 }

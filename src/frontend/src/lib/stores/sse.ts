@@ -18,16 +18,14 @@ function safeParse(d: string): any {
 function onFrame(type: string, data: any): void {
   if (type === 'path_generated') {
     invalidate(['paths']);
-    invalidate(['dashboard']);
+    invalidate(['analyticsDashboard']);
   } else if (type === 'assessment_completed') {
     invalidate(['analyticsDashboard']);
   } else if (type === 'ai_test_ready' || type === 'ai_quiz_ready' ||
       type === 'ai_step_quiz_ready') {
     invalidate(['paths']);
-    invalidate(['dashboard']);
     invalidate(['analyticsDashboard']);
   } else if (type === 'ai_step_diagnostic' || type === 'proficiency_adjusted') {
-    invalidate(['dashboard']);
     invalidate(['analyticsDashboard']);
   }
   if (browser) window.dispatchEvent(new CustomEvent('sse:' + type, { detail: data }));
