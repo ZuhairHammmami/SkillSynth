@@ -105,6 +105,18 @@ class TestAssessmentCRUD:
         assert len(data["questions"]) == 1
         assert data["questions"][0]["prompt"] == "Q1"
 
+    def test_create_pass_score_zero_round_trips(self, api_client, admin_headers):
+        sid = _mk_skill(api_client, admin_headers)
+        resp = api_client.post("/api/admin/assessments", json={
+            "skill_id": sid, "title": "ZeroPass", "pass_score": 0},
+            headers=admin_headers)
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["passing_score"] == 0
+        detail = api_client.get(
+            f"/api/admin/assessments/{resp.json()['id']}",
+            headers=admin_headers).json()
+        assert detail["passing_score"] == 0
+
     def test_get_detail_missing_404(self, api_client, admin_headers):
         resp = api_client.get("/api/admin/assessments/99999999",
                               headers=admin_headers)
@@ -138,6 +150,25 @@ class TestAssessmentCRUD:
         resp = api_client.delete(f"/api/admin/assessments/{aid}",
                                  headers=admin_headers)
         assert resp.status_code == 200
+
+    def test_delete_restricted_by_questions_then_force(self, api_client, admin_headers):
+        sid = _mk_skill(api_client, admin_headers)
+        aid = _mk_assessment(api_client, admin_headers, sid)
+        api_client.post(f"/api/admin/assessments/{aid}/questions", json={
+            "prompt": "Q1", "options": ["a", "b"], "correct_index": 0},
+            headers=admin_headers)
+        blocked = api_client.delete(f"/api/admin/assessments/{aid}",
+                                    headers=admin_headers)
+        assert blocked.status_code == 409
+        detail = blocked.json()["detail"]
+        assert "force=true" in detail["message"]
+        assert detail["dependents"]["assessment_questions"] == 1
+        forced = api_client.delete(f"/api/admin/assessments/{aid}?force=true",
+                                   headers=admin_headers)
+        assert forced.status_code == 200, forced.text
+        gone = api_client.get(f"/api/admin/assessments/{aid}",
+                              headers=admin_headers)
+        assert gone.status_code == 404
 
 
 class TestQuestionCRUD:

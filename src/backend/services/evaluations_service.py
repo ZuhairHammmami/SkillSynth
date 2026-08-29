@@ -30,7 +30,8 @@ def _serialize_assessment(db, a, with_questions: bool = False) -> dict:
         "id": a.id, "skill_id": a.skill_id,
         "skill_name": skill.name if skill else None,
         "title": a.title, "description": a.description,
-        "assessment_type": a.description, "passing_score": a.pass_score or 60,
+        "assessment_type": a.description,
+        "passing_score": a.pass_score if a.pass_score is not None else 60,
         "question_count": repo.count_questions(db, a.id),
     }
     if with_questions:
