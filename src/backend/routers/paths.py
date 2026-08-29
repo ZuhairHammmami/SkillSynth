@@ -46,6 +46,35 @@ def generate_path(data: GeneratePathIn, db: Session = Depends(get_db),
     return result
 
 
+class GenerateSkillPathIn(BaseModel):
+    """POST /generate-path/skill/{id} body — weekly time budget + prefs."""
+
+    weekly_hours: int = 10
+    preferences: dict | None = None
+
+
+@router.post("/generate-path/skill/{skill_id}", response_model=PathDetailOut)
+def generate_path_for_skill(skill_id: int, data: GenerateSkillPathIn,
+                            db: Session = Depends(get_db),
+                            current_user=Depends(get_current_user)):
+    """Generate a learning path from a single catalog skill (endpoint C).
+
+    Calls learning_service.generate_path_for_skill, reusing the wizard
+    prereq-ordering/persistence helpers additively (no change to the
+    existing wizard flow). Raises 404 (unknown skill) or 409 (already in a
+    path / all mastered). Broadcasts path events for dashboard refresh."""
+    result, error = learning_service.generate_path_for_skill(
+        db, current_user, skill_id,
+        weekly_hours=data.weekly_hours, preferences=data.preferences)
+    if error:
+        status = 409 if "already" in error or "mastered" in error else 404
+        raise HTTPException(status_code=status, detail=error)
+    send_event(current_user.id, "path_generated", {"path_id": result["id"]})
+    send_admin_event("path_generated", {
+        "path_id": result["id"], "title": result.get("title")})
+    return result
+
+
 @router.get("/paths/")
 def list_paths(db: Session = Depends(get_db),
                current_user=Depends(get_current_user)):

@@ -1,7 +1,9 @@
 """Catalog router — learner-facing browse API.
 
-Wires /api/catalog to services/catalog_service.py (Task 3). All endpoints
-require a signed-in user; consumed by the learner catalog UI.
+Wires /api/catalog to services/catalog_service.py. All endpoints require a
+signed-in user; consumed by the learner catalog UI. Public (non-admin)
+browse: categories, skills, skill detail, and roles. Per-skill path
+generation lives in routers/paths at /api/generate-path/skill/{id}.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -43,3 +45,24 @@ def list_skills(db: Session = Depends(get_db),
     catalog_service._serialize_skill for each repo.get_all_skills(db)."""
     return [catalog_service._serialize_skill(db, s)
             for s in repo.get_all_skills(db)]
+
+
+@router.get("/skills/{skill_id}")
+def get_skill_detail(skill_id: int, db: Session = Depends(get_db),
+                     current_user=Depends(get_current_user)):
+    """Return one skill's learner detail with prerequisite + recommended
+    strips. Raises 404 when the skill id does not exist; consumed by the
+    catalog skill view (endpoint A)."""
+    skill = repo.get_skill(db, skill_id)
+    if skill is None:
+        raise HTTPException(status_code=404, detail="Skill not found")
+    return catalog_service.serialize_skill_detail(db, skill)
+
+
+@router.get("/roles")
+def list_roles(db: Session = Depends(get_db),
+               current_user=Depends(get_current_user)):
+    """Return lean learner-facing job roles with their ordered skills.
+    Calls catalog_service.list_catalog_roles; consumed by the catalog
+    role picker (endpoint B)."""
+    return catalog_service.list_catalog_roles(db)

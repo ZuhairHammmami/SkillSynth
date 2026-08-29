@@ -203,6 +203,43 @@ def generate_path(db, user, data) -> tuple[dict | None, str | None]:
     return format_path_detail(db, path, user.id), None
 
 
+def generate_path_for_skill(db, user, skill_id: int,
+                            weekly_hours: int = 10,
+                            preferences: dict | None = None
+                            ) -> tuple[dict | None, str | None]:
+    """Catalog path generation for POST /generate-path/skill/{id}.
+
+    Builds a plan from the target skill plus its prerequisite closure,
+    drops prerequisites already mastered (>= MASTERY_LEVEL), duplicate-
+    guards the target so a skill can't open two paths, then reuses
+    _persist_plan/format_path_detail. Caller: routers/catalog.
+    """
+    skill = catalog_repository.get_skill(db, skill_id)
+    if not skill:
+        return None, "Skill not found"
+    if lrepo.skill_in_user_paths(db, user.id, skill_id):
+        return None, "Skill is already in one of your paths"
+    chain = catalog_repository.get_prerequisite_chain(db, skill_id)
+    rows = catalog_repository.get_skills_by_ids(db, chain)
+    current = _user_proficiency_by_name(db, user.id, rows)
+    plan_rows = [s for s in rows if current[s.name] < MASTERY_LEVEL]
+    if skill not in plan_rows:
+        plan_rows.append(skill)
+    plan = _order_by_prereqs(db, plan_rows)
+    if not plan:
+        return None, "You have already mastered this skill and its prerequisites"
+    weekly = max(weekly_hours, 1)
+    prefs = {"weekly_hours": weekly, "prefs": (preferences or {})}
+    hours = sum((s.estimated_hours or 10) for s in plan)
+    weeks = max(1, round(hours / weekly))
+    levels = {s.name: current[s.name] for s in rows}
+    path = _persist_plan(
+        db, user.id, f"Master {skill.name}",
+        f"Learning path for {skill.name}. Estimated {hours}h over {weeks} weeks.",
+        None, plan, levels, current, prefs)
+    return format_path_detail(db, path, user.id), None
+
+
 def _serialize_step(db, step, completed_ids: set[int], user_id: int) -> dict:
     """One steps[] entry; content mirrors description and is_completed
     comes from the completed-step id set. Emits skill linkage, ordering

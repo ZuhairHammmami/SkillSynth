@@ -313,3 +313,65 @@ def delete_job_role(db, job_role_id: int,
             return False, conflict
     repo.delete_job_role(db, job_role_id)
     return True, None
+
+
+# ── Learner catalog (public browse) ───────────────────────────────────
+
+def _skill_link(db, skill_id: int) -> dict | None:
+    """Tiny {id, name} for a skill or None; prerequisite/follower strips."""
+    skill = repo.get_skill(db, skill_id)
+    if not skill:
+        return None
+    details = {"id": skill.id, "name": skill.name,
+               "difficulty_level": skill.difficulty_level}
+    if skill.difficulty_level is not None:
+        details["difficulty_level"] = skill.difficulty_level
+    return details
+
+
+def _category_name(db, category_id: int | None) -> str | None:
+    """Human name for a category id, or None when absent."""
+    if category_id is None:
+        return None
+    cat = db.query(Category).filter(Category.id == category_id).first()
+    return cat.name if cat else None
+
+
+def serialize_skill_detail(db, skill) -> dict:
+    """Learner-facing skill detail (catalog page).
+
+    Adds prerequisite + follower {id,name} strips and the parent category
+    name on top of the admin _serialize_skill shape. Called by routers/
+    catalog.get_skill_detail; consumed by the catalog skill view."""
+    base = _serialize_skill(db, skill)
+    graph = repo.get_prerequisite_graph(db)
+    prereqs = [_skill_link(db, pid) for pid in sorted(graph.get(skill.id, []))]
+    prereqs = [p for p in prereqs if p is not None]
+    followers = [fid for fid, pres in graph.items()
+                 if skill.id in pres]
+    follower_links = [_skill_link(db, fid)
+                      for fid in sorted(followers)]
+    follower_links = [f for f in follower_links if f is not None]
+    base["category_name"] = _category_name(db, skill.category_id)
+    base["prerequisites"] = prereqs
+    base["recommended"] = follower_links
+    return base
+
+
+def list_catalog_roles(db) -> list[dict]:
+    """Lean learner-facing job-role list with ordered skill names.
+
+    Called by routers/catalog.list_roles; drives the catalog role picker
+    and RecommendedStrip joins without admin skill_ids plumbing."""
+    out = []
+    for role in repo.get_all_job_roles(db):
+        skill_ids = repo.get_job_role_skill_ids(db, role.id)
+        skills = [s for s in (_skill_link(db, sid) for sid in skill_ids)
+                  if s is not None]
+        out.append({
+            "id": role.id, "title": role.title,
+            "description": role.description,
+            "career_field": role.career_field,
+            "skills": skills,
+        })
+    return out

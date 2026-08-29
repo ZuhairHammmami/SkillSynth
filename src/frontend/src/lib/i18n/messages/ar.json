@@ -214,7 +214,16 @@
     "completion": "الإنجاز",
     "backToCategories": "العودة إلى الفئات",
     "viewSkills": "عرض المهارات",
-    "level": "المستوى"
+    "level": "المستوى",
+    "startLearning": "ابدأ بتعلّم هذه المهارة",
+    "inYourPaths": "ضمن مساراتك",
+    "prerequisites": "المتطلبات السابقة",
+    "recommendedNext": "المقترح التالي",
+    "viewPath": "عرض المسار",
+    "alreadyInPaths": "لديك بالفعل مسار لهذه المهارة",
+    "hours": "ساعات",
+    "emptyCategories": "لا توجد فئات بعد",
+    "skillNotFound": "المهارة غير موجودة"
   },
   "error": {
     "title": "حدث خطأ ما",

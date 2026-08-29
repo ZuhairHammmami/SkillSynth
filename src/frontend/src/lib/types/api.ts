@@ -107,9 +107,23 @@ export interface Skill {
   description?: string | null;
   difficulty_level?: number;
   estimated_hours?: number;
+  icon?: string;
+  color?: string;
   category_id?: number | null;
   category_ids?: number[];
   prerequisite_ids?: number[];
+}
+
+export interface SkillLink {
+  id: number;
+  name: string;
+  difficulty_level?: number;
+}
+
+export interface SkillDetail extends Skill {
+  category_name?: string | null;
+  prerequisites?: SkillLink[];
+  recommended?: SkillLink[];
 }
 export interface Resource {
   id: number;

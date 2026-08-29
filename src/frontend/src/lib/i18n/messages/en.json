@@ -441,7 +441,16 @@
     "completion": "Completion",
     "backToCategories": "Back to categories",
     "viewSkills": "View skills",
-    "level": "Level"
+    "level": "Level",
+    "startLearning": "Start learning this skill",
+    "inYourPaths": "In your paths",
+    "prerequisites": "Prerequisites",
+    "recommendedNext": "Recommended next",
+    "viewPath": "View path",
+    "alreadyInPaths": "You already have a path for this skill",
+    "hours": "hours",
+    "emptyCategories": "No categories yet",
+    "skillNotFound": "Skill not found"
   },
   "error": {
     "title": "Something went wrong",

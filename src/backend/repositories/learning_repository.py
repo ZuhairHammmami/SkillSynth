@@ -134,6 +134,19 @@ def count_steps(db: Session, user_id: int | None = None) -> int:
     return query.count()
 
 
+def skill_in_user_paths(db: Session, user_id: int, skill_id: int) -> bool:
+    """True when a skill is already a step target in one of the user's paths.
+
+    Duplicate-guard for catalog path generation (generate_path_for_skill):
+    prevents adding the same skill as a target in more than one path."""
+    return (
+        db.query(PathStep.id)
+        .join(Path, PathStep.path_id == Path.id)
+        .filter(Path.user_id == user_id, PathStep.skill_id == skill_id)
+        .first() is not None
+    )
+
+
 def create_step(db: Session, path_id: int, position: int, title: str,
                 description: str = "", estimated_hours: int = 8,
                 resource_ids: list[int] | None = None,
