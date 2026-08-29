@@ -21,6 +21,7 @@ from backend.repositories import assess_repository, catalog_repository
 from backend.repositories import engagement_repository as erepo
 from backend.repositories import identity_repository as irepo
 from backend.repositories import learning_repository as lrepo
+from backend.services import catalog_integrity
 
 
 # ── User management ───────────────────────────────────────────────────
@@ -68,10 +69,24 @@ def update_user(db, user_id: int, data, hasher,
     return irepo.update_fields(db, user, fields), None
 
 
-def delete_user(db, user_id: int, admin_id: int) -> tuple[bool, str | None]:
-    """Self-deletion guard + hard delete; (ok, error) tuple."""
+def delete_user(db, user_id: int, admin_id: int,
+                force: bool = False) -> tuple[bool, str | dict | None]:
+    """Self-deletion guard + restricted-delete census + hard delete.
+
+    Called by routers/admin.delete_user; self-delete fails with a 400
+    string, missing rows with a 404 string, and an existing-dependent
+    census returns the structured 409 payload unless ?force=true bypasses
+    it (mirrors the skills/categories/job_roles guard).
+    """
     if user_id == admin_id:
         return False, "Cannot delete yourself"
+    user = irepo.get_by_id(db, user_id)
+    if not user:
+        return False, "User not found"
+    if not force:
+        conflict = catalog_integrity.user_delete_conflict(db, user_id)
+        if conflict:
+            return False, conflict
     if not irepo.delete(db, user_id):
         return False, "User not found"
     return True, None

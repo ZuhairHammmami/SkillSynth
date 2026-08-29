@@ -141,17 +141,23 @@ class TestAdminSystem:
         assert isinstance(response.json(), list)
 
     def test_list_assessments_shape(self, api_client, admin_headers):
-        """Pins the /admin/assessments serializer (routers/admin.py
-        list_assessments): flat rows keyed exactly {id, skill_id, title,
-        assessment_type, passing_score} with an int passing_score."""
+        """Pins the /admin/assessments serializer (routers/evaluations_admin.py
+        list_assessments): the legacy flat keys {id, skill_id, title,
+        assessment_type, passing_score} plus the additive skill_name and
+        question_count (Task 3)."""
         response = api_client.get("/api/admin/assessments",
                                   headers=admin_headers)
         assert response.status_code == 200
         assessments = response.json()
         assert isinstance(assessments, list) and assessments
-        assert set(assessments[0]) == {
-            "id", "skill_id", "title", "assessment_type", "passing_score"}
+        assert {
+            "id", "skill_id", "title", "assessment_type",
+            "passing_score", "skill_name", "question_count",
+        } <= set(assessments[0])
         assert isinstance(assessments[0]["passing_score"], int)
+        assert all(e["assessment_type"] == e["description"]
+                   for e in assessments)
+        assert all(e["question_count"] >= 0 for e in assessments)
 
     def test_post_backup_writes_into_cwd_backups_dir(
             self, api_client, admin_headers, tmp_path, monkeypatch):

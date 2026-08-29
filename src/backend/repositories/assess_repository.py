@@ -153,3 +153,91 @@ def create_assessment_with_questions(db: Session, skill_id: int | None,
     db.commit()
     db.refresh(assessment)
     return assessment
+
+
+# ── Admin evaluations write helpers (Task 3) ─────────────────────────
+
+def create_assessment(db: Session, skill_id: int | None, title: str,
+                      description: str | None,
+                      pass_score: int) -> Assessment:
+    """Insert one assessment row; commits + refreshes.
+
+    Called by evaluations_service.create_assessment after the skill-FK
+    guard passes."""
+    assessment = Assessment(skill_id=skill_id, title=title,
+                            description=description, pass_score=pass_score)
+    db.add(assessment)
+    db.commit()
+    db.refresh(assessment)
+    return assessment
+
+
+def update_assessment(db: Session, assessment: Assessment,
+                      fields: dict) -> Assessment:
+    """Apply non-None scalar fields onto an assessment row; commits.
+
+    Called by evaluations_service.update_assessment; service validates
+    skill_id and selects the field set first."""
+    for key, value in fields.items():
+        if value is not None:
+            setattr(assessment, key, value)
+    db.commit()
+    db.refresh(assessment)
+    return assessment
+
+
+def get_question(db: Session, question_id: int) -> AssessmentQuestion | None:
+    """Fetch one question by PK; admin question edit/delete entry point."""
+    return db.query(AssessmentQuestion).filter(
+        AssessmentQuestion.id == question_id).first()
+
+
+def count_questions(db: Session, assessment_id: int) -> int:
+    """Total questions for one assessment; last-question-delete guard."""
+    return db.query(AssessmentQuestion).filter(
+        AssessmentQuestion.assessment_id == assessment_id).count()
+
+
+def add_question(db: Session, assessment_id: int, position: int, prompt: str,
+                 options: list, correct_index: int) -> AssessmentQuestion:
+    """Insert one question row at the given position; commits + refreshes.
+
+    Called by evaluations_service.add_question after option/index
+    validation and position allocation."""
+    question = AssessmentQuestion(assessment_id=assessment_id,
+                                  position=position, prompt=prompt,
+                                  options=options, correct_index=correct_index)
+    db.add(question)
+    db.commit()
+    db.refresh(question)
+    return question
+
+
+def update_question(db: Session, question: AssessmentQuestion,
+                    fields: dict) -> AssessmentQuestion:
+    """Apply non-None fields onto a question row; commits + refreshes.
+
+    Called by evaluations_service.update_question after validation and
+    neighborhood re-positioning."""
+    for key, value in fields.items():
+        if value is not None:
+            setattr(question, key, value)
+    db.commit()
+    db.refresh(question)
+    return question
+
+
+def delete_question(db: Session, question: AssessmentQuestion) -> None:
+    """Delete one question row and renumber the remainder; commits.
+
+    Called by evaluations_service.delete_question whose caller guards
+    the last-question rule and passes the ordered survivors."""
+    db.delete(question)
+    db.commit()
+
+
+def renumber_questions(db: Session, questions: list[AssessmentQuestion]) -> None:
+    """Assign the sequential positions 1..n to the given ordered rows."""
+    for idx, question in enumerate(questions, start=1):
+        question.position = idx
+    db.commit()

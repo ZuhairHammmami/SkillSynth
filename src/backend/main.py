@@ -37,7 +37,8 @@ from backend.middlewares.csrf import CSRFMiddleware
 from backend.middlewares.security import SecurityHeadersMiddleware
 from backend.repositories import identity_repository
 from backend.routers import admin, analytics, assessments, auth, catalog, catalog_admin
-from backend.routers import ai, learning, paths, realtime
+from backend.routers import ai, evaluations_admin, learning, paths, realtime
+from backend.services import llm_engine, settings_service
 from backend.services.auth_service import decode_token, hash_password
 
 logging.basicConfig(level=logging.INFO,
@@ -75,6 +76,24 @@ async def lifespan(app: FastAPI):
             logger.info("Admin user created: %s", admin_email)
     finally:
         db.close()
+    if settings_service.is_ai_enabled():
+
+        def _warmup_async() -> None:
+            """Warm the SS-AI engine off the request path.
+
+            Called by a daemon thread at startup; delegates to llm_engine.
+            warmup() and logs non-fatally so the app starts serving instantly
+            while the model loads in the background (single-purpose wrapper).
+            """
+            try:
+                if not llm_engine.warmup():
+                    logger.warning(
+                        "SS-AI warmup did not complete at startup; the model "
+                        "will lazy-load on the first AI request when VRAM frees.")
+            except Exception as exc:  # noqa: BLE001 — non-fatal startup step
+                logger.warning("SS-AI warmup error (non-fatal): %s", exc)
+
+        threading.Thread(target=_warmup_async, daemon=True).start()
     yield
 
 
@@ -103,6 +122,7 @@ app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"]
 app.include_router(catalog.router, prefix="/api/catalog", tags=["Catalog"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(catalog_admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(evaluations_admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(realtime.router, prefix="/api/realtime", tags=["Real-time"])
 app.include_router(ai.router, prefix="/api", tags=["AI"])
 

@@ -8,12 +8,21 @@ user_email/user_agent from the merged activity_log table.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from backend.dto.auth import PasswordValidator
+
+
+def _sanitize(value: str) -> str:
+    """Strip angle/quote characters from free text; requires non-empty."""
+    value = value.strip()
+    if not value:
+        raise ValueError("Value must not be empty")
+    return re.sub(r"[<>'\"\\]", "", value)
 
 
 class AdminCreateUser(BaseModel):
@@ -147,3 +156,93 @@ class AggregatedReportOut(BaseModel):
 
 
 AdminDashboardResponse = AggregatedReportOut
+
+
+# ── Evaluations (assessments + questions) ─────────────────────────────
+
+class AssessmentCreate(BaseModel):
+    """POST /admin/assessments body; links an assessment to one skill."""
+
+    skill_id: Optional[int] = None
+    title: str = Field(..., min_length=1, max_length=200)
+    description: Optional[str] = Field(None, max_length=2000)
+    pass_score: int = Field(60, ge=0, le=100)
+
+    @field_validator("title")
+    @classmethod
+    def sanitize_title(cls, v: str) -> str:
+        """Strip markup via the shared sanitizer."""
+        return _sanitize(v)
+
+
+class AssessmentUpdate(BaseModel):
+    """PUT /admin/assessments/{id} body; None fields left untouched."""
+
+    skill_id: Optional[int] = None
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    description: Optional[str] = Field(None, max_length=2000)
+    pass_score: Optional[int] = Field(None, ge=0, le=100)
+
+    @field_validator("title")
+    @classmethod
+    def sanitize_title(cls, v: Optional[str]) -> Optional[str]:
+        """Strip markup when a new value is supplied."""
+        return _sanitize(v) if v is not None else v
+
+
+class QuestionCreate(BaseModel):
+    """POST /admin/assessments/{id}/questions body (position optional).
+
+    Semantic option/index rules are enforced by evaluations_service so
+    they surface as a 400 (mapped), not a 422 field error."""
+
+    prompt: str = Field(..., min_length=1, max_length=2000)
+    options: List[str]
+    correct_index: int = Field(..., ge=0)
+    position: Optional[int] = Field(None, ge=1)
+
+    @field_validator("prompt")
+    @classmethod
+    def sanitize_prompt(cls, v: str) -> str:
+        """Strip markup via the shared sanitizer."""
+        return _sanitize(v)
+
+
+class QuestionUpdate(BaseModel):
+    """PUT /admin/assessments/{id}/questions/{qid} body; None left as-is."""
+
+    prompt: Optional[str] = Field(None, min_length=1, max_length=2000)
+    options: Optional[List[str]] = None
+    correct_index: Optional[int] = Field(None, ge=0)
+    position: Optional[int] = Field(None, ge=1)
+
+    @field_validator("prompt")
+    @classmethod
+    def sanitize_prompt(cls, v: Optional[str]) -> Optional[str]:
+        """Strip markup when a new value is supplied."""
+        return _sanitize(v) if v is not None else v
+
+
+class AssessmentQuestionOut(BaseModel):
+    """Serialized question row within an assessment detail payload."""
+
+    id: int
+    assessment_id: int
+    position: int
+    prompt: str
+    options: List[str]
+    correct_index: int
+
+
+class AssessmentDetailOut(BaseModel):
+    """GET /admin/assessments/{id} — metadata + ordered questions."""
+
+    id: int
+    skill_id: Optional[int] = None
+    skill_name: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    assessment_type: Optional[str] = None
+    passing_score: int
+    question_count: int = 0
+    questions: List[AssessmentQuestionOut] = []

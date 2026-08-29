@@ -8,10 +8,13 @@ require_admin dependency; consumed by the admin-app pages.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+import logging
+
 from backend.config.app_settings import (
-    ACCESS_TOKEN_EXPIRE_MINUTES, AI_ENABLED, AI_MODEL_PATH, APP_MODE,
+    ACCESS_TOKEN_EXPIRE_MINUTES, AI_MODEL_PATH, APP_MODE,
     CORS_ORIGINS, CSRF_ENABLED, LOGIN_LOCKOUT_MINUTES, MAX_LOGIN_ATTEMPTS,
     PASSWORD_MIN_LENGTH,
 )
@@ -19,8 +22,10 @@ from backend.database import get_db
 from backend.dto.admin import AdminCreateUser, AdminUserUpdate, PathAdminView
 from backend.policies.auth_policy import get_current_user, require_admin
 from backend.routers.error_mapping import status_for_error
-from backend.repositories import assess_repository
 from backend.services import admin_service, auth_service
+from backend.services import llm_engine, settings_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(dependencies=[Depends(require_admin)])
 
@@ -68,32 +73,19 @@ def update_user(user_id: int, data: AdminUserUpdate, db: Session = Depends(get_d
 
 
 @router.delete("/users/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db),
+def delete_user(user_id: int, force: bool = False,
+                db: Session = Depends(get_db),
                 current_user=Depends(get_current_user)):
-    """Hard-delete a user (self-delete guarded). Calls admin_service.delete_user;
-    router-level require_admin already gates access."""
-    ok, error = admin_service.delete_user(db, user_id, current_user.id)
+    """Restricted-delete a user (self-delete + dependent census guarded).
+    Calls admin_service.delete_user; router-level require_admin gates
+    access and the structured 409 payload surfaces dependent rows."""
+    ok, error = admin_service.delete_user(db, user_id, current_user.id, force)
     if not ok:
+        if isinstance(error, dict):
+            raise HTTPException(status_code=409, detail=error)
         raise HTTPException(status_code=400 if "yourself" in (error or "") else 404,
                             detail=error)
     return {"detail": "User deleted"}
-
-
-@router.get("/assessments")
-def list_assessments(db: Session = Depends(get_db)):
-    """List all assessments. Reads the assess repository; admin assessments page."""
-    return [{"id": a.id, "skill_id": a.skill_id, "title": a.title,
-             "assessment_type": a.description,
-             "passing_score": a.pass_score or 60}
-            for a in assess_repository.get_all_assessments(db)]
-
-
-@router.delete("/assessments/{assessment_id}")
-def delete_assessment(assessment_id: int, db: Session = Depends(get_db)):
-    """Delete an assessment. Calls the assess repository delete."""
-    if not assess_repository.delete_assessment(db, assessment_id):
-        raise HTTPException(status_code=404, detail="Assessment not found")
-    return {"detail": "Deleted successfully"}
 
 
 @router.get("/paths", response_model=list[PathAdminView])
@@ -133,15 +125,23 @@ def db_inspector(db: Session = Depends(get_db)):
     return admin_service.db_inspector(db)
 
 
+class FeatureFlagsUpdate(BaseModel):
+    """PUT /api/admin/feature-flags body — the AI toggle payload."""
+
+    ai_enabled: bool
+
+
 @router.get("/feature-flags")
 def feature_flags():
-    """Return the read-only system configuration object for the admin
-    feature-flags page (built from config/app_settings); values now
-    reflect live configuration rather than hardcoded placeholders."""
+    """Return the system configuration object for the admin feature-flags
+    page; AI fields now reflect the runtime, file-backed toggle from
+    settings_service rather than the startup env value."""
+    ai_enabled = settings_service.is_ai_enabled()
     return {
         "app_mode": APP_MODE,
         "registration_enabled": True,
-        "ai_path_generation": AI_ENABLED,
+        "ai_enabled": ai_enabled,
+        "ai_path_generation": ai_enabled,
         "ai_local_model": AI_MODEL_PATH,
         "real_time_updates": True,
         "csrf_protection": CSRF_ENABLED,
@@ -158,6 +158,27 @@ def feature_flags():
         "lockout_minutes": LOGIN_LOCKOUT_MINUTES,
         "cors_origins": CORS_ORIGINS,
     }
+
+
+@router.put("/feature-flags")
+def update_feature_flags(data: FeatureFlagsUpdate):
+    """Persist the runtime AI toggle from the admin feature-flags page.
+
+    Called by PUT /api/admin/feature-flags; requires admin via the
+    router-level dependency. Delegates the write to settings_service, then
+    on enable eagerly warms the engine (non-fatal — surfaces model/VRAM
+    problems immediately instead of on the next quiz) and on disable clears
+    any failed-load latch so a later re-enable retries cleanly. Returns the
+    updated ai_enabled state."""
+    settings_service.set_ai_enabled(data.ai_enabled)
+    if data.ai_enabled:
+        try:
+            llm_engine.warmup()
+        except Exception as exc:  # noqa: BLE001 — non-fatal toggle side-effect
+            logger.warning("feature-flags: AI warmup on enable failed: %s", exc)
+    else:
+        llm_engine.reset_load_failure()
+    return {"ai_enabled": settings_service.is_ai_enabled()}
 
 
 @router.get("/reports/aggregated")
