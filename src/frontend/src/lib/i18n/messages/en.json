@@ -171,12 +171,7 @@
       "passwordVeryStrong": "Very Strong"
     },
     "validation": {
-      "emailRequired": "Please enter a valid email address.",
-      "passwordRequired": "Password is required.",
-      "passwordMin": "Password must be at least 8 characters.",
-      "nameMin": "Name must be at least 2 characters.",
-      "passwordsNoMatch": "Passwords do not match.",
-      "acceptTerms": "You must accept the terms and conditions."
+      "passwordsNoMatch": "Passwords do not match."
     },
     "forgotPassword": {
       "title": "Forgot Password",
@@ -754,7 +749,20 @@
     "practiceTest": "Skill Mastery"
   },
   "validation": {
-    "passwordsNoMatch": "Passwords do not match"
+    "passwordsNoMatch": "Passwords do not match",
+    "required": "This field is required",
+    "emailInvalid": "Enter a valid email address",
+    "nameChars": "Name must not contain these characters: < > \" ' \\",
+    "nameTooLong": "Name must be at most 100 characters",
+    "minLength": "Must be at least {min} characters",
+    "policyRequirements": "Must be at least {min} characters with upper and lower case letters, a number and a special character, and no spaces",
+    "maxLength": "Must be at most {max} characters",
+    "range": "Must be between {min} and {max}",
+    "weeklyHoursRange": "Weekly hours must be between {min} and {max}",
+    "urlInvalid": "Enter a valid URL starting with http:// or https://",
+    "hexColorInvalid": "Enter a valid hex color code, e.g. #0F172A",
+    "minOptions": "Select at least {min} options",
+    "whitespace": "Must not contain spaces"
   },
   "forgotPasswordForm": {
     "email": "Email",
