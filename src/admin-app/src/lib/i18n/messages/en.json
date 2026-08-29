@@ -951,7 +951,12 @@
       "url": "{field} must be a valid URL",
       "invalidEmail": "{field} must be a valid email address",
       "hexColor": "{field} must be a valid hex color",
-      "minOptions": "Select at least {min} option(s)"
+      "minOptions": "Select at least {min} option(s)",
+      "nameChars": "{field} must not contain the characters < > \" ' \\",
+      "nonNegative": "{field} must be 0 or greater",
+      "policyRequirements": "{field} must meet the password policy (min {min} chars, upper/lower/digit/special char)",
+      "positiveInt": "{field} must be a positive integer",
+      "whitespace": "{field} must not contain spaces"
     }
   }
 }
