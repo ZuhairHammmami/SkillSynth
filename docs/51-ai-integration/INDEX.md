@@ -45,7 +45,7 @@ Goal → POST /api/ai/wizard-quiz → jobId → SSE ai_quiz_ready|ai_quiz_failed
 | POST /api/ai/explain | none | per-question why + study advice; falls back `narrative_available:false` |
 | GET /api/learning/analysis | none | weaknesses/diagnostic feed for analytics panel |
 
-All gated by `AI_ENABLED` → **503** `{"detail":"AI features are disabled"}` when off; all require Bearer auth.
+All gated by the runtime AI flag → **503** `{"detail":"AI features are disabled"}` when off; all require Bearer auth. The flag defaults from the `AI_ENABLED` env var and is **overridable at runtime** via the admin `PUT /api/admin/feature-flags` endpoint (persisted to `src/data/settings.json`), so an admin can enable/disable AI from the UI without restarting.
 
 ## Emitted Event Types (5 new — verified in code)
 | Event | Source | Payload |

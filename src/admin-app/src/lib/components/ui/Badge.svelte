@@ -1,4 +1,5 @@
-<!-- Badge / tag. Warm-craft pill with tone variants. -->
+<!-- Status badge. Variants: neutral | accent | ok | danger | warn. Each uses
+     sufficient-contrast token pairings (dark text on a light tint). -->
 <script lang="ts">
   let { tone = 'neutral', children }: any = $props();
 </script>
@@ -10,18 +11,18 @@
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
-    padding: 0.15rem 0.55rem;
+    padding: 0.2rem 0.6rem;
     border-radius: 999px;
     font-size: 0.75rem;
     font-weight: 600;
     border: 1px solid var(--line-strong);
     background: var(--paper-2);
     color: var(--ink-soft);
+    white-space: nowrap;
   }
-  .neutral { background: var(--paper-2); }
-  .ochre { background: var(--ochre); color: #fff7e8; border-color: var(--ochre-deep); }
-  .sage { background: var(--sage); color: #f3f6ee; border-color: var(--sage-deep); }
-  .danger { background: var(--danger); color: #fff; border-color: #7e2c1c; }
-  .warn { background: #efd9a6; color: var(--ochre-deep); border-color: var(--ochre); }
-  .ok { background: var(--sage); color: #f3f6ee; border-color: var(--sage-deep); }
+  .neutral { background: var(--paper-2); color: var(--ink-soft); border-color: var(--line-strong); }
+  .accent { background: var(--accent-soft); color: var(--accent-deep); border-color: var(--accent); }
+  .danger { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
+  .ok { background: var(--ok-soft); color: var(--ok); border-color: var(--ok); }
+  .warn { background: color-mix(in srgb, var(--warn) 14%, var(--paper)); color: var(--warn); border-color: var(--warn); }
 </style>

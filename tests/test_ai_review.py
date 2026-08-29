@@ -1,7 +1,7 @@
 """tests/test_ai_review.py — /ai/explain endpoint + bounded submit hook."""
 import pytest
 
-from backend.services import assess_service
+from backend.services import assess_service, settings_service
 
 _MARK = "[REVIEW]"
 _TRACK = {"assessments": [], "skills": []}
@@ -96,6 +96,7 @@ class TestExplain:
         llm_pipeline.explain_result returns None.
         """
         monkeypatch.setattr("backend.config.app_settings.AI_ENABLED", True)
+        monkeypatch.setattr(settings_service, "is_ai_enabled", lambda: True)
         monkeypatch.setattr("backend.services.llm_pipeline.explain_result",
                             lambda responses: None)
         r = api_client.post("/api/ai/explain", headers=_headers(api_client),
@@ -110,6 +111,7 @@ class TestExplain:
     def test_explain_disabled_returns_503(self, api_client, monkeypatch):
         """AI_ENABLED off ⇒ 503 before any lookup (routers/ai._gate)."""
         monkeypatch.setattr("backend.config.app_settings.AI_ENABLED", False)
+        monkeypatch.setattr(settings_service, "is_ai_enabled", lambda: False)
         r = api_client.post("/api/ai/explain", headers=_headers(api_client),
                             json={"assessment_id": 1, "answers": [0]})
         assert r.status_code == 503
@@ -117,6 +119,7 @@ class TestExplain:
     def test_explain_unknown_assessment_404(self, api_client, monkeypatch):
         """Unknown assessment id ⇒ 404 (explain_result lookup miss)."""
         monkeypatch.setattr("backend.config.app_settings.AI_ENABLED", True)
+        monkeypatch.setattr(settings_service, "is_ai_enabled", lambda: True)
         r = api_client.post("/api/ai/explain", headers=_headers(api_client),
                             json={"assessment_id": 9999999,
                                   "answers": [0]})
@@ -126,6 +129,7 @@ class TestExplain:
                                          monkeypatch):
         """Question-less assessment ⇒ 400 (explain_result gate)."""
         monkeypatch.setattr("backend.config.app_settings.AI_ENABLED", True)
+        monkeypatch.setattr(settings_service, "is_ai_enabled", lambda: True)
         a = _mk_assessment(db_session, None, 0)
         r = api_client.post("/api/ai/explain", headers=_headers(api_client),
                             json={"assessment_id": a.id, "answers": []})
@@ -158,6 +162,7 @@ class TestSubmitHook:
                     "final_level": current_level + 1}
 
         monkeypatch.setattr("backend.config.app_settings.AI_ENABLED", True)
+        monkeypatch.setattr(settings_service, "is_ai_enabled", lambda: True)
         monkeypatch.setattr(assess_service, "review_level", fake_review)
         monkeypatch.setattr(assess_service, "_spawn_review",
                             lambda fn: fn())
@@ -199,6 +204,7 @@ class TestSubmitHook:
                     "final_level": current_level}
 
         monkeypatch.setattr("backend.config.app_settings.AI_ENABLED", True)
+        monkeypatch.setattr(settings_service, "is_ai_enabled", lambda: True)
         monkeypatch.setattr(assess_service, "review_level", fake_review)
         monkeypatch.setattr(assess_service, "_spawn_review",
                             lambda fn: fn())
@@ -228,6 +234,7 @@ class TestSubmitHook:
             raise AssertionError("review_level must not run")
 
         monkeypatch.setattr("backend.config.app_settings.AI_ENABLED", True)
+        monkeypatch.setattr(settings_service, "is_ai_enabled", lambda: True)
         monkeypatch.setattr("backend.services.llm_pipeline.review_level",
                             boom)
         monkeypatch.setattr(assess_service, "_engine_ready", lambda: False)

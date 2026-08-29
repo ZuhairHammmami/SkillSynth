@@ -43,7 +43,18 @@
     trending: 'M3 17l6-6 4 4 8-8M21 7h-5M21 7v5',
     clock: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l4 2',
     mail: 'M3 6h18v12H3zM3 7l9 6 9-6',
-    home: 'M4 11l8-7 8 7M6 10v9h12v-9'
+    home: 'M4 11l8-7 8 7M6 10v9h12v-9',
+    sort: 'M7 4v16M4 17l3 3 3-3M17 20V4M14 7l3-3 3 3',
+    info: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM12 11v5M12 7.5v.5',
+    external: 'M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5',
+    eye: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',
+    file: 'M6 2h8l4 4v16H6zM14 2v4h4M9 13h6M9 17h6',
+    power: 'M12 4v8M6.5 7a8 8 0 1 0 11 0',
+    filter: 'M4 5h16l-6 7v5l-4 2v-7z',
+    checkCircle: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM8.5 12l2.5 2.5 4.5-5',
+    xCircle: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM9 9l6 6M15 9l-6 6',
+    chevronUp: 'M6 15l6-6 6 6',
+    chevronDown: 'M6 9l6 6 6-6'
   };
 </script>
 

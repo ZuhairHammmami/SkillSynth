@@ -64,6 +64,8 @@ skillsynth doctor --strict                      # gate: deps/AI/model/db all OK
 
 Frontends read `NEXT_PUBLIC_API_BASE_URL` (default `http://localhost:8000/api`) from their env files.
 
+Note: `skillsynth run` launches the full stack (backend + both Next frontends) and is cross-platform — on Windows it uses `pnpm.cmd` discovery and `taskkill`/process-group teardown, on POSIX it uses session groups + `killpg`; the AI_* env block seeds the file-backed runtime AI setting (ADR-015 §8).
+
 Note: `.env.example` also lists legacy keys (SENDGRID_API_KEY, GITHUB_TOKEN). Current backend code does not consume these; they remain only as placeholders. The dead Phase-4 LLM blocks (LLM_*/OPENAI_*/OLLAMA_*, VECTOR_*/EMBEDDING_*) and the docker ollama service were removed — the local model is configured via the AI_* block above (ADR-015).
 
 ## Rules

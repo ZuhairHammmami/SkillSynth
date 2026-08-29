@@ -45,7 +45,9 @@ function normalizeDetail(data: any): string {
 }
 
 export async function apiFetch(path: string, opts: RequestOpts = {}): Promise<any> {
-  const url = new URL(path, BASE);
+  const clean = path.startsWith('/') ? path.slice(1) : path;
+  const base = BASE.endsWith('/') ? BASE : BASE + '/';
+  const url = new URL(clean, base);
   if (opts.query) {
     for (const [k, v] of Object.entries(opts.query)) {
       if (v !== undefined) url.searchParams.set(k, String(v));

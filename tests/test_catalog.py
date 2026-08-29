@@ -23,7 +23,7 @@ class TestCatalogListings:
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
-        assert len(data) == 102
+        assert len(data) == 152
         assert {"id", "name", "category_id"} <= set(data[0])
 
     def test_list_resources(self, api_client, admin_headers):
@@ -31,7 +31,7 @@ class TestCatalogListings:
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
-        assert len(data) == 87
+        assert len(data) == 144
 
     def test_wizard_options_structure(self, api_client):
         response = api_client.get("/api/wizard-options")

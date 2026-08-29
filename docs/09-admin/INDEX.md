@@ -40,7 +40,7 @@ Document the standalone admin application at `src/admin-app` (:3001) — a separ
 | `/audit-logs` | Audit Logs | activity_log feed (SSE-backed) |
 | `/backups` | Backups | List/create database backups |
 | `/db-inspector` | DB Inspector | Table/row browser over the live schema |
-| `/feature-flags` | System Configuration | Read-only configuration view |
+| `/feature-flags` | System Configuration | AI enable/disable toggle + runtime config view (writable) |
 
 ## Sequence: Admin CRUD Flow
 ```

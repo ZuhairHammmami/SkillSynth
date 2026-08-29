@@ -60,10 +60,10 @@ class TestSchema:
 
     def test_stable_catalog_counts(self, conn):
         expected = {
-            "categories": 16, "skills": 102, "job_roles": 25,
-            "job_role_skills": 301, "resources": 87,
-            "assessments": 102, "assessment_questions": 219,
-            "skill_prerequisites": 112,
+            "categories": 16, "skills": 152, "job_roles": 25,
+            "job_role_skills": 301, "resources": 144,
+            "assessments": 152, "assessment_questions": 613,
+            "skill_prerequisites": 269,
         }
         for table, count in expected.items():
             actual = conn.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]

@@ -158,7 +158,9 @@ def test_token_budgets_realistic(fake):
     assert eng.kwargs[0]["max_tokens"] == max(650, 2 * 230)
     eng2 = fake({"questions": [{"skill": "SQL", **_one_question_obj()["questions"][0]}]})
     pipe.generate_role_quiz("Dev", [{"name": "SQL", "difficulty": 1}])
-    assert eng2.kwargs[0]["max_tokens"] == max(850, 1 * 330)
+    # role quiz now generates per skill via generate_skill_quiz(n=2):
+    # max(650, 2 * 230) = 650.
+    assert eng2.kwargs[0]["max_tokens"] == max(650, 2 * 230)
 
 
 def test_review_level_low_sampling_temperature(fake):

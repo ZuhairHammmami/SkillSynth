@@ -30,27 +30,38 @@
   let quizAnswers = $state<Record<string, number>>({});
   let quizStatus = $state<'idle' | 'requesting' | 'ready' | 'submitting' | 'error'>('idle');
   let quizError = $state('');
+  let enriching = $state(false);
 
   /**
-   * Handles the SSE event announcing that the AI quiz is ready, storing the
-   * streamed questions when the job id matches the one this component requested.
+   * Handles the SSE event announcing enrichment questions, upserting each
+   * streamed question by id over the bank version already on screen; the final
+   * more:false closes the job and clears the enriching indicator.
    */
   function onQuizReady(e: CustomEvent) {
-    if (quizJobId && e.detail?.job_id === quizJobId) {
-      quizQuestions = e.detail?.questions ?? [];
-      quizStatus = quizQuestions.length ? 'ready' : 'error';
-      if (!quizQuestions.length) quizError = t('wizard.noQuestions');
+    if (!quizJobId || e.detail?.job_id !== quizJobId) return;
+    const more = e.detail?.more !== false;
+    const incoming: any[] = e.detail?.questions ?? [];
+    if (incoming.length) {
+      const byId = new Map(quizQuestions.map((q: any) => [q.id, q]));
+      for (const q of incoming) byId.set(q.id, q);
+      quizQuestions = Array.from(byId.values());
+      quizStatus = 'ready';
+    }
+    if (!more) {
+      enriching = false;
+      quizStatus = 'ready';
     }
   }
 
   /**
-   * Handles the SSE event reporting that the AI quiz failed, surfacing the
-   * backend error when the failing job id matches the one this component requested.
+   * Handles the SSE event reporting that the AI quiz failed; the seeded-bank
+   * quiz stays usable, so this only stops the enriching indicator for the
+   * failing job id the component requested.
    */
   function onQuizFailed(e: CustomEvent) {
     if (quizJobId && e.detail?.job_id === quizJobId) {
-      quizStatus = 'error';
-      quizError = e.detail?.error || t('wizard.quizError');
+      enriching = false;
+      quizStatus = 'ready';
     }
   }
 
@@ -65,8 +76,9 @@
   });
 
   /**
-   * Requests a placement quiz job from the backend for the selected goal and
-   * records the returned job id so later SSE events can be correlated.
+   * Requests the placement quiz from the seeded question bank and renders it
+   * immediately from the synchronous response, keeping the returned job id so
+   * later SSE enrichment events can be correlated to this request.
    */
   async function startQuiz() {
     if (!goal) return;
@@ -76,10 +88,32 @@
       const r = await apiFetch('/ai/wizard-quiz', {
         method: 'POST', body: { goal }
       });
+      quizQuestions = r.questions ?? [];
       quizJobId = r.job_id;
+      quizStatus = 'ready';
+      quizMode = 'quiz';
+      quizError = '';
     } catch (e) {
       quizStatus = 'error';
       quizError = e instanceof ApiError ? e.detail : t('wizard.quizError');
+    }
+  }
+
+  /**
+   * Kicks off an optional AI enrichment job for the already-shown bank quiz,
+   * leaving the synchronous questions on screen; improved question deltas arrive
+   * non-blocking via onQuizReady and the whole upgrade stays soft-failing.
+   */
+  async function enrichQuiz() {
+    if (!goal || enriching) return;
+    enriching = true;
+    try {
+      const r = await apiFetch('/ai/wizard-quiz', {
+        method: 'POST', body: { goal, enrich: true }
+      });
+      quizJobId = r.job_id;
+    } catch (e) {
+      enriching = false;
     }
   }
 
@@ -111,7 +145,7 @@
   }
 </script>
 
-{#if aiEnabled && quizMode === null}
+{#if quizMode === null}
   <p class="sub">{t('wizard.placementQuizDesc')}</p>
   <div class="quiz-choice">
     <Button onclick={startQuiz} disabled={quizStatus === 'requesting'}>
@@ -128,6 +162,17 @@
     <p class="err-state"><Icon name="alert" size={18} /> {quizError || t('wizard.quizError')}</p>
     <button class="link" onclick={() => (quizMode = 'self')}>{t('wizard.useSelfAssessment')}</button>
   {:else if quizStatus === 'ready' || quizStatus === 'submitting'}
+    {#if aiEnabled && quizStatus === 'ready'}
+      <div class="enrich-row">
+        {#if enriching}
+          <span class="enriching"><Spinner /> {t('wizard.enriching')}</span>
+        {:else}
+          <Button variant="ghost" size="sm" onclick={enrichQuiz}>
+            <Icon name="sparkles" size={14} /> {t('wizard.enrichQuiz')}
+          </Button>
+        {/if}
+      </div>
+    {/if}
     {#each quizQuestions as q, i}
       <div class="q">
         <p class="q-text">{t('wizard.questionLabel', { n: i + 1 })}: {q.text}</p>
@@ -156,6 +201,8 @@
   .err-state { display: flex; align-items: center; gap: 0.5rem; color: var(--danger); margin-top: 0.8rem; }
   .center-spin { display: flex; justify-content: center; padding: 1.2rem; }
   .quiz-choice { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.4rem; }
+  .enrich-row { display: flex; justify-content: flex-end; margin-bottom: 0.6rem; }
+  .enriching { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--ink-soft); font-size: 0.9rem; }
   .link { background: none; border: none; color: var(--accent-deep); cursor: pointer; font-family: var(--font-body); font-size: 0.9rem; text-decoration: underline; padding: 0.4rem 0; }
   .link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-glow); border-radius: var(--radius); }
   .q { border: 1px solid var(--line); border-radius: var(--radius); padding: 0.8rem; margin-bottom: 0.8rem; }

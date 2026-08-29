@@ -3,6 +3,7 @@ import pytest
 
 from backend.events import publisher
 from backend.routers import ai as ai_router
+from backend.services import settings_service
 
 
 @pytest.fixture(autouse=True)
@@ -67,11 +68,13 @@ def test_analyze_diagnostic_normalizes_gap_key(monkeypatch):
 
 def test_ai_quiz_grades_via_bank_with_narrative(
         api_client, db_session, inline_jobs, monkeypatch):
-    """t1: AI quiz delivery banks correct indices; analysis grades from
-    the bank (correct=2/total=2/level=5) and returns the narrative."""
+    """t1: enrichment quiz delivery banks correct indices via AI_QUIZ_BANK;
+    analysis grades from the bank (correct=2/total=2/level=5) + narrative."""
     from backend.config import app_settings as settings
-    from backend.services import llm_pipeline
+    from backend.services import llm_engine, llm_pipeline
     monkeypatch.setattr(settings, "AI_ENABLED", True)
+    monkeypatch.setattr(settings_service, "is_ai_enabled", lambda: True)
+    monkeypatch.setattr(llm_engine, "available", lambda: True)
     monkeypatch.setattr(ai_router.pipe, "generate_role_quiz", lambda *a, **k: [
         {"skill": "JavaScript", "text": "js1?", "options":
          ["a", "b", "c", "d"], "correct_index": 1},
@@ -80,7 +83,8 @@ def test_ai_quiz_grades_via_bank_with_narrative(
     ])
     headers = _headers(api_client)
     r = api_client.post("/api/ai/wizard-quiz",
-                        json={"goal": "Frontend Developer"}, headers=headers)
+                        json={"goal": "Frontend Developer", "enrich": True},
+                        headers=headers)
     assert r.status_code == 200, r.text
     job_id = r.json()["job_id"]
     assert [e for e in inline_jobs if e[1] == "ai_quiz_ready"]
@@ -89,7 +93,7 @@ def test_ai_quiz_grades_via_bank_with_narrative(
     canned = {"summary": "ok", "strengths": [], "weaknesses": [],
               "recommended_focus": [], "next_steps": ""}
     monkeypatch.setattr(llm_pipeline, "analyze_diagnostic",
-                        lambda rows: dict(canned))
+                        lambda rows, *a, **k: dict(canned))
     r2 = api_client.post("/api/wizard/analysis", headers=headers, json={
         "goal": "Frontend Developer", "weekly_hours": 10,
         "answers": {"javascript_q0": 1, "javascript_q1": 1},
@@ -108,6 +112,7 @@ def test_unknown_quiz_job_falls_back_to_seeded(api_client, db_session,
     """t2: unknown quiz_job_id → legacy seeded scoring; still zero writes."""
     from backend.config import app_settings as settings
     monkeypatch.setattr(settings, "AI_ENABLED", False)
+    monkeypatch.setattr(settings_service, "is_ai_enabled", lambda: False)
     headers = _headers(api_client)
     uid = _auth_uid(api_client, headers)
     before = _profile(db_session, uid)

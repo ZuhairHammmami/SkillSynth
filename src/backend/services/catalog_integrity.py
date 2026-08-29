@@ -15,6 +15,18 @@ from backend.repositories import catalog_repository as repo
 from backend.repositories import integrity_repository as irepo
 
 
+def census_dependents(db: Session, entity: str,
+                      counts: dict[str, int]) -> dict | None:
+    """Shared structured 409-payload builder for any restricted delete.
+
+    Thin wrapper over _delete_conflict so all six guarded delete paths
+    (skills, categories, job roles, users, resources, assessments) emit
+    an identical {"detail":{"message","dependents"}} shape; returns None
+    when the census is empty and the delete may proceed.
+    """
+    return _delete_conflict(counts, entity)
+
+
 def ensure_category_exists(db: Session, category_id: int | None) -> str | None:
     """FK guard for skills.category_id writes.
 
@@ -134,8 +146,8 @@ def skill_delete_conflict(db: Session, skill_id: int) -> dict | None:
 
     Called by catalog_service.delete_skill before the hard delete.
     """
-    return _delete_conflict(
-        irepo.count_skill_dependents(db, skill_id), "skill")
+    return census_dependents(
+        db, "skill", irepo.count_skill_dependents(db, skill_id))
 
 
 def category_delete_conflict(db: Session, category_id: int) -> dict | None:
@@ -143,8 +155,8 @@ def category_delete_conflict(db: Session, category_id: int) -> dict | None:
 
     Called by catalog_service.delete_category before the hard delete.
     """
-    return _delete_conflict(
-        irepo.count_category_skills(db, category_id), "category")
+    return census_dependents(
+        db, "category", irepo.count_category_skills(db, category_id))
 
 
 def job_role_delete_conflict(db: Session, job_role_id: int) -> dict | None:
@@ -152,5 +164,32 @@ def job_role_delete_conflict(db: Session, job_role_id: int) -> dict | None:
 
     Called by catalog_service.delete_job_role before the hard delete.
     """
-    return _delete_conflict(
-        irepo.count_job_role_dependencies(db, job_role_id), "job role")
+    return census_dependents(
+        db, "job role", irepo.count_job_role_dependencies(db, job_role_id))
+
+
+def user_delete_conflict(db: Session, user_id: int) -> dict | None:
+    """Restricted-delete payload for users (all referencing tables).
+
+    Called by admin_service.delete_user before the hard delete.
+    """
+    return census_dependents(
+        db, "user", irepo.count_user_dependents(db, user_id))
+
+
+def resource_delete_conflict(db: Session, resource_id: int) -> dict | None:
+    """Restricted-delete payload for resources (path_steps JSON census).
+
+    Called by catalog_service.delete_resource before the hard delete.
+    """
+    return census_dependents(
+        db, "resource", irepo.count_resource_dependents(db, resource_id))
+
+
+def assessment_delete_conflict(db: Session, assessment_id: int) -> dict | None:
+    """Restricted-delete payload for assessments (results/questions/steps).
+
+    Called by admin_service.delete_assessment before the hard delete.
+    """
+    return census_dependents(
+        db, "assessment", irepo.count_assessment_dependents(db, assessment_id))

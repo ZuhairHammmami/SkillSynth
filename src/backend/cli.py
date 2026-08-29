@@ -1,10 +1,12 @@
-"""backend.cli — skillsynth console entrypoint (run/seed/test/schema/doctor).
+"""backend.cli — skillsynth console entrypoint (run/seed/test/schema/doctor/frontend/admin/verify).
 
 Installed as the `skillsynth` console script via pyproject [project.scripts]
 and wrapped by ./skillsynth (bash shim) plus run.py (legacy launcher).
-Subcommands delegate to uvicorn (`run`), seed_v3.seed (`seed`), a pytest
+Subcommands delegate to uvicorn (`run`), seed_v4.seed (`seed`), a pytest
 subprocess (`test`), tools/verify_schema.py (`schema`), local health probes
-(`doctor`) and package metadata (`version`). See docs/25-cli/INDEX.md.
+(`doctor`), pnpm (`frontend`/`admin`) and the from-scratch `verify`
+orchestrator (frontend+admin check/build, pytest, schema, doctor). See
+docs/25-cli/INDEX.md.
 """
 
 import argparse
@@ -43,6 +45,9 @@ def main(argv=None):
         args = parser.parse_args(tokens)
     except SystemExit as exc:
         return int(exc.code or 0)
+    if not hasattr(args, "func"):
+        parser.print_help()
+        return 2
     return int(args.func(args))
 
 
@@ -69,7 +74,7 @@ def _build_parser():
                        help="do not start the admin dev server")
     p_run.set_defaults(func=_cmd_run)
 
-    p_seed = sub.add_parser("seed", help="run seed_v3 against --db")
+    p_seed = sub.add_parser("seed", help="run seed_v4 against --db")
     p_seed.add_argument("--db", default=os.path.join(BASE_DIR, "skillsynth.db"),
                         help="target SQLite file (default <repo>/skillsynth.db)")
     p_seed.set_defaults(func=_cmd_seed)
@@ -84,8 +89,31 @@ def _build_parser():
         func=_cmd_schema)
     p_doc = sub.add_parser("doctor", help="environment health table")
     p_doc.add_argument("--strict", action="store_true",
-                       help="exit 1 when a required check fails")
+                        help="exit 1 when a required check fails")
     p_doc.set_defaults(func=_cmd_doctor)
+
+    p_fe = sub.add_parser(
+        "frontend", help="pnpm check|build the student frontend")
+    p_fe.add_argument("action", choices=["check", "build"],
+                      help="svelte-check (type-check) or vite build")
+    p_fe.add_argument("--clean-deps", action="store_true",
+                      help="wipe node_modules + pnpm install before the action")
+    p_fe.set_defaults(func=_cmd_frontend)
+
+    p_ad = sub.add_parser("admin", help="pnpm check|build the admin app")
+    p_ad.add_argument("action", choices=["check", "build"],
+                      help="svelte-check (type-check) or vite build")
+    p_ad.add_argument("--clean-deps", action="store_true",
+                      help="wipe node_modules + pnpm install before the action")
+    p_ad.set_defaults(func=_cmd_admin)
+
+    p_v = sub.add_parser(
+        "verify", help="full from-scratch verification: check+build both apps, "
+                       "pytest, schema, doctor")
+    p_v.add_argument(
+        "--clean-deps", action="store_true",
+        help="wipe + reinstall node_modules in both apps before building")
+    p_v.set_defaults(func=_cmd_verify)
 
     p_ver = sub.add_parser("version", help="print name + version").set_defaults(
         func=_cmd_version)
@@ -269,9 +297,9 @@ def _terminate_session(proc, force=False):
 
 
 def _cmd_seed(args):
-    """Seed the SQLite file at --db by driving seed_v3's injection seam.
+    """Seed the SQLite file at --db by driving seed_v4's injection seam.
 
-    Invoked by main via `skillsynth seed`; executes the real seed_v3.py with
+    Invoked by main via `skillsynth seed`; executes the real seed_v4.py with
     runpy under a non-__main__ name (its auto-run never fires), then calls its
     documented seed(engine, session_factory) seam bound to an isolated engine
     at the requested path — the dev database is never opened when --db points
@@ -279,7 +307,7 @@ def _cmd_seed(args):
     """
     db_path = os.path.abspath(args.db)
     namespace = runpy.run_path(
-        os.path.join(BASE_DIR, "seed_v3.py"), run_name="skillsynth_cli_seed")
+        os.path.join(BASE_DIR, "seed_v4.py"), run_name="skillsynth_cli_seed")
     engine, factory = _make_seed_engine(db_path)
     try:
         namespace["seed"](engine=engine, session_factory=factory)
@@ -464,3 +492,129 @@ def _version_from_pyproject():
             return tomllib.load(handle)["project"]["version"]
     except Exception:
         return "unknown"
+
+
+def _pnpm():
+    """Resolve the pnpm executable; error string (not path) when absent."""
+    return shutil.which("pnpm")
+
+
+def _run(cmd, cwd):
+    """Run a command in cwd, stream output to the terminal, return exit code.
+
+    Called by the frontend/admin/verify handlers; inherits stdout/stderr so
+    build and test output is visible live and the subprocess return code is
+    passed straight through to the caller.
+    """
+    proc = subprocess.run(cmd, cwd=cwd, check=False)
+    return proc.returncode
+
+
+def _clean_artifacts(app_dir):
+    """Remove SvelteKit/Vite build output so the next build is from scratch.
+
+    Called by the frontend/admin build handlers (default "clean build"); drops
+    .svelte-kit and build so generated client/server bundles are regenerated
+    rather than incrementally reused.
+    """
+    for name in (".svelte-kit", "build"):
+        path = os.path.join(app_dir, name)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+
+
+def _install(app_dir):
+    """pnpm install in app_dir; returns 1 with a clear message if pnpm missing."""
+    pnpm = _pnpm()
+    if not pnpm:
+        print("ERROR: pnpm not found on PATH — install pnpm to build the apps")
+        return 1
+    return _run([pnpm, "install"], cwd=app_dir)
+
+
+def _cmd_frontend(args):
+    """pnpm check|build the student frontend with optional from-scratch deps.
+
+    Invoked by main via `skillsynth frontend {check|build} [--clean-deps]`;
+    build always cleans .svelte-kit/build first, --clean-deps also wipes
+    node_modules and reinstalls. Returns the pnpm exit code.
+    """
+    app_dir = os.path.join(SRC_PATH, "frontend")
+    pnpm = _pnpm()
+    if not pnpm:
+        print("ERROR: pnpm not found on PATH — install pnpm to build the apps")
+        return 1
+    if args.clean_deps:
+        shutil.rmtree(os.path.join(app_dir, "node_modules"), ignore_errors=True)
+        rc = _run([pnpm, "install"], cwd=app_dir)
+        if rc:
+            return rc
+    if args.action == "build":
+        _clean_artifacts(app_dir)
+        return _run([pnpm, "build"], cwd=app_dir)
+    return _run([pnpm, "check"], cwd=app_dir)
+
+
+def _cmd_admin(args):
+    """pnpm check|build the admin app with optional from-scratch deps.
+
+    Invoked by main via `skillsynth admin {check|build} [--clean-deps]`;
+    mirrors _cmd_frontend against src/admin-app. Returns the pnpm exit code.
+    """
+    app_dir = os.path.join(SRC_PATH, "admin-app")
+    pnpm = _pnpm()
+    if not pnpm:
+        print("ERROR: pnpm not found on PATH — install pnpm to build the apps")
+        return 1
+    if args.clean_deps:
+        shutil.rmtree(os.path.join(app_dir, "node_modules"), ignore_errors=True)
+        rc = _run([pnpm, "install"], cwd=app_dir)
+        if rc:
+            return rc
+    if args.action == "build":
+        _clean_artifacts(app_dir)
+        return _run([pnpm, "build"], cwd=app_dir)
+    return _run([pnpm, "check"], cwd=app_dir)
+
+
+def _cmd_verify(args):
+    """Full from-scratch verification across both apps + backend, stop on fail.
+
+    Invoked by main via `skillsynth verify [--clean-deps]`; runs frontend
+    svelte-check, admin svelte-check, frontend build, admin build (clean
+    artifacts every run; --clean-deps also reinstalls node_modules), backend
+    pytest, schema verify and doctor. Prints a per-stage PASS/FAIL summary and
+    returns the first non-zero stage exit code, or 0 when all stages pass.
+    """
+    stages = [
+        ("frontend svelte-check",
+         lambda: _cmd_frontend(argparse.Namespace(action="check", clean_deps=False))),
+        ("admin svelte-check",
+         lambda: _cmd_admin(argparse.Namespace(action="check", clean_deps=False))),
+        ("frontend build",
+         lambda: _cmd_frontend(argparse.Namespace(action="build", clean_deps=args.clean_deps))),
+        ("admin build",
+         lambda: _cmd_admin(argparse.Namespace(action="build", clean_deps=args.clean_deps))),
+        ("backend pytest",
+         lambda: _cmd_test(argparse.Namespace(pytest_args=[]))),
+        ("schema verify", lambda: _cmd_schema(argparse.Namespace())),
+        ("doctor", lambda: _cmd_doctor(argparse.Namespace(strict=False))),
+    ]
+    print("=== SkillSynth full verification (from-scratch build) ===")
+    results = []
+    failed = None
+    for name, fn in stages:
+        print(f"\n--- {name} ---")
+        rc = fn()
+        results.append((name, rc))
+        if rc != 0 and failed is None:
+            failed = (name, rc)
+            break
+    print("\n=== Verification summary ===")
+    for name, rc in results:
+        print(f"  [{'PASS' if rc == 0 else 'FAIL'}] {name}")
+    if failed:
+        print(f"\nVerification FAILED at stage '{failed[0]}' (exit {failed[1]}).")
+        return failed[1]
+    print("\nVerification PASSED — all stages green.")
+    return 0

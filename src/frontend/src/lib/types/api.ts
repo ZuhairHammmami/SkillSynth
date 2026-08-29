@@ -11,25 +11,33 @@ export interface Profile {
 
 export interface Step {
   id: number;
-  path_id: number;
+  path_id?: number;
   title: string;
+  content?: string | null;
   description?: string | null;
   order_index?: number;
+  step_number?: number;
+  is_completed?: boolean;
   completed?: boolean;
-  duration_hours?: number;
-  skill?: { id: number; name: string } | null;
+  duration_hours?: number | null;
+  skill_id?: number | null;
+  skill?: { id: number; name: string; difficulty_level?: number | null } | null;
   resource_ids?: number[];
   assessment_ids?: number[];
+  resources?: { id?: number; title: string; url: string; type?: string }[];
+  learning_objectives?: string[];
 }
 
 export interface Path {
   id: number;
   title: string;
-  goal: string;
+  goal?: string;
+  goal_job_role?: string | null;
   user_id?: number;
   created_at?: string;
   status?: string;
   progress?: number;
+  skills?: { id: number; name: string }[];
   steps?: Step[];
   [key: string]: any;
 }

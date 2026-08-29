@@ -79,7 +79,7 @@ def role_quiz_prompt(role_title: str, skills: list[dict],
     user = (
         f'Diagnostic quiz for the job role "{role_title}". Skills: {rows}.{target}{focus} '
         f"For EACH listed skill write exactly 2 distinct questions. "
-        f'Write ALL generated text (questions, options, explanations) in{lang}. '
+        f'Write ALL generated text (questions, options) in{lang}. '
         f'Schema: {{"questions":[{{"skill":exact-skill-name,"text":str,'
         f'"options":[str,str,str,str],"correct_index":0..3}}]}} '
         "Every question MUST contain exactly the keys skill, text, options, "

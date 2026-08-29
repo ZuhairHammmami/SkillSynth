@@ -3,13 +3,20 @@
   import type { SkillGrowthItem } from '$lib/types/api';
   import Badge from '$lib/components/ui/Badge.svelte';
   import ProgressMeter from './ProgressMeter.svelte';
+  import { t } from '$lib/i18n';
 
   let { items = [] }: { items?: SkillGrowthItem[] } = $props();
   function tone(s: string): string {
     if (s === 'mastered') return 'ok';
-    if (s === 'learning') return 'sage';
+    if (s === 'learning') return 'accent';
     return 'neutral';
   }
+  const statusLabel = $derived<Record<string, string>>({
+    mastered: t('units.mastered'),
+    learning: t('units.learning'),
+    not_started: t('skills.notStarted'),
+    completed: t('units.completed')
+  });
 </script>
 
 <ul class="list">
@@ -17,7 +24,7 @@
     <li>
       <div class="row">
         <span class="name">{it.skill}</span>
-        <Badge tone={tone(it.status)}>{it.status}</Badge>
+        <Badge tone={tone(it.status)}>{statusLabel[it.status] ?? it.status}</Badge>
       </div>
       <ProgressMeter value={it.proficiency * 20} />
     </li>

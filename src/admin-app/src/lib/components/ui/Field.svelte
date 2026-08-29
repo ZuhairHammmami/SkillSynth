@@ -1,14 +1,15 @@
-<!-- Field wrapper: label + control + error, for composed forms. -->
+<!-- Field wrapper: label + control + error, for composed forms. Error is
+     announced via role="alert". -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
   let { label, error = '', children }: any = $props();
 </script>
 
-<label class="field">
+<div class="field">
   {#if label}<span class="lbl">{label}</span>{/if}
   {@render children()}
-  {#if error}<span class="err">{error}</span>{/if}
-</label>
+  {#if error}<span class="err" role="alert">{error}</span>{/if}
+</div>
 
 <style>
   .field { display: block; }

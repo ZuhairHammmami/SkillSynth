@@ -23,6 +23,7 @@ class UserSkill(Base):
     skill_id = Column(Integer, ForeignKey("skills.id", ondelete='CASCADE'), primary_key=True)
     proficiency_level = Column(Integer, default=1)
     last_assessed_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    weak_points = Column(JSON, nullable=True)
 
 
 class Path(Base):
@@ -65,6 +66,7 @@ class PathStep(Base):
     estimated_hours = Column(Integer, default=8)
     resource_ids = Column(JSON, nullable=True)
     assessment_ids = Column(JSON, nullable=True)
+    learning_objectives = Column(JSON, nullable=True)
     selected_level = Column(Integer, nullable=False, default=0, server_default=text('0'))
     current_level = Column(Integer, nullable=False, default=0, server_default=text('0'))
 

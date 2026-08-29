@@ -3,13 +3,11 @@
   import '../app.css';
   import { onMount } from 'svelte';
   import Toaster from '$lib/components/ui/Toaster.svelte';
+  import { initLocale } from '$lib/stores/locale';
 
   let { children } = $props();
   onMount(() => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.lang = 'en';
-      document.documentElement.dir = 'ltr';
-    }
+    initLocale();
   });
 </script>
 

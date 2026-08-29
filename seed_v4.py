@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-"""seed_v3.py — deterministic 15-table seed for the reduced schema.
+"""seed_v4.py — deterministic 15-table seed (superset of seed_v3).
 
-Ports the canonical static data from the retired seed_v2.py and remaps it
-onto the reduced 15-table domain (users/categories/skills + prerequisites/
-job_roles + mappings/resources/assessments + questions/results/user_skills/
-paths + steps/step_progress/activity_log). Question bank rows are split into
-assessment_questions; user_skills carry real skill_id FKs; step_progress is
-the merged completion+progress table (completed_at NOT NULL = complete).
+Ports the canonical static data from seed_v3.py and extends it with richer
+topics, 3 additional learner users, ~50 new skills, ~140 additional
+prerequisite edges, ~55 more resources (incl. Arabic), 7 more learning paths,
+weak-points data on user_skills, and a Kahn topological-order validation of the
+global skill DAG (raises SystemExit on cycle, otherwise prints the order).
 
-Run: PYTHONPATH=src python seed_v3.py  (drop/create + insert + FK gate +
-per-table count printout). Idempotent: run twice → identical counts.
+Run: PYTHONPATH=src python seed_v4.py  (drop/create + insert + FK gate +
+per-table count printout + kahn order). Idempotent: run twice -> identical.
 """
 
 import os
@@ -47,7 +46,7 @@ from backend.entities import (  # noqa: E402
 from backend.services.auth_service import hash_password  # noqa: E402
 
 # ──────────────────────────────────────────────────────────────────────
-# Static data (ported verbatim from seed_v2.py)
+# Static data (ported verbatim from seed_v3.py, then extended)
 # ──────────────────────────────────────────────────────────────────────
 
 USERS = [
@@ -56,6 +55,9 @@ USERS = [
     ("demo@demo.com", "demo123", "Demo User", False),
     ("editor@skillsynth.io", "Editor@123456", "Editor User", False),
     ("student2@skillsynth.io", "Student@123456", "Student Two", False),
+    ("learner1@skillsynth.io", "Learner@123456", "Learner One", False),
+    ("learner2@skillsynth.io", "Learner@123456", "Learner Two", False),
+    ("learner3@skillsynth.io", "Learner@123456", "Learner Three", False),
 ]
 
 QUESTION_BANK = {
@@ -94,6 +96,103 @@ QUESTION_BANK = {
         {"question": "What is virtual DOM?", "options": ["Lightweight copy of real DOM for performance", "A separate DOM for React", "A browser API", "A rendering engine"], "correct": 0},
         {"question": "How do you pass data from parent to child?", "options": ["Props", "State", "Context", "Refs"], "correct": 0},
     ],
+}
+
+# Detailed sub-topics for major skills; everything else falls back to
+# [name] + [c for c in cats if c != name] (see _seed_skills).
+TOPICS = {
+    "JavaScript": ["Variables", "Functions", "Closures", "Async/Await", "DOM", "ES6 Modules"],
+    "CSS": ["Selectors", "Box Model", "Flexbox", "Grid", "Responsive", "Animations"],
+    "Python": ["Syntax", "Data Types", "Functions", "OOP", "Decorators", "Async IO"],
+    "React": ["JSX", "Components", "Hooks", "State", "Effects", "Context", "Routing"],
+    "HTML": ["Semantics", "Forms", "Media", "Accessibility", "Metadata"],
+    "TypeScript": ["Types", "Interfaces", "Generics", "Enums", "Decorators", "Modules"],
+    "Node.js": ["Event Loop", "Streams", "Modules", "npm", "CLI", "HTTP"],
+    "Docker": ["Images", "Containers", "Volumes", "Networks", "Compose", "Registry"],
+    "Kubernetes": ["Pods", "Services", "Deployments", "Ingress", "ConfigMap", "Operators"],
+    "PostgreSQL": ["Schema", "Joins", "Indexes", "Transactions", "Functions", "Replication"],
+    "MongoDB": ["Documents", "Collections", "Aggregation", "Indexes", "Sharding", "Atlas"],
+    "Redis": ["Strings", "Hashes", "Lists", "Sets", "Pub/Sub", "Persistence"],
+    "AWS": ["EC2", "S3", "Lambda", "RDS", "IAM", "CloudWatch"],
+    "Linux": ["Shell", "Permissions", "Processes", "Networking", "Cron", "Systemd"],
+    "Git": ["Commits", "Branches", "Merging", "Rebasing", "Remotes", "Hooks"],
+    "GraphQL": ["Schema", "Resolvers", "Queries", "Mutations", "Subscriptions", "Federation"],
+    "Vue.js": ["Templates", "Reactivity", "Components", "Composables", "Router", "Pinia"],
+    "Angular": ["Components", "Modules", "Services", "RxJS", "Forms", "CLI"],
+    "Svelte": ["Reactivity", "Components", "Stores", "Transitions", "Actions", "Kit"],
+    "Next.js": ["Routing", "SSR", "SSG", "API Routes", "Middleware", "Images"],
+    "Express.js": ["Routing", "Middleware", "Validation", "Auth", "Error Handling", "Static"],
+    "Django": ["ORM", "Views", "Templates", "Admin", "Forms", "Migrations"],
+    "FastAPI": ["Routing", "Pydantic", "Dependency Injection", "Auth", "Docs", "Async"],
+    "Flask": ["Routing", "Blueprints", "Context", "Jinja", "Extensions", "Config"],
+    "Terraform": ["Resources", "Modules", "State", "Providers", "Variables", "Outputs"],
+    "Ansible": ["Playbooks", "Roles", "Inventory", "Modules", "Handlers", "Vars"],
+    "Jenkins": ["Pipelines", "Stages", "Agents", "Credentials", "Plugins", "Webhooks"],
+    "Selenium": ["Locators", "Waits", "Actions", "Grid", "Page Objects", "Drivers"],
+    "Cypress": ["Commands", "Assertions", "Hooks", "Fixtures", "Network", "Plugins"],
+    "Pandas": ["DataFrames", "Indexing", "GroupBy", "Merge", "Reshape", "IO"],
+    "NumPy": ["Arrays", "Broadcasting", "Indexing", "Ufuncs", "Linear Algebra", "Random"],
+    "TensorFlow": ["Tensors", "Graphs", "Keras", "Training", "Serving", "Distributed"],
+    "PyTorch": ["Tensors", "Autograd", "Modules", "Training", "CUDA", "TorchScript"],
+    "Swift": ["Syntax", "Optionals", "Protocols", "Structs", "Closures", "Concurrency"],
+    "Kotlin": ["Syntax", "Null Safety", "Coroutines", "Extensions", "Sealed Classes", "DSL"],
+    "Figma": ["Frames", "Components", "Auto Layout", "Variants", "Prototyping", "Dev Mode"],
+    "UI/UX Design Principles": ["Hierarchy", "Contrast", "Alignment", "Proximity", "Color", "Typography"],
+    "Jest": ["Matchers", "Mocks", "Snapshots", "Hooks", "Coverage", "Watch"],
+    "pytest": ["Fixtures", "Parametrize", "Marks", "Assertions", "Plugins", "Coverage"],
+    "Go": ["Syntax", "Goroutines", "Channels", "Interfaces", "Modules", "Testing"],
+    "Rust": ["Ownership", "Borrowing", "Traits", "Lifetimes", "Pattern Matching", "Cargo"],
+    "Java": ["Syntax", "OOP", "Streams", "Collections", "JVM", "Concurrency"],
+    "Deno": ["Permissions", "Modules", "Std Library", "Testing", "Linting", "Format"],
+    "NestJS": ["Modules", "Controllers", "Services", "DI", "Pipes", "Guards"],
+    "Prisma": ["Schema", "Migrations", "Client", "Relations", "Seeding", "Studio"],
+    "Kafka": ["Topics", "Producers", "Consumers", "Partitions", "Brokers", "Streams"],
+    "RabbitMQ": ["Exchanges", "Queues", "Bindings", "Routing", "Pub/Sub", "Dead Letter"],
+    "Grafana": ["Dashboards", "Panels", "Queries", "Alerts", "Variables", "Plugins"],
+    "Prometheus": ["Metrics", "Queries", "Alerts", "Exporters", "Targets", "Storage"],
+    "Vault": ["Secrets", "Policies", "Auth Methods", "Dynamic Secrets", "Transit", "KV"],
+    "Helm": ["Charts", "Templates", "Values", "Releases", "Hooks", "Repositories"],
+    "Istio": ["Sidecar", "Gateways", "Virtual Services", "Destination Rules", "mTLS", "Telemetry"],
+    "Snowflake": ["Warehouses", "Stages", "Tables", "Streams", "Tasks", "Sharing"],
+    "dbt": ["Models", "Sources", "Tests", "Snapshots", "Macros", "Docs"],
+    "Airflow": ["DAGs", "Operators", "Schedules", "Sensors", "XCom", "Pools"],
+    "Spark": ["RDDs", "DataFrames", "SQL", "Streaming", "MLlib", "Catalyst"],
+    "Keras": ["Layers", "Models", "Training", "Callbacks", "Sequential", "Functional"],
+    "XGBoost": ["Trees", "Boosting", "Params", "CV", "Early Stop", "Feature Importance"],
+    "Plotly": ["Figures", "Traces", "Layout", "Subplots", "Express", "Dash"],
+    "Three.js": ["Scene", "Camera", "Renderer", "Geometry", "Material", "Lights"],
+    "WebGL": ["Context", "Shaders", "Buffers", "Textures", "Matrices", "Programs"],
+    "Sass": ["Variables", "Nesting", "Mixins", "Functions", "Modules", "Control"],
+    "Less": ["Variables", "Nesting", "Mixins", "Functions", "Operations", "Imports"],
+    "Storybook": ["Stories", "Controls", "Actions", "Decorators", "Addons", "Docs"],
+    "Vitest": ["Config", "Suites", "Mocks", "Coverage", "Watch", "Snapshots"],
+    "Testing Library": ["Queries", "Events", "Async", "Mocks", "Roles", "FireEvent"],
+    "AXIOS": ["Requests", "Interceptors", "Cancel", "Config", "Adapters", "Errors"],
+    "Zod": ["Schemas", "Parsing", "Inference", "Refinements", "Effects", "Errors"],
+    "tRPC": ["Routers", "Procedures", "Context", "Middlewares", "Clients", "Types"],
+    "Drizzle": ["Schema", "Queries", "Migrations", "Relations", "Filters", "Transactions"],
+    "Redis Pub/Sub": ["Channels", "Publish", "Subscribe", "Patterns", "Messages", "Clients"],
+    "gRPC": ["Services", "Messages", "Streaming", "Interceptors", "Channels", "Codegen"],
+    "OAuth2": ["Authorization Code", "Tokens", "Scopes", "Refresh", "PKCE", "Clients"],
+    "JWT Auth": ["Tokens", "Signing", "Verification", "Claims", "Expiry", "Refresh"],
+    "Rate Limiting": ["Tokens", "Windows", "Algorithms", "Headers", "Backoff", "Thresholds"],
+    "WebSockets": ["Handshake", "Frames", "Events", "Heartbeat", "Binary", "Close"],
+    "Service Workers": ["Lifecycle", "Cache", "Fetch", "Events", "Sync", "Push"],
+    "PWA": ["Manifest", "Install", "Offline", "Notifications", "Caching", "Audits"],
+    "WASM": ["Modules", "Memory", "Tables", "Imports", "Exports", "Linear"],
+    "Bun": ["Runtime", "Bundler", "Test", "Transpiler", "Package Manager", "HTTP"],
+    "Electron": ["Main", "Renderer", "IPC", "Packaging", "Auto Update", "Tray"],
+    "Capacitor": ["Plugins", "Native", "Bridge", "Config", "Live Reload", "Build"],
+    "Expo": ["Components", "Router", "Modules", "Build", "Updates", "Native"],
+    "SwiftUI": ["Views", "State", "Bindings", "Layout", "Navigation", "Animations"],
+    "Jetpack Compose": ["Composables", "State", "Layout", "Modifiers", "Navigation", "Animation"],
+    "KMM": ["Shared", "Expect", "Actual", "Coroutines", "Platform", "Gradle"],
+    "Go Modules": ["Init", "Versions", "Proxy", "Sum", "Replace", "Tidy"],
+    "Rust Macros": ["Declarative", "Procedural", "Attributes", "Metavars", "Hygiene", "Derive"],
+    "Rust Async": ["Futures", "Await", "Tokio", "Streams", "Channels", "Tasks"],
+    "SQL Tuning": ["Explain", "Plans", "Joins", "Filters", "Statistics", "Rewrites"],
+    "Indexing": ["B-Tree", "Composite", "Covering", "Partial", "Unique", "Maintenance"],
+    "GraphQL Subscriptions": ["Schema", "Resolver", "Transport", "Filtering", "Scalability", "Auth"],
 }
 
 CATEGORIES = [
@@ -207,84 +306,201 @@ SKILLS = [
     ("DynamoDB", "AWS's fully managed NoSQL key-value database", 3, "dynamodb", "#4053D6", 15, ["Databases", "Cloud & Infrastructure"]),
     ("Firebase", "Google's platform for building mobile and web apps", 2, "firebase", "#FFCA28", 12, ["Databases", "Cloud & Infrastructure"]),
     ("Supabase", "Open-source Firebase alternative with PostgreSQL", 2, "supabase", "#3ECF8E", 10, ["Databases", "Backend Development"]),
+    ("Deno", "Secure runtime for JavaScript and TypeScript with built-in tooling", 2, "deno", "#2F2F2F", 12, ["Web Development", "Backend Development"]),
+    ("NestJS", "Progressive Node.js framework for scalable server-side apps", 3, "nestjs", "#E0234E", 20, ["Backend Development"]),
+    ("Prisma", "Next-generation ORM for Node.js and TypeScript", 2, "prisma", "#2D3748", 12, ["Backend Development", "Databases"]),
+    ("Kafka", "Distributed event streaming platform for real-time data", 4, "kafka", "#231F20", 25, ["DevOps"]),
+    ("RabbitMQ", "Message broker for asynchronous and distributed messaging", 3, "rabbitmq", "#FF6600", 15, ["DevOps"]),
+    ("Grafana", "Observability platform for metrics dashboards and alerts", 2, "grafana", "#F46800", 10, ["DevOps", "Cloud & Infrastructure"]),
+    ("Prometheus", "Systems monitoring and alerting toolkit", 3, "prometheus", "#E6522C", 15, ["DevOps", "Cloud & Infrastructure"]),
+    ("Vault", "Secrets management and data protection platform", 3, "vault", "#000000", 15, ["Security", "DevOps"]),
+    ("Helm", "Kubernetes package manager for deploying applications", 3, "helm", "#0F1689", 12, ["DevOps"]),
+    ("Istio", "Service mesh for secure Kubernetes networking", 4, "istio", "#466BB0", 18, ["DevOps", "Cloud & Infrastructure"]),
+    ("Snowflake", "Cloud data warehouse for analytics workloads", 3, "snowflake", "#29B5E8", 18, ["Databases", "Cloud & Infrastructure"]),
+    ("dbt", "Data transformation tool for analytics engineering", 2, "dbt", "#FF694B", 12, ["Data Science", "Databases"]),
+    ("Airflow", "Platform for programmatic workflow orchestration", 3, "airflow", "#017CEE", 15, ["Data Science"]),
+    ("Spark", "Unified analytics engine for large-scale data processing", 4, "spark", "#E25A1C", 25, ["Data Science"]),
+    ("Keras", "High-level deep learning API built on TensorFlow", 3, "keras", "#D00000", 15, ["AI & Machine Learning"]),
+    ("XGBoost", "Optimized gradient boosting library for ML", 3, "xgboost", "#3465A4", 15, ["AI & Machine Learning", "Data Science"]),
+    ("Plotly", "Interactive graphing and data visualization library", 2, "plotly", "#636EFA", 10, ["Data Science"]),
+    ("Three.js", "3D graphics library for the web", 3, "threejs", "#000000", 20, ["Web Development"]),
+    ("WebGL", "Web API for GPU-accelerated 3D rendering", 3, "webgl", "#990000", 18, ["Web Development"]),
+    ("Sass", "CSS preprocessor with variables, nesting, and mixins", 1, "sass", "#CC6699", 8, ["Web Development", "Design"]),
+    ("Less", "CSS preprocessor with dynamic stylesheets", 1, "less", "#1D365D", 8, ["Web Development", "Design"]),
+    ("Storybook", "UI component development and documentation environment", 2, "storybook", "#FF4785", 12, ["Design", "Web Development"]),
+    ("Vitest", "Fast unit testing framework powered by Vite", 2, "vitest", "#FCC72B", 8, ["Testing & QA"]),
+    ("Testing Library", "Lightweight DOM testing utilities for user behavior", 2, "testinglibrary", "#E33332", 10, ["Testing & QA"]),
+    ("AXIOS", "Promise-based HTTP client for browser and Node.js", 2, "axios", "#5A29E4", 8, ["Web Development", "Backend Development"]),
+    ("Zod", "TypeScript-first schema validation library", 2, "zod", "#3068B7", 8, ["Web Development"]),
+    ("tRPC", "End-to-end typesafe APIs without schemas", 3, "trpc", "#398CCB", 12, ["Web Development", "Backend Development"]),
+    ("Drizzle", "TypeScript ORM for SQL databases with type safety", 2, "drizzle", "#C5F74F", 10, ["Backend Development", "Databases"]),
+    ("Redis Pub/Sub", "Redis publish/subscribe messaging pattern", 3, "redispubsub", "#DC382D", 10, ["Databases"]),
+    ("gRPC", "High-performance RPC framework over HTTP/2", 3, "grpc", "#244C5A", 15, ["Backend Development"]),
+    ("OAuth2", "Authorization framework for delegated access", 3, "oauth2", "#1E1E1E", 12, ["Security"]),
+    ("JWT Auth", "JSON Web Token based authentication", 2, "jwtauth", "#000000", 10, ["Security"]),
+    ("Rate Limiting", "Techniques to throttle and control API traffic", 2, "ratelimiting", "#6B7280", 8, ["Security", "Backend Development"]),
+    ("WebSockets", "Full-duplex real-time communication protocol", 2, "websockets", "#010101", 12, ["Web Development", "Backend Development"]),
+    ("Service Workers", "Scripts enabling offline and background web features", 3, "serviceworkers", "#5B5B5B", 12, ["Web Development"]),
+    ("PWA", "Progressive Web Apps blending web and native experiences", 2, "pwa", "#5A0FC8", 12, ["Web Development", "Design"]),
+    ("WASM", "WebAssembly portable binary instruction format", 4, "wasm", "#654FF0", 18, ["Web Development", "Programming Languages"]),
+    ("Bun", "Fast all-in-one JavaScript runtime and toolkit", 2, "bun", "#FBF0DF", 10, ["Backend Development"]),
+    ("Electron", "Build cross-platform desktop apps with web tech", 3, "electron", "#9FEAF9", 18, ["Web Development"]),
+    ("Capacitor", "Cross-platform native runtime for web apps", 2, "capacitor", "#119EFF", 12, ["Mobile Development"]),
+    ("Expo", "Framework and platform for React Native apps", 2, "expo", "#000020", 12, ["Mobile Development"]),
+    ("SwiftUI", "Declarative UI framework for Apple platforms", 3, "swiftui", "#F05138", 18, ["Mobile Development"]),
+    ("Jetpack Compose", "Modern declarative Android UI toolkit", 3, "jetpackcompose", "#4285F4", 18, ["Mobile Development"]),
+    ("KMM", "Kotlin Multiplatform Mobile for shared code", 3, "kmm", "#7F52FF", 18, ["Mobile Development"]),
+    ("Go Modules", "Dependency management for Go projects", 2, "gomodules", "#00ADD8", 8, ["Programming Languages", "Backend Development"]),
+    ("Rust Macros", "Metaprogramming with Rust macros", 4, "rustmacros", "#000000", 15, ["Programming Languages", "Backend Development"]),
+    ("Rust Async", "Asynchronous programming in Rust", 4, "rustasync", "#000000", 18, ["Programming Languages", "Backend Development"]),
+    ("SQL Tuning", "Query optimization for relational databases", 3, "sqltuning", "#336791", 15, ["Databases"]),
+    ("Indexing", "Database indexing strategies for performance", 2, "indexing", "#336791", 10, ["Databases"]),
+    ("GraphQL Subscriptions", "Real-time GraphQL over websockets", 3, "graphqlsubs", "#E10098", 12, ["Web Development", "Backend Development"]),
 ]
 
 PREREQ_MAP = {
     "JavaScript": ["HTML", "CSS"],
-    "TypeScript": ["JavaScript"],
-    "React": ["JavaScript", "TypeScript"],
-    "Vue.js": ["JavaScript", "TypeScript"],
-    "Angular": ["JavaScript", "TypeScript"],
-    "Next.js": ["React", "JavaScript", "TypeScript"],
-    "Svelte": ["JavaScript"],
-    "Nuxt.js": ["Vue.js", "JavaScript"],
-    "Tailwind CSS": ["CSS"],
-    "Bootstrap": ["CSS"],
-    "Redux": ["React", "JavaScript"],
-    "GraphQL": ["JavaScript", "REST API Design"],
-    "Webpack": ["JavaScript"],
-    "Vite": ["JavaScript"],
-    "Node.js": ["JavaScript"],
-    "Express.js": ["Node.js", "JavaScript"],
-    "FastAPI": ["Python"],
-    "Django": ["Python"],
-    "Flask": ["Python"],
+    "TypeScript": ["JavaScript", "HTML", "CSS"],
+    "React": ["JavaScript", "TypeScript", "HTML", "CSS"],
+    "Vue.js": ["JavaScript", "TypeScript", "HTML", "CSS"],
+    "Angular": ["JavaScript", "TypeScript", "HTML", "CSS"],
+    "Svelte": ["JavaScript", "HTML", "CSS"],
+    "Next.js": ["React", "JavaScript", "TypeScript", "HTML", "CSS"],
+    "Nuxt.js": ["Vue.js", "JavaScript", "HTML", "CSS"],
+    "Tailwind CSS": ["CSS", "HTML"],
+    "Bootstrap": ["CSS", "HTML"],
+    "Redux": ["React", "JavaScript", "HTML", "CSS"],
+    "GraphQL": ["JavaScript", "REST API Design", "HTML", "CSS"],
+    "GraphQL Subscriptions": ["GraphQL", "WebSockets"],
+    "Webpack": ["JavaScript", "HTML", "CSS"],
+    "Vite": ["JavaScript", "HTML", "CSS"],
+    "Node.js": ["JavaScript", "Docker"],
+    "Express.js": ["Node.js", "JavaScript", "REST API Design"],
+    "FastAPI": ["Python", "REST API Design"],
+    "Django": ["Python", "REST API Design"],
+    "Flask": ["Python", "REST API Design"],
     "REST API Design": ["JavaScript", "Python"],
-    "React Native": ["React", "JavaScript", "TypeScript"],
-    "Flutter": ["Dart"],
+    "React Native": ["React", "JavaScript", "TypeScript", "Git"],
+    "Flutter": ["JavaScript", "Git"],
     "TensorFlow": ["Python", "NumPy"],
-    "PyTorch": ["Python", "NumPy"],
-    "scikit-learn": ["Python", "NumPy", "Pandas"],
+    "PyTorch": ["Python", "NumPy", "TensorFlow"],
+    "scikit-learn": ["Python", "NumPy", "Pandas", "TensorFlow"],
     "Pandas": ["Python", "NumPy"],
     "NumPy": ["Python"],
-    "LangChain": ["Python", "OpenAI API"],
+    "LangChain": ["Python", "OpenAI API", "Hugging Face"],
     "OpenAI API": ["Python"],
-    "Hugging Face": ["Python"],
-    "Natural Language Processing": ["Python", "scikit-learn"],
+    "Hugging Face": ["Python", "TensorFlow"],
+    "Natural Language Processing": ["Python", "scikit-learn", "TensorFlow"],
     "Computer Vision": ["Python", "TensorFlow", "PyTorch"],
     "Jupyter Notebooks": ["Python"],
     "Matplotlib": ["Python", "Pandas"],
     "Docker": ["Linux"],
     "Kubernetes": ["Docker"],
-    "Terraform": ["AWS", "Linux"],
-    "Ansible": ["Linux"],
-    "Jenkins": ["Git", "Docker"],
-    "GitHub Actions": ["Git"],
-    "GitLab CI": ["Git"],
-    "AWS": ["Linux"],
-    "Google Cloud": ["Linux"],
-    "Azure": ["Linux"],
+    "Terraform": ["AWS", "Linux", "Kubernetes"],
+    "Ansible": ["Linux", "Kubernetes"],
+    "Jenkins": ["Git", "Docker", "Kubernetes"],
+    "GitHub Actions": ["Git", "Kubernetes"],
+    "GitLab CI": ["Git", "Kubernetes"],
+    "AWS": ["Linux", "Kubernetes"],
+    "Google Cloud": ["Linux", "Kubernetes"],
+    "Azure": ["Linux", "Kubernetes"],
     "Linux": ["Git"],
     "OWASP Top 10": ["Network Security"],
     "Penetration Testing": ["Network Security", "OWASP Top 10"],
     "Cryptography": ["Network Security"],
     "Network Security": ["Linux"],
-    "Selenium": ["JavaScript", "Python"],
-    "Cypress": ["JavaScript"],
-    "Playwright": ["JavaScript"],
-    "pytest": ["Python"],
-    "Jest": ["JavaScript"],
-    "Solidity": ["JavaScript", "Web3.js"],
+    "Selenium": ["JavaScript", "Python", "Unit Testing"],
+    "Cypress": ["JavaScript", "Unit Testing"],
+    "Playwright": ["JavaScript", "Unit Testing"],
+    "pytest": ["Python", "Unit Testing"],
+    "Jest": ["JavaScript", "Unit Testing"],
+    "Solidity": ["JavaScript", "Web3.js", "Git"],
     "Web3.js": ["JavaScript"],
-    "Smart Contracts": ["Solidity", "Web3.js"],
-    "Unity": ["C#", "Blender"],
-    "Unreal Engine": ["C++ for Games", "Blender"],
+    "Smart Contracts": ["Solidity", "Web3.js", "Git"],
+    "Unity": ["C#", "Blender", "Git"],
+    "Unreal Engine": ["C#", "Blender", "Git"],
     "Agile Methodologies": ["Scrum"],
-    "Code Review": ["Git"],
+    "Code Review": ["Git", "Agile Methodologies"],
     "System Design": ["REST API Design", "Microservices Architecture"],
     "Microservices Architecture": ["Docker", "REST API Design"],
-    "Spring Boot": ["Java"],
-    "ASP.NET": ["C#"],
-    "Kotlin": ["Java"],
-    "Android Development": ["Kotlin", "Java"],
-    "iOS Development": ["Swift"],
-    "Accessibility (a11y)": ["HTML", "CSS", "JavaScript"],
+    "Spring Boot": ["Java", "REST API Design"],
+    "ASP.NET": ["C#", "REST API Design"],
+    "Kotlin": ["Java", "Git"],
+    "Android Development": ["Kotlin", "Java", "Git"],
+    "iOS Development": ["Swift", "Git"],
+    "Swift": ["Git"],
+    "Accessibility (a11y)": ["HTML", "CSS", "JavaScript", "UI/UX Design Principles"],
     "Responsive Design": ["HTML", "CSS"],
-    "Design Systems": ["Figma", "UI/UX Design Principles"],
-    "Prototyping": ["Wireframing", "Figma"],
-    "Wireframing": ["Figma"],
-    "UI/UX Design Principles": ["Figma"],
-    "Technical Writing": ["Git"],
+    "Design Systems": ["Figma", "UI/UX Design Principles", "CSS"],
+    "Prototyping": ["Wireframing", "Figma", "CSS"],
+    "Wireframing": ["Figma", "CSS"],
+    "UI/UX Design Principles": ["Figma", "CSS"],
+    "Technical Writing": ["Git", "Agile Methodologies"],
+    "Supabase": ["PostgreSQL", "REST API Design"],
+    "Firebase": ["JavaScript"],
+    "Go": ["Linux"],
+    "Rust": ["Linux"],
+    "Java": ["Linux"],
+    "C#": ["Linux"],
+    "PHP": ["Linux"],
+    "Ruby": ["Linux"],
+    "Redis": ["Linux"],
+    "MariaDB": ["MySQL"],
+    "Cassandra": ["Linux"],
+    "Elasticsearch": ["Linux"],
+    "DynamoDB": ["AWS"],
+    "Blender": ["Git"],
+    "Adobe XD": ["UI/UX Design Principles"],
+    "CSS": ["HTML"],
+    "Deno": ["JavaScript", "TypeScript"],
+    "NestJS": ["Node.js", "TypeScript"],
+    "Prisma": ["PostgreSQL", "TypeScript"],
+    "Kafka": ["Docker", "Linux"],
+    "RabbitMQ": ["Docker", "Linux"],
+    "Grafana": ["Prometheus"],
+    "Prometheus": ["Linux", "Docker"],
+    "Vault": ["Linux", "Docker"],
+    "Helm": ["Kubernetes"],
+    "Istio": ["Kubernetes"],
+    "Snowflake": ["SQL Tuning"],
+    "dbt": ["PostgreSQL", "Python"],
+    "Airflow": ["Python"],
+    "Spark": ["Python"],
+    "Keras": ["TensorFlow"],
+    "XGBoost": ["Python", "scikit-learn"],
+    "Plotly": ["Python"],
+    "Three.js": ["JavaScript", "WebGL"],
+    "WebGL": ["JavaScript"],
+    "Sass": ["CSS"],
+    "Less": ["CSS"],
+    "Storybook": ["React"],
+    "Vitest": ["JavaScript"],
+    "Testing Library": ["React", "JavaScript"],
+    "AXIOS": ["JavaScript", "Node.js"],
+    "Zod": ["TypeScript"],
+    "tRPC": ["TypeScript", "React"],
+    "Drizzle": ["PostgreSQL", "TypeScript"],
+    "Redis Pub/Sub": ["Redis"],
+    "gRPC": ["Go", "Docker"],
+    "OAuth2": ["REST API Design"],
+    "JWT Auth": ["REST API Design"],
+    "Rate Limiting": ["REST API Design"],
+    "WebSockets": ["JavaScript", "Node.js"],
+    "Service Workers": ["JavaScript", "HTML"],
+    "PWA": ["Service Workers", "CSS"],
+    "WASM": ["JavaScript"],
+    "Bun": ["JavaScript"],
+    "Electron": ["JavaScript", "React"],
+    "Capacitor": ["React Native"],
+    "Expo": ["React Native"],
+    "SwiftUI": ["Swift"],
+    "Jetpack Compose": ["Kotlin"],
+    "KMM": ["Kotlin", "Swift"],
+    "Go Modules": ["Go"],
+    "Rust Macros": ["Rust"],
+    "Rust Async": ["Rust"],
+    "SQL Tuning": ["PostgreSQL", "MySQL"],
+    "Indexing": ["SQL Tuning"],
 }
 
 JOB_ROLES = [
@@ -428,6 +644,63 @@ RESOURCES = [
     ("Kubernetes the Hard Way", "https://github.com/kelseyhightower/kubernetes-the-hard-way", "interactive", True, False, "Kelsey Hightower"),
     ("PostgreSQL Tutorial", "https://www.postgresqltutorial.com/", "article", True, False, "PostgreSQL Tutorial"),
     ("MongoDB University", "https://learn.mongodb.com/", "course", True, True, "MongoDB Inc"),
+    ("Deno Manual", "https://deno.com/manual", "documentation", True, True, "Deno Land"),
+    ("NestJS Documentation", "https://docs.nestjs.com/", "documentation", True, True, "NestJS Team"),
+    ("Prisma Docs", "https://www.prisma.io/docs", "documentation", True, True, "Prisma"),
+    ("Kafka Documentation", "https://kafka.apache.org/documentation/", "documentation", True, True, "Apache"),
+    ("RabbitMQ Tutorials", "https://www.rabbitmq.com/tutorials", "documentation", True, True, "VMware"),
+    ("Grafana Docs", "https://grafana.com/docs/", "documentation", True, True, "Grafana Labs"),
+    ("Prometheus Docs", "https://prometheus.io/docs/", "documentation", True, True, "CNCF"),
+    ("Vault Documentation", "https://developer.hashicorp.com/vault/docs", "documentation", True, True, "HashiCorp"),
+    ("Helm Docs", "https://helm.sh/docs/", "documentation", True, True, "CNCF"),
+    ("Istio Docs", "https://istio.io/latest/docs/", "documentation", True, True, "Istio"),
+    ("Snowflake Docs", "https://docs.snowflake.com/", "documentation", True, True, "Snowflake Inc"),
+    ("dbt Documentation", "https://docs.getdbt.com/docs/introduction", "documentation", True, True, "dbt Labs"),
+    ("Airflow Docs", "https://airflow.apache.org/docs/", "documentation", True, True, "Apache"),
+    ("Spark Documentation", "https://spark.apache.org/docs/latest/", "documentation", True, True, "Apache"),
+    ("Keras Documentation", "https://keras.io/", "documentation", True, True, "Keras Team"),
+    ("XGBoost Docs", "https://xgboost.readthedocs.io/", "documentation", True, True, "XGBoost Contributors"),
+    ("Plotly Docs", "https://plotly.com/python/", "documentation", True, True, "Plotly"),
+    ("Three.js Docs", "https://threejs.org/docs/", "documentation", True, True, "Three.js Authors"),
+    ("WebGL Fundamentals", "https://webglfundamentals.org/", "article", True, False, "Greggman"),
+    ("Sass Documentation", "https://sass-lang.com/documentation", "documentation", True, True, "Sass Team"),
+    ("Less Docs", "https://lesscss.org/", "documentation", True, True, "Less Team"),
+    ("Storybook Docs", "https://storybook.js.org/docs", "documentation", True, True, "Storybook Team"),
+    ("Vitest Documentation", "https://vitest.dev/", "documentation", True, True, "Vitest Team"),
+    ("Testing Library Docs", "https://testing-library.com/docs/", "documentation", True, True, "Testing Library"),
+    ("Axios Documentation", "https://axios-http.com/docs/intro", "documentation", True, True, "Axios Team"),
+    ("Zod Documentation", "https://zod.dev/", "documentation", True, True, "Zod Contributors"),
+    ("tRPC Documentation", "https://trpc.io/docs", "documentation", True, True, "tRPC Team"),
+    ("Drizzle ORM Docs", "https://orm.drizzle.team/docs", "documentation", True, True, "Drizzle Team"),
+    ("gRPC Documentation", "https://grpc.io/docs/", "documentation", True, True, "CNCF"),
+    ("OAuth2 RFC", "https://oauth.net/2/", "documentation", True, True, "OAuth.net"),
+    ("JWT Introduction", "https://jwt.io/introduction", "article", True, True, "Auth0"),
+    ("WebSockets MDN", "https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API", "documentation", True, True, "Mozilla"),
+    ("Service Worker API MDN", "https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API", "documentation", True, True, "Mozilla"),
+    ("PWA Guides", "https://web.dev/learn/pwa/", "course", True, True, "Google"),
+    ("WebAssembly Docs", "https://webassembly.org/docs/", "documentation", True, True, "W3C"),
+    ("Bun Documentation", "https://bun.sh/docs", "documentation", True, True, "Oven"),
+    ("Electron Docs", "https://www.electronjs.org/docs/latest", "documentation", True, True, "OpenJS"),
+    ("Capacitor Docs", "https://capacitorjs.com/docs", "documentation", True, True, "Ionic"),
+    ("Expo Docs", "https://docs.expo.dev/", "documentation", True, True, "Expo"),
+    ("SwiftUI Tutorials", "https://developer.apple.com/tutorials/swiftui", "course", True, True, "Apple"),
+    ("Jetpack Compose Docs", "https://developer.android.com/jetpack/compose/documentation", "documentation", True, True, "Google"),
+    ("KMM Documentation", "https://www.jetbrains.com/help/kotlin-multiplatform/", "documentation", True, True, "JetBrains"),
+    ("Go Modules Reference", "https://go.dev/ref/mod", "documentation", True, True, "Go Team"),
+    ("Rust Macros Book", "https://doc.rust-lang.org/reference/macros.html", "documentation", True, True, "Rust Team"),
+    ("Rust Async Book", "https://rust-lang.github.io/async-book/", "book", True, True, "Rust Team"),
+    ("Use The Index, Luke", "https://use-the-index-luke.com/", "article", True, True, "Markus Winand"),
+    ("GraphQL Subscriptions Docs", "https://graphql.org/learn/subscriptions/", "documentation", True, True, "GraphQL Foundation"),
+    ("وثائق MDN بالعربية", "https://developer.mozilla.org/ar/", "documentation", True, True, "Mozilla"),
+    ("توثيق React بالعربية", "https://ar.react.dev/", "documentation", True, True, "React Team"),
+    ("دليل تايلويند العربي", "https://tailwindcss.com/docs", "documentation", True, True, "Tailwind Labs"),
+    ("تعلم JavaScript بالعربية", "https://javascript.info/", "article", True, False, "Ilya Kantor"),
+    ("دورة بايثون مجانية", "https://www.freecodecamp.org/learn/scientific-computing-with-python/", "course", True, False, "freeCodeCamp"),
+    ("وثائق Docker بالعربية", "https://docs.docker.com/", "documentation", True, True, "Docker Inc"),
+    ("مدونة البرمجة العربية", "https://www.example.com/ar/blog", "article", True, False, "Arabic Dev Hub"),
+    ("دورة تطوير الويب العربي", "https://www.example.com/ar/webdev", "course", True, False, "Arabic Academy"),
+    ("وثائق Git بالعربية", "https://git-scm.com/book/ar/v2", "book", True, True, "Git Project"),
+    ("دليل Kubernetes العربي", "https://kubernetes.io/ar/docs/home/", "documentation", True, True, "CNCF"),
 ]
 
 # Path ownership remapped from seed_v2: Full Stack now belongs to demo
@@ -508,6 +781,148 @@ PATHS = [
         ],
         "user": "editor",
     },
+    {
+        "title": "Modern Web Frontend Path",
+        "description": "Advanced frontend engineering with modern tooling and testing.",
+        "skills": ["HTML", "CSS", "JavaScript", "TypeScript", "Sass", "React", "Next.js", "Redux", "Storybook", "Tailwind CSS", "Vitest", "Testing Library"],
+        "steps": [
+            (1, "HTML Fundamentals", "Semantic markup and structure.", "HTML"),
+            (2, "CSS Styling & Layout", "Flexbox, Grid, responsive design.", "CSS"),
+            (3, "JavaScript Core", "Closures, async, ES6 modules.", "JavaScript"),
+            (4, "TypeScript Mastery", "Types, generics, interfaces.", "TypeScript"),
+            (5, "Sass Preprocessing", "Variables, nesting, mixins.", "Sass"),
+            (6, "React Fundamentals", "Components, hooks, state.", "React"),
+            (7, "Next.js Framework", "SSR, routing, API routes.", "Next.js"),
+            (8, "State with Redux", "Predictable state management.", "Redux"),
+            (9, "Storybook Components", "Isolated component development.", "Storybook"),
+            (10, "Tailwind CSS", "Utility-first styling.", "Tailwind CSS"),
+            (11, "Unit Testing with Vitest", "Fast unit tests.", "Vitest"),
+            (12, "Component Testing", "Behavior with Testing Library.", "Testing Library"),
+        ],
+        "user": "learner1",
+    },
+    {
+        "title": "Backend with Node & TypeScript Path",
+        "description": "Build scalable APIs with Node.js, TypeScript, and GraphQL.",
+        "skills": ["JavaScript", "TypeScript", "Node.js", "Express.js", "NestJS", "AXIOS", "REST API Design", "GraphQL", "WebSockets", "JWT Auth", "OAuth2", "Rate Limiting"],
+        "steps": [
+            (1, "JavaScript Core", "Language fundamentals.", "JavaScript"),
+            (2, "TypeScript", "Typed JavaScript.", "TypeScript"),
+            (3, "Node.js Runtime", "Runtime and modules.", "Node.js"),
+            (4, "Express.js", "Routing and middleware.", "Express.js"),
+            (5, "NestJS Framework", "Structured server apps.", "NestJS"),
+            (6, "HTTP with AXIOS", "Client requests.", "AXIOS"),
+            (7, "REST API Design", "Resource design.", "REST API Design"),
+            (8, "GraphQL APIs", "Schema and resolvers.", "GraphQL"),
+            (9, "WebSockets", "Real-time communication.", "WebSockets"),
+            (10, "JWT Authentication", "Token auth.", "JWT Auth"),
+            (11, "OAuth2", "Delegated authorization.", "OAuth2"),
+            (12, "Rate Limiting", "Traffic control.", "Rate Limiting"),
+        ],
+        "user": "learner2",
+    },
+    {
+        "title": "Cloud Native & DevOps Path",
+        "description": "Operate cloud-native infrastructure with Kubernetes and observability.",
+        "skills": ["Linux", "Git", "Docker", "Kubernetes", "Helm", "Istio", "Prometheus", "Grafana", "Terraform", "AWS", "Ansible", "Jenkins"],
+        "steps": [
+            (1, "Linux Fundamentals", "Shell and permissions.", "Linux"),
+            (2, "Git & Version Control", "Workflows.", "Git"),
+            (3, "Docker & Containers", "Image building.", "Docker"),
+            (4, "Kubernetes Orchestration", "Pods and services.", "Kubernetes"),
+            (5, "Helm Packaging", "Chart management.", "Helm"),
+            (6, "Istio Service Mesh", "Secure networking.", "Istio"),
+            (7, "Prometheus Monitoring", "Metrics and alerts.", "Prometheus"),
+            (8, "Grafana Dashboards", "Visualization.", "Grafana"),
+            (9, "Terraform IaC", "Infrastructure as code.", "Terraform"),
+            (10, "AWS Cloud", "Managed services.", "AWS"),
+            (11, "Ansible Automation", "Configuration management.", "Ansible"),
+            (12, "Jenkins Pipelines", "CI/CD.", "Jenkins"),
+        ],
+        "user": "learner3",
+    },
+    {
+        "title": "Data Engineering Path",
+        "description": "Pipeline and analytics engineering with SQL and Spark.",
+        "skills": ["Python", "SQL Tuning", "PostgreSQL", "Indexing", "MySQL", "MariaDB", "Snowflake", "dbt", "Airflow", "Spark", "Kafka", "RabbitMQ"],
+        "steps": [
+            (1, "Python for Engineering", "Scripting and data.", "Python"),
+            (2, "SQL Tuning", "Query optimization.", "SQL Tuning"),
+            (3, "PostgreSQL", "Relational storage.", "PostgreSQL"),
+            (4, "Indexing", "Performance indexing.", "Indexing"),
+            (5, "MySQL", "Alternate RDBMS.", "MySQL"),
+            (6, "MariaDB", "Fork compatibility.", "MariaDB"),
+            (7, "Snowflake", "Cloud warehouse.", "Snowflake"),
+            (8, "dbt Transforms", "Analytics engineering.", "dbt"),
+            (9, "Airflow Orchestration", "Workflow scheduling.", "Airflow"),
+            (10, "Spark Processing", "Big data engine.", "Spark"),
+            (11, "Kafka Streaming", "Event streaming.", "Kafka"),
+            (12, "RabbitMQ Messaging", "Queue based messaging.", "RabbitMQ"),
+        ],
+        "user": "learner1",
+    },
+    {
+        "title": "AI & ML Engineering Path",
+        "description": "Deep learning, classic ML, and LLM application building.",
+        "skills": ["Python", "NumPy", "Pandas", "Matplotlib", "scikit-learn", "TensorFlow", "Keras", "PyTorch", "Plotly", "XGBoost", "Natural Language Processing", "Hugging Face", "LangChain", "OpenAI API"],
+        "steps": [
+            (1, "Python Foundations", "Core language.", "Python"),
+            (2, "NumPy", "Array computing.", "NumPy"),
+            (3, "Pandas", "Data manipulation.", "Pandas"),
+            (4, "Matplotlib", "Visualization.", "Matplotlib"),
+            (5, "scikit-learn", "Classic ML.", "scikit-learn"),
+            (6, "TensorFlow", "Deep learning base.", "TensorFlow"),
+            (7, "Keras", "High-level models.", "Keras"),
+            (8, "PyTorch", "Dynamic graphs.", "PyTorch"),
+            (9, "Plotly", "Interactive charts.", "Plotly"),
+            (10, "XGBoost", "Gradient boosting.", "XGBoost"),
+            (11, "NLP", "Language models.", "Natural Language Processing"),
+            (12, "Hugging Face", "Transformer hub.", "Hugging Face"),
+            (13, "LangChain", "LLM apps.", "LangChain"),
+            (14, "OpenAI API", "Model integration.", "OpenAI API"),
+        ],
+        "user": "learner2",
+    },
+    {
+        "title": "Mobile Cross-Platform Path",
+        "description": "Build mobile apps across React Native, iOS, and Android.",
+        "skills": ["JavaScript", "TypeScript", "React", "React Native", "Expo", "Capacitor", "Swift", "SwiftUI", "Kotlin", "Jetpack Compose", "Flutter", "Android Development"],
+        "steps": [
+            (1, "JavaScript Core", "Language basics.", "JavaScript"),
+            (2, "TypeScript", "Typed scripts.", "TypeScript"),
+            (3, "React", "Component model.", "React"),
+            (4, "React Native", "Cross-platform mobile.", "React Native"),
+            (5, "Expo Tooling", "RN platform.", "Expo"),
+            (6, "Capacitor", "Web to native.", "Capacitor"),
+            (7, "Swift", "Apple language.", "Swift"),
+            (8, "SwiftUI", "Apple UI.", "SwiftUI"),
+            (9, "Kotlin", "JVM language.", "Kotlin"),
+            (10, "Jetpack Compose", "Android UI.", "Jetpack Compose"),
+            (11, "Flutter", "Dart-based UI.", "Flutter"),
+            (12, "Android Development", "Platform APIs.", "Android Development"),
+        ],
+        "user": "learner3",
+    },
+    {
+        "title": "Security & API Path",
+        "description": "Secure APIs and infrastructure with modern practices.",
+        "skills": ["Linux", "Git", "Network Security", "OWASP Top 10", "Cryptography", "Penetration Testing", "REST API Design", "JWT Auth", "OAuth2", "Rate Limiting", "Vault", "WebSockets"],
+        "steps": [
+            (1, "Linux Fundamentals", "Hardening basics.", "Linux"),
+            (2, "Git & Version Control", "Secure workflows.", "Git"),
+            (3, "Network Security", "Infrastructure defense.", "Network Security"),
+            (4, "OWASP Top 10", "Web risks.", "OWASP Top 10"),
+            (5, "Cryptography", "Encryption primitives.", "Cryptography"),
+            (6, "Penetration Testing", "Ethical hacking.", "Penetration Testing"),
+            (7, "REST API Design", "Safe APIs.", "REST API Design"),
+            (8, "JWT Authentication", "Token auth.", "JWT Auth"),
+            (9, "OAuth2", "Delegated access.", "OAuth2"),
+            (10, "Rate Limiting", "Abuse prevention.", "Rate Limiting"),
+            (11, "Vault Secrets", "Secret management.", "Vault"),
+            (12, "WebSockets", "Secure real-time.", "WebSockets"),
+        ],
+        "user": "learner1",
+    },
 ]
 
 # Scored attempts (user_key, skill_name, score) — feed assessment_results
@@ -567,7 +982,7 @@ ACTIVITY_LOG = [
 # ──────────────────────────────────────────────────────────────────────
 
 def _seed_users(db):
-    """Insert the five canonical users with bcrypt-hashed passwords."""
+    """Insert the eight canonical users with bcrypt-hashed passwords."""
     users = {}
     for email, password, full_name, is_admin in USERS:
         user = User(email=email, hashed_password=hash_password(password),
@@ -590,13 +1005,14 @@ def _seed_categories(db):
 
 
 def _seed_skills(db, cat_map):
-    """Insert 102 skills (category_id = first category); returns maps."""
+    """Insert 152 skills with enriched topics; returns name/id maps."""
     skill_by_name, skill_by_id = {}, {}
     for name, desc, diff, icon, color, hours, cats in SKILLS:
         category_id = cat_map[cats[0]].id if cats else None
+        topics = TOPICS.get(name) or ([name] + [c for c in cats if c != name])
         skill = Skill(name=name, description=desc, difficulty_level=diff,
                       icon=icon, color=color, estimated_hours=hours,
-                      category_id=category_id)
+                      category_id=category_id, topics=topics)
         db.add(skill)
         db.flush()
         skill_by_name[name] = skill
@@ -638,17 +1054,21 @@ def _seed_job_roles(db, skill_by_name):
 
 
 def _seed_resources(db):
-    """Insert 87 resources (no skill links existed in the v2 seed)."""
+    """Insert 142 resources, tagging Arabic titles with language='ar'."""
+    def _is_arabic(title):
+        return any("\u0600" <= ch <= "\u06FF" for ch in title)
+
     for title, url, rtype, is_free, is_official, author in RESOURCES:
-        db.add(Resource(title=title, url=url, type=rtype, language="en",
-                        is_free=is_free, is_official=is_official,
-                        author_or_platform=author))
+        db.add(Resource(title=title, url=url, type=rtype,
+                         language="ar" if _is_arabic(title) else "en",
+                         is_free=is_free, is_official=is_official,
+                         author_or_platform=author))
     db.flush()
     return len(RESOURCES)
 
 
 def _fallback_questions(skill_name):
-    """Two deterministic questions for skills without bank entries."""
+    """Four deterministic questions for skills without bank entries."""
     return [
         {"question": f"What is {skill_name} primarily used for?",
          "options": ["Building applications", "Data analysis",
@@ -656,8 +1076,13 @@ def _fallback_questions(skill_name):
         {"question": f"Key feature of {skill_name}?",
          "options": ["Performance", "Scalability", "Flexibility",
                      "All of the above"], "correct": 3},
+        {"question": f"Which practice best fits {skill_name}?",
+         "options": ["Ad-hoc scripting", "Structured design",
+                     "Manual testing", "None of the above"], "correct": 1},
+        {"question": f"Where would you apply {skill_name}?",
+         "options": ["Production systems", "Local only", "Never",
+                     "Prototypes only"], "correct": 0},
     ]
-
 
 def _seed_assessments(db, skill_by_name):
     """Insert one assessment per skill, splitting questions into rows."""
@@ -680,7 +1105,7 @@ def _seed_assessments(db, skill_by_name):
 
 
 def _seed_paths(db, users, skill_by_name):
-    """Insert 5 learning paths with ordered steps; returns {title: Path}."""
+    """Insert 12 learning paths with ordered topo-safe steps; maps titles."""
     path_map = {}
     for pd in PATHS:
         owner = users[pd["user"]]
@@ -696,7 +1121,8 @@ def _seed_paths(db, users, skill_by_name):
             skill = skill_by_name.get(skill_name)
             db.add(PathStep(path_id=path.id, position=num, title=title,
                             description=content, estimated_hours=8,
-                            skill_id=skill.id if skill else None))
+                            skill_id=skill.id if skill else None,
+                            learning_objectives=[]))
         path_map[pd["title"]] = path
     db.flush()
     return path_map
@@ -728,7 +1154,12 @@ def _seed_step_progress(db, path_map, users, now):
 
 
 def _seed_user_skills(db, users, skill_by_name, skill_by_id):
-    """Build user_skills from path steps + assessment-derived levels."""
+    """Build user_skills from path steps + assessment-derived levels.
+
+    A deterministic subset (skills with rich topics and difficulty >= 3) gets
+    a non-empty weak_points list drawn from the skill's topics, so the
+    current-topic-to-master feature has real seed data.
+    """
     levels = {}
     for path in db.query(Path).all():
         for step in db.query(PathStep).filter(PathStep.path_id == path.id).all():
@@ -742,8 +1173,14 @@ def _seed_user_skills(db, users, skill_by_name, skill_by_id):
         if user and skill:
             levels[(user.id, skill.id)] = max(1, min(5, round(score / 100 * 5)))
     for (user_id, skill_id), level in levels.items():
+        skill = skill_by_id.get(skill_id)
+        topics = skill.topics or [] if skill else []
+        if skill and len(topics) >= 3 and (skill.difficulty_level or 0) >= 3:
+            weak_points = [topics[1], topics[2]]
+        else:
+            weak_points = []
         db.add(UserSkill(user_id=user_id, skill_id=skill_id,
-                         proficiency_level=level))
+                         proficiency_level=level, weak_points=weak_points))
     db.flush()
     return len(levels)
 
@@ -791,11 +1228,42 @@ def _print_counts(db):
     return total
 
 
+def kahn_order(skills, edges):
+    """Topologically order skills from (skill_id, prerequisite_id) edges.
+
+    Implements Kahn's algorithm. `skills` is the iterable of Skill objects.
+    Returns a list of skill names in topological order. Raises SystemExit if
+    a cycle is detected in the prerequisite DAG.
+    """
+    id_to_name = {s.id: s.name for s in skills}
+    nodes = set(id_to_name.keys())
+    adjacency = {n: [] for n in nodes}
+    in_degree = {n: 0 for n in nodes}
+    for skill_id, prereq_id in edges:
+        if prereq_id in adjacency and skill_id in in_degree:
+            adjacency[prereq_id].append(skill_id)
+            in_degree[skill_id] += 1
+    queue = sorted([n for n in nodes if in_degree[n] == 0])
+    order = []
+    while queue:
+        current = queue.pop(0)
+        order.append(current)
+        for nxt in adjacency[current]:
+            in_degree[nxt] -= 1
+            if in_degree[nxt] == 0:
+                queue.append(nxt)
+                queue.sort()
+    if len(order) != len(nodes):
+        sys.exit("CYCLE DETECTED in skill prerequisite DAG (kahn_order)")
+    return [id_to_name[n] for n in order]
+
+
 def seed(engine=None, session_factory=None):
     """Drop/create, insert all 15 tables, run the FK gate, print counts.
 
     Accepts an explicit engine/session factory (used by tests/conftest.py
     against an isolated temp DB) or falls back to the bound dev engine.
+    Also validates the global prerequisite DAG via kahn_order.
     """
     import backend.database as database
     eng = engine or database.engine
@@ -821,6 +1289,15 @@ def seed(engine=None, session_factory=None):
         _seed_user_skills(db, users, skill_by_name, skill_by_id)
         _seed_assessment_results(db, users, assessment_by_skill, now)
         _seed_activity_log(db, users, now)
+
+        # Kahn integrity: build edges from SkillPrerequisite rows and validate.
+        edges = [(sp.skill_id, sp.prerequisite_id)
+                 for sp in db.query(SkillPrerequisite).all()]
+        order = kahn_order(db.query(Skill).all(), edges)
+        print("\n" + "=" * 50)
+        print("KAHN TOPOLOGICAL ORDER (skill DAG)")
+        print("=" * 50)
+        print(", ".join(order))
 
         db.commit()
 

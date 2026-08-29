@@ -22,9 +22,10 @@
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     padding: 1.25rem;
+    box-shadow: var(--shadow);
   }
   .panel-head { margin-bottom: 0.9rem; }
   .panel-head h3 { font-size: 1.15rem; margin: 0; }
   .panel-head p { margin: 0.2rem 0 0; font-size: 0.85rem; }
-  .panel-foot { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px dashed var(--line-strong); }
+  .panel-foot { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--line); }
 </style>

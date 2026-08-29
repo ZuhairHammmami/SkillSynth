@@ -161,11 +161,13 @@ def update_resource(resource_id: int, data: ResourceUpdate,
 
 
 @router.delete("/resources/{resource_id}")
-def delete_resource(resource_id: int, db: Session = Depends(get_db)):
-    """Delete a resource. Calls catalog_service.delete_resource."""
-    ok, error = catalog_service.delete_resource(db, resource_id)
+def delete_resource(resource_id: int, force: bool = False,
+                    db: Session = Depends(get_db)):
+    """Delete a resource; blocked while referenced by path_steps unless
+    ?force=true lets the referencing steps keep a detached list."""
+    ok, error = catalog_service.delete_resource(db, resource_id, force)
     if not ok:
-        raise HTTPException(status_code=404, detail=error)
+        _fail_create(error)
     return {"detail": "Deleted successfully"}
 
 

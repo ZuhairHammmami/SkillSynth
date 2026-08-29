@@ -13,7 +13,9 @@ from backend.entities.catalog import (
     Category, JobRoleSkill, Resource, Skill, SkillPrerequisite,
 )
 from backend.entities.engagement import ActivityLog
-from backend.entities.learning import Path, PathStep, StepProgress, UserSkill
+from backend.entities.learning import (
+    Path, PathStep, StepProgress, UserSkill,
+)
 
 from tests.integrity_support import (
     complete_step, constellation, fresh, generate_path, mk_assessment,
@@ -104,7 +106,7 @@ def test_user_delete_cascades_learning_and_nulls_activity(
         logged = [row.id for row in db_session.query(ActivityLog)
                   .filter_by(user_id=user_id).all()]
         assert logged
-        deleted = api_client.delete(f"/api/admin/users/{user_id}",
+        deleted = api_client.delete(f"/api/admin/users/{user_id}?force=true",
                                     headers=admin_headers)
         assert deleted.status_code == 200, deleted.text
         db_session.expire_all()
@@ -137,7 +139,7 @@ def test_assessment_delete_cascades_questions_and_results(
     assessment = mk_assessment(db_session, skill)
     user_id, headers = register_user(api_client)
     submit_assessment(api_client, headers, assessment)
-    deleted = api_client.delete(f"/api/admin/assessments/{assessment}",
+    deleted = api_client.delete(f"/api/admin/assessments/{assessment}?force=true",
                                 headers=admin_headers)
     assert deleted.status_code == 200, deleted.text
     db_session.expire_all()
@@ -150,8 +152,69 @@ def test_assessment_delete_cascades_questions_and_results(
                                          "skills": [skill]})
 
 
+def test_user_and_assessment_and_resource_delete_restricted_then_force(
+        api_client, admin_headers, db_session):
+    """ERD: users, assessments and resources are RESTRICTed while dependents
+    exist — each returns 409 with the identical {"detail":{"message",
+    "dependents"}} census shape — and ?force=true bypasses the guard to
+    run the delete."""
+    skill = mk_skill(api_client, admin_headers)
+    assessment = mk_assessment(db_session, skill)
+    resource = db_session.query(Resource).filter_by(skill_id=skill).first()
+    if resource is None:
+        resp = api_client.post("/api/admin/resources", json={
+            "title": fresh("Res"), "url": "https://example.com",
+            "type": "article", "skill_id": skill}, headers=admin_headers)
+        resource = db_session.get(Resource, resp.json()["id"])
+    user_id, headers = register_user(api_client)
+    submit_assessment(api_client, headers, assessment)
+    try:
+        ref_path = Path(user_id=user_id, title="ref")
+        db_session.add(ref_path)
+        db_session.flush()
+        db_session.add(PathStep(path_id=ref_path.id, position=1,
+                               title="step", resource_ids=[resource.id]))
+        db_session.commit()
+        db_session.expire_all()
+
+        user_block = api_client.delete(f"/api/admin/users/{user_id}",
+                                       headers=admin_headers)
+        assert user_block.status_code == 409
+        ud = user_block.json()["detail"]
+        assert "force=true" in ud["message"]
+        assert ud["dependents"]["assessment_results"] == 1
+        assert sum(ud["dependents"].values()) >= 1
+
+        assess_block = api_client.delete(
+            f"/api/admin/assessments/{assessment}", headers=admin_headers)
+        assert assess_block.status_code == 409
+        ad = assess_block.json()["detail"]
+        assert "force=true" in ad["message"]
+        assert ad["dependents"]["assessment_results"] == 1
+
+        res_block = api_client.delete(
+            f"/api/admin/resources/{resource.id}", headers=admin_headers)
+        assert res_block.status_code == 409
+        rd = res_block.json()["detail"]
+        assert "force=true" in rd["message"]
+        assert rd["dependents"] == {"path_steps": 1}
+
+        forced = api_client.delete(
+            f"/api/admin/users/{user_id}?force=true", headers=admin_headers)
+        assert forced.status_code == 200, forced.text
+        db_session.expire_all()
+        assert db_session.query(AssessmentResult).filter_by(
+            user_id=user_id).count() == 0
+        assert db_session.get(Resource, resource.id) is not None
+    finally:
+        api_client.delete(f"/api/admin/resources/{resource.id}?force=true",
+                          headers=admin_headers)
+        teardown(api_client, admin_headers, {
+            "users": [user_id], "skills": [skill], "assessments": [assessment]})
+
+
 def test_path_delete_cascades_steps_and_progress(api_client, admin_headers,
-                                                 db_session):
+                                                  db_session):
     """ERD: an owned-path delete CASCADEs its path_steps and, with them,
     every step_progress row (first covered success-path delete)."""
     skill = mk_skill(api_client, admin_headers)

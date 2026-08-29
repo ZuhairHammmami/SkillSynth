@@ -5,7 +5,7 @@ resources. Referenced by the learning, assessment and engagement layers;
 DDL twin lives in src/migrations/003_reduced_schema.sql.
 """
 
-from sqlalchemy import Boolean, Column, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Boolean, Column, ForeignKey, Index, Integer, JSON, String, Text
 from backend.entities.base import Base
 
 
@@ -40,6 +40,7 @@ class Skill(Base):
     icon = Column(String, nullable=True)
     color = Column(String, nullable=True)
     category_id = Column(Integer, ForeignKey("categories.id", ondelete='SET NULL'), nullable=True)
+    topics = Column(JSON, nullable=True)
 
 
 class SkillPrerequisite(Base):

@@ -123,11 +123,11 @@ def teardown(api_client, admin_headers, plan):
     """Best-effort fixture cleanup so later suites see exact seed counts
     (test_schema.py pins eight table totals); stale 404s are ignored."""
     routes = [("users", "/api/admin/users/{id}", True),
-              ("assessments", "/api/admin/assessments/{id}", False),
-              ("resources", "/api/admin/resources/{id}", False),
+              ("assessments", "/api/admin/assessments/{id}", True),
+              ("resources", "/api/admin/resources/{id}", True),
               ("roles", "/api/admin/job-roles/{id}", True),
               ("skills", "/api/admin/skills/{id}", True),
-              ("categories", "/api/admin/categories/{id}", False)]
+              ("categories", "/api/admin/categories/{id}", True)]
     for key, template, force in routes:
         for row_id in plan.get(key, []):
             suffix = "?force=true" if force else ""

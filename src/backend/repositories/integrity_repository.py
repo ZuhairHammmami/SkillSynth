@@ -7,11 +7,17 @@ keys mirror migrations/003_reduced_schema.sql relations.
 
 from sqlalchemy.orm import Session
 
-from backend.entities.assessment import Assessment
+from backend.entities.assessment import (
+    Assessment, AssessmentQuestion, AssessmentResult,
+)
 from backend.entities.catalog import (
     JobRoleSkill, Resource, Skill, SkillPrerequisite,
 )
-from backend.entities.learning import PathStep, UserSkill
+from backend.entities.engagement import ActivityLog
+from backend.entities.identity import User
+from backend.entities.learning import (
+    Path, PathStep, StepProgress, UserSkill,
+)
 
 
 def count_skill_dependents(db: Session, skill_id: int) -> dict[str, int]:
@@ -62,3 +68,61 @@ def count_job_role_dependencies(db: Session, job_role_id: int) -> dict[str, int]
     cnt = db.query(JobRoleSkill)\
         .filter(JobRoleSkill.job_role_id == job_role_id).count()
     return {"job_role_skills": cnt} if cnt else {}
+
+
+def count_user_dependents(db: Session, user_id: int) -> dict[str, int]:
+    """Non-zero dependent census blocking DELETE /admin/users/{id}.
+
+    Called by catalog_integrity.user_delete_conflict; covers every row
+    with an FK to users.id (paths, assessment_results, user_skills,
+    step_progress and the nullable activity_log audit trail).
+    """
+    counts = {
+        "paths": db.query(Path).filter(Path.user_id == user_id).count(),
+        "assessment_results": db.query(AssessmentResult)
+            .filter(AssessmentResult.user_id == user_id).count(),
+        "user_skills": db.query(UserSkill)
+            .filter(UserSkill.user_id == user_id).count(),
+        "step_progress": db.query(StepProgress)
+            .filter(StepProgress.user_id == user_id).count(),
+        "activity_log": db.query(ActivityLog)
+            .filter(ActivityLog.user_id == user_id).count(),
+    }
+    return {name: cnt for name, cnt in counts.items() if cnt}
+
+
+def count_resource_dependents(db: Session, resource_id: int) -> dict[str, int]:
+    """Non-zero dependent census blocking DELETE /api/admin/resources/{id}.
+
+    Called by catalog_integrity.resource_delete_conflict; path_steps keeps
+    resource_ids as a JSON array (documented 3NF exception) so the
+    reference is found by scanning the non-null lists in Python.
+    """
+    steps = db.query(PathStep).filter(
+        PathStep.resource_ids.isnot(None)).all()
+    refs = sum(1 for s in steps if resource_id in (s.resource_ids or []))
+    return {"path_steps": refs} if refs else {}
+
+
+def count_assessment_dependents(db: Session, assessment_id: int) -> dict[str, int]:
+    """Non-zero dependent census blocking DELETE /api/admin/assessments/{id}.
+
+    Called by catalog_integrity.assessment_delete_conflict; counts scored
+    results and questions plus path_steps that embed the id in their
+    assessment_ids JSON array (documented 3NF exception).
+    """
+    results = db.query(AssessmentResult).filter(
+        AssessmentResult.assessment_id == assessment_id).count()
+    questions = db.query(AssessmentQuestion).filter(
+        AssessmentQuestion.assessment_id == assessment_id).count()
+    steps = db.query(PathStep).filter(
+        PathStep.assessment_ids.isnot(None)).all()
+    refs = sum(1 for s in steps if assessment_id in (s.assessment_ids or []))
+    counts: dict[str, int] = {}
+    if results:
+        counts["assessment_results"] = results
+    if questions:
+        counts["assessment_questions"] = questions
+    if refs:
+        counts["path_steps"] = refs
+    return counts

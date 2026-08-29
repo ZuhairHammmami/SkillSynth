@@ -66,8 +66,9 @@ true; llama-cpp-python is optional."""
 AI_N_GPU_LAYERS = int(os.getenv("AI_N_GPU_LAYERS", "-1"))
 """int: GPU layers offloaded to llama.cpp. Env var AI_N_GPU_LAYERS (default -1,
 all). No effect without optional llama-cpp-python."""
-AI_N_CTX = int(os.getenv("AI_N_CTX", "4096"))
-"""int: LLM context window size. Env var AI_N_CTX (default 4096). Optional."""
+AI_N_CTX = int(os.getenv("AI_N_CTX", "1024"))
+"""int: LLM context window size. Env var AI_N_CTX (default 1024). 1024 fits a
+4 GB VRAM GPU with all layers offloaded (-1); override up if VRAM allows."""
 AI_TEMPERATURE = float(os.getenv("AI_TEMPERATURE", "0.3"))
 """float: sampling temperature. Env var AI_TEMPERATURE (default 0.3). Optional."""
 AI_REPEAT_PENALTY = float(os.getenv("AI_REPEAT_PENALTY", "1.15"))

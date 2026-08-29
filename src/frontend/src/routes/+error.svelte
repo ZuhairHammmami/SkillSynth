@@ -3,13 +3,14 @@
   import { page } from '$app/stores';
   import Illustration from '$lib/components/Illustration.svelte';
   import Button from '$lib/components/ui/Button.svelte';
+  import { t } from '$lib/i18n';
 </script>
 
 <div class="wrap">
   <Illustration name="sprout" width={140} />
   <h1>{$page.status}</h1>
-  <p class="muted">{$page.error?.message || 'Something went off the path.'}</p>
-  <Button onclick={() => history.back()}>Go back</Button>
+  <p class="muted">{$page.error?.message || t('errors.default')}</p>
+  <Button onclick={() => history.back()}>{t('errors.goBack')}</Button>
 </div>
 
 <style>

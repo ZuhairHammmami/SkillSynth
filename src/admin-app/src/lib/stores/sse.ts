@@ -15,8 +15,8 @@ function safeParse(d: string): any {
 }
 
 function onFrame(type: string, data: any): void {
-  if (type === 'path_generated') invalidate(['adminPaths']);
-  if (type === 'assessment_completed') invalidate(['adminAssessments']);
+  if (type === 'path_generated') invalidate(['PATHS']);
+  if (type === 'assessment_completed') invalidate(['ASMT']);
   if (browser) window.dispatchEvent(new CustomEvent('sse:' + type, { detail: data }));
 }
 
@@ -24,7 +24,8 @@ export function connectSSE(): void {
   if (!browser || es) return;
   const token = getToken();
   if (!token) return;
-  es = new EventSource(`/api/realtime/admin/events?token=${encodeURIComponent(token)}`);
+  const BASE = (import.meta.env.PUBLIC_API_BASE_URL as string) || 'http://127.0.0.1:8000/api';
+  es = new EventSource(`${BASE}/realtime/admin/events?token=${encodeURIComponent(token)}`);
   es.onopen = () => sseStatus.set('open');
   es.onerror = () => sseStatus.set('closed');
   ['path_generated', 'assessment_completed', 'connected', 'ping', 'activity'].forEach((f) => {

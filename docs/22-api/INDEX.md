@@ -72,7 +72,7 @@ GET dashboard · skill-growth · path-progress/{path_id} · learning-history
 | events | GET feed (activity_log) |
 | backups | GET list · POST create |
 | db-inspector | GET table/row browser |
-| feature-flags | GET configuration view |
+| feature-flags | GET/PUT configuration view (admin can toggle AI at runtime) |
 | reports | GET aggregated · GET system-health |
 
 Restricted deletes (skills/categories/job-roles): dependents present → **409 + census** unless `?force=true` (ADR-014).

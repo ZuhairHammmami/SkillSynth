@@ -1,5 +1,6 @@
 """tests/test_wizard_analysis.py — pure pre-path analysis."""
 from backend.services.assess_service import normalize_key
+from backend.services import settings_service
 
 
 def _headers(api_client):
@@ -39,6 +40,7 @@ def test_analysis_is_pure(api_client, db_session, monkeypatch):
     """Endpoint computes levels without touching user_skills."""
     from backend.config import app_settings as settings
     monkeypatch.setattr(settings, "AI_ENABLED", False)
+    monkeypatch.setattr(settings_service, "is_ai_enabled", lambda: False)
     headers = _headers(api_client)
     uid = _auth_uid(api_client, headers)
     before = _profile(db_session, uid)
@@ -56,6 +58,7 @@ def test_levels_match_formula(api_client, db_session, monkeypatch):
     """Graded quiz (<skill>_q<i> keys) engages scoring; weeks estimate sane."""
     from backend.config import app_settings as settings
     monkeypatch.setattr(settings, "AI_ENABLED", False)
+    monkeypatch.setattr(settings_service, "is_ai_enabled", lambda: False)
     qs = api_client.get("/api/assessments/role/Frontend Developer",
                         headers=_headers(api_client)).json()
     assert qs, "seed must provide Frontend Developer questions"

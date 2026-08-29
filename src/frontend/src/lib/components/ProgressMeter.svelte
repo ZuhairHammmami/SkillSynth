@@ -12,6 +12,6 @@
 <style>
   .meter { display: flex; flex-direction: column; gap: 0.3rem; }
   .track { height: 8px; background: var(--paper-2); border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
-  .fill { height: 100%; background: linear-gradient(90deg, var(--ochre), var(--sage)); border-radius: 999px; transition: inline-size 0.4s ease; }
+  .fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-deep)); border-radius: 999px; transition: inline-size 0.4s ease; }
   .lbl { font-size: 0.78rem; color: var(--muted); }
 </style>

@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
-# skillsynth — root shim: prefer the venv entrypoint, fall back to source tree.
+# skillsynth — root shim: prefer the venv entrypoint, fall back to the venv
+# python, then finally a system python with PYTHONPATH wired to src/.
 set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -x "$DIR/.venv/bin/skillsynth" ]]; then
   exec "$DIR/.venv/bin/skillsynth" "$@"
+fi
+if [[ -x "$DIR/.venv/bin/python" ]]; then
+  exec env PYTHONPATH="$DIR/src${PYTHONPATH:+:$PYTHONPATH}" \
+    "$DIR/.venv/bin/python" -m backend.cli "$@"
 fi
 exec env PYTHONPATH="$DIR/src${PYTHONPATH:+:$PYTHONPATH}" python -m backend.cli "$@"

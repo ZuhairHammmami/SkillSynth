@@ -41,7 +41,10 @@ def _path_progress_list(db, user_id: int, paths: list) -> list[dict]:
 
 def learner_dashboard(db, user_id: int) -> dict:
     """GET /analytics/dashboard payload — EXACT legacy keys including
-    mastered_skills/learning_skills/total_skill_areas/completion_rate."""
+    mastered_skills/learning_skills/total_skill_areas/completion_rate.
+    Compatibility keys added (non-breaking): learning_hours, paths_count,
+    completion_percentage alias the existing total_hours/total_paths/
+    completion_rate values the student UI expects."""
     total_paths = lrepo.count_paths(db, user_id)
     total_completed = lrepo.count_completions(db, user_id)
     total_steps = lrepo.count_steps(db, user_id)
@@ -69,6 +72,9 @@ def learner_dashboard(db, user_id: int) -> dict:
         "learning_velocity": round(monthly / (30 / 7), 1) if monthly > 0 else 0,
         "recent_activity": _recent_activity(db, user_id),
         "path_progress": _path_progress_list(db, user_id, paths),
+        "learning_hours": total_hours,
+        "paths_count": total_paths,
+        "completion_percentage": completion_rate,
     }
 
 

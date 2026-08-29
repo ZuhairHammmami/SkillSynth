@@ -12,6 +12,7 @@
 
   const items = $derived([
     { href: '/dashboard', label: t('nav.dashboard'), icon: 'dashboard' },
+    { href: '/wizard', label: t('wizard.title'), icon: 'sparkles' },
     { href: '/learn', label: t('nav.learningPaths'), icon: 'learn' },
     { href: '/catalog', label: t('catalog.browse'), icon: 'category' },
     { href: '/analytics', label: t('nav.analytics'), icon: 'analytics' },

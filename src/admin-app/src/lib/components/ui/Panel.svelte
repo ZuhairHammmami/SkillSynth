@@ -1,5 +1,4 @@
-<!-- Panel: the Warm-Craft replacement for the SaaS "card". Hairline border,
-     paper surface, optional title/footer slots. No drop shadows. -->
+<!-- Panel: card surface. Paper background, hairline border, accent-radius shadow. -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
   let { title, subtitle, children, footer }: any = $props();
@@ -8,7 +7,7 @@
 <section class="panel">
   {#if title || subtitle}
     <header class="panel-head">
-      {#if title}<h3>{title}</h3>{/if}
+      {#if title}<h2>{title}</h2>{/if}
       {#if subtitle}<p class="muted">{subtitle}</p>{/if}
     </header>
   {/if}
@@ -22,9 +21,10 @@
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
   }
   .panel-head { margin-bottom: 0.9rem; }
-  .panel-head h3 { font-size: 1.15rem; margin: 0; }
+  .panel-head h2 { font-size: 1.15rem; margin: 0; }
   .panel-head p { margin: 0.2rem 0 0; font-size: 0.85rem; }
-  .panel-foot { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px dashed var(--line-strong); }
+  .panel-foot { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--line); }
 </style>

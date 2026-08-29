@@ -1,7 +1,8 @@
-"""Backend tests for the AI placement quiz → wizard analysis contract.
+"""Backend tests for the AI ENRICHMENT placement quiz → wizard analysis.
 
-Covers: wizard-quiz job creation (answer-key bank), grading via
-/wizard/analysis with quiz_job_id, and the 503 gate when AI is off.
+Covers: enrich wizard-quiz job (answer-key bank pre-seeded from the bank then
+replaced by the LLM), bank grading via /wizard/analysis with quiz_job_id, and
+the fact that the primary (non-enrich) path is synchronous with no 503 gate.
 The real LLM engine is mocked so no model is ever invoked.
 """
 import time
@@ -14,30 +15,39 @@ from backend.services import settings_service
 
 
 def _fake_role_quiz(role_title, skills, exclude_texts=frozenset(),
-                    proficiency_level=None, topics=None, locale="en"):
+                    proficiency_level=None, topics=None, locale="en",
+                    on_skill=None):
     """Deterministic role quiz: two MCQs per requested skill, correct=0.
 
-    Replaces llm_pipeline.generate_role_quiz in tests; the wizard job
+    Replaces llm_pipeline.generate_role_quiz in enrichment tests; the job
     converts each tag to a q0/q1 id and records correct_index in the bank.
     """
     out = []
     for s in skills:
         name = s["name"]
-        for i in range(2):
-            out.append({"skill": name, "text": f"Q{i} {name}",
-                        "options": ["A", "B", "C", "D"], "correct_index": 0})
+        chunk = [{"text": f"Q{i} {name}", "options": ["A", "B", "C", "D"],
+                  "correct_index": 0} for i in range(2)]
+        out.extend({"skill": name, **q} for q in chunk)
+        if on_skill:
+            on_skill(name, chunk)
     return out
 
 
 @pytest.fixture
 def ai_on(monkeypatch):
-    """Enable AI at runtime and mock the quiz generator; restore after."""
+    """Enable AI at runtime, make enrichment available, mock the generator.
+
+    Also pins llm_pipeline._engine_available False so the narrative hook
+    (analyze_diagnostic) never triggers a real inference load during tests.
+    """
     prev = settings_service.is_ai_enabled()
     settings_service.set_ai_enabled(True)
-    monkeypatch.setattr("backend.services.llm_pipeline.generate_role_quiz",
-                        _fake_role_quiz)
+    monkeypatch.setattr(ai_router, "_spawn", lambda fn: fn())
+    monkeypatch.setattr("backend.services.llm_engine.available", lambda: True)
     monkeypatch.setattr("backend.services.llm_pipeline._engine_available",
                         lambda: False)
+    monkeypatch.setattr("backend.services.llm_pipeline.generate_role_quiz",
+                        _fake_role_quiz)
     yield
     settings_service.set_ai_enabled(prev)
 
@@ -57,43 +67,57 @@ def _wait_for_bank(job_id, timeout=5.0):
     return job_id in AI_QUIZ_BANK
 
 
-def _role_with_quiz(api_client, user_token, min_skills=2):
-    """Return (goal, job_id) for a role whose quiz bank has >= min_skills.
+def _enrich_bank(api_client, user_token, goal):
+    """POST the enrichment wizard quiz and poll until its bank is populated."""
+    resp = api_client.post("/api/ai/wizard-quiz", json={"goal": goal,
+                                                        "enrich": True},
+                           headers={"Authorization": f"Bearer {user_token}"})
+    assert resp.status_code == 200, resp.text
+    job_id = resp.json()["job_id"]
+    assert _wait_for_bank(job_id), "enrichment bank never populated"
+    return job_id
 
-    Needed because the bank-grading proof requires at least one fully-wrong
-    skill (level 0) and one fully-correct skill (level 5); scans roles until
-    the spawned job populates AI_QUIZ_BANK with enough skill keys.
-    """
+
+def _role_with_quiz(api_client, user_token, min_skills=2):
+    """Return (goal, job_id) for an enrichment role with >= min_skills."""
     roles = api_client.get("/api/wizard-options").json()["job_roles"]
     for role in roles:
         goal = role["title"]
-        job_id = api_client.post("/api/ai/wizard-quiz", json={"goal": goal},
-                                 headers={"Authorization": f"Bearer {user_token}"}).json()["job_id"]
-        if _wait_for_bank(job_id) and len(AI_QUIZ_BANK[job_id]) >= min_skills:
+        job_id = _enrich_bank(api_client, user_token, goal)
+        if len(AI_QUIZ_BANK[job_id]) >= min_skills:
             return goal, job_id
     raise AssertionError(f"no role with >= {min_skills} skills found")
 
 
-def test_wizard_quiz_creates_bank_entry(api_client, user_token, ai_on):
-    """POST /ai/wizard-quiz returns a job and populates the answer-key bank."""
+def test_wizard_quiz_is_synchronous_and_bankless(api_client, user_token):
+    """Primary (non-enrich) delivery returns questions, no 503, no bank."""
+    prev = settings_service.is_ai_enabled()
+    settings_service.set_ai_enabled(False)
+    try:
+        goal = _first_role(api_client)
+        resp = api_client.post("/api/ai/wizard-quiz", json={"goal": goal},
+                               headers={"Authorization": f"Bearer {user_token}"})
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["questions"] and "job_id" in body
+        assert body["job_id"] not in AI_QUIZ_BANK
+    finally:
+        settings_service.set_ai_enabled(prev)
+
+
+def test_enrich_creates_bank_entry(api_client, user_token, ai_on):
+    """enrich wizard-quiz populates the answer-key bank (LLM keys)."""
     goal = _first_role(api_client)
-    resp = api_client.post("/api/ai/wizard-quiz", json={"goal": goal},
-                           headers={"Authorization": f"Bearer {user_token}"})
-    assert resp.status_code == 200, resp.text
-    job_id = resp.json()["job_id"]
-    assert _wait_for_bank(job_id)
+    job_id = _enrich_bank(api_client, user_token, goal)
     assert all(isinstance(v, list) for v in AI_QUIZ_BANK[job_id].values())
 
 
 def test_quiz_analysis_grades_per_skill(api_client, user_token, ai_on):
     """Bank grading yields 0 for the wrong skill, 5 for correct ones.
 
-    The fake bank stores correct_index==0 for every question. We answer the
-    FIRST skill fully wrong and every other skill fully correct, so only
-    _analysis_from_bank (driven by AI_QUIZ_BANK) can produce levels {0, 5}.
-    The fallback _build_report_rows would score against seeded questions and
-    yield a different level set, so these assertions fail if quiz_job_id is
-    not honored.
+    The fake bank stores correct_index==0 for every enrichment question. We
+    answer the FIRST skill fully wrong and every other skill fully correct, so
+    only _analysis_from_bank (driven by AI_QUIZ_BANK) can produce {0, 5}.
     """
     goal, job_id = _role_with_quiz(api_client, user_token)
     answers, first = {}, True
@@ -112,16 +136,3 @@ def test_quiz_analysis_grades_per_skill(api_client, user_token, ai_on):
     assert set(levels) == {0, 5}, f"bank-only levels expected, got {levels}"
     assert body["weaknesses"], "graded skills should yield weaknesses"
     assert body["recommended_focus"], "recommended_focus should be populated"
-
-
-def test_wizard_quiz_disabled_returns_503(api_client, user_token):
-    """With AI off, /ai/wizard-quiz degrades to 503 and bank stays empty."""
-    prev = settings_service.is_ai_enabled()
-    settings_service.set_ai_enabled(False)
-    try:
-        goal = _first_role(api_client)
-        resp = api_client.post("/api/ai/wizard-quiz", json={"goal": goal},
-                               headers={"Authorization": f"Bearer {user_token}"})
-        assert resp.status_code == 503
-    finally:
-        settings_service.set_ai_enabled(prev)

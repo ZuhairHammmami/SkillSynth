@@ -45,9 +45,9 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-import seed_v3  # noqa: E402
+import seed_v4  # noqa: E402
 
-seed_v3.seed(engine=test_engine, session_factory=TestingSessionLocal)
+seed_v4.seed(engine=test_engine, session_factory=TestingSessionLocal)
 
 from backend.main import app  # noqa: E402
 from backend.database import get_db  # noqa: E402

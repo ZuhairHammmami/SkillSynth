@@ -219,29 +219,36 @@ def generate_skill_quiz(skill_name: str, difficulty: int, n: int = 5,
 def generate_role_quiz(role_title: str, skills: list[dict],
                         exclude_texts=frozenset(),
                         proficiency_level: int = None,
-                        topics: list = None, locale: str = "en") -> list[dict]:
-    """Validated role diagnostic quiz; items carry exact skill tag. Deps: _engine_available, sanitize_topic, prompts.role_quiz_prompt, _complete_json, _valid_question. Impl: gates on engine, keeps only questions tagged with a requested skill passing _valid_question; per-skill shortfall tolerated downstream. New optional params target the learner level, focus on topics, and select output locale."""
+                        topics: list = None, locale: str = "en",
+                        on_skill: Callable[[str, list[dict]], None] | None = None
+                        ) -> list[dict]:
+    """Validated role diagnostic quiz; items carry exact skill tag. Deps: _engine_available, sanitize_topic, generate_skill_quiz, _valid_question, logger. Impl: instead of one oversized call (which truncates on small GPUs), loops per skill calling generate_skill_quiz (n=2, small/reliable JSON) and merges/tags each passing _valid_question with its exact skill name; a per-skill failure is caught and skipped so one bad skill never kills the whole quiz. Optional on_skill(name, chunk) hook fires after each skill so callers can stream progress. Raises LLMOperationError only when zero questions survive."""
     if not _engine_available():
         raise LLMOperationError("AI unavailable")
-    safe = [{"name": sanitize_topic(s["name"]),
-             "difficulty": int(s.get("difficulty") or 1)} for s in skills]
-    data = _complete_json(
-        prompts.role_quiz_prompt(
-            sanitize_topic(role_title), safe,
-            proficiency_level=proficiency_level,
-            topics=[sanitize_topic(t) for t in topics] if topics else None,
-            locale=locale),
-        max_tokens=max(850, len(safe) * 330),
-        salvage=_salvage_questions)
-    exclude, out = set(exclude_texts), []
-    seen_names = {s["name"] for s in safe}
-    for q in data.get("questions", []):
-        if q.get("skill") not in seen_names:
+    exclude = set(exclude_texts)
+    out: list[dict] = []
+    for s in skills:
+        name = sanitize_topic(s.get("name", ""))
+        if not name:
             continue
-        base = {k: q[k] for k in ("text", "options", "correct_index")}
-        if _valid_question(base, {x["text"] for x in out}, exclude):
-            out.append({**base, "skill": q["skill"],
-                        "text": base["text"].strip()})
+        s_topics = [sanitize_topic(t) for t in (s.get("topics") or [])] or None
+        try:
+            qs = generate_skill_quiz(
+                name, int(s.get("difficulty") or 1), n=2,
+                exclude_texts=exclude, proficiency_level=proficiency_level,
+                topics=s_topics, locale=locale)
+        except LLMOperationError as exc:
+            logger.warning("role quiz: skipped skill %r: %s", name, exc)
+            continue
+        chunk: list[dict] = []
+        for q in qs:
+            base = {k: q[k] for k in ("text", "options", "correct_index")}
+            if _valid_question(base, {x["text"] for x in out}, exclude):
+                item = {**base, "skill": name, "text": base["text"].strip()}
+                out.append(item)
+                chunk.append(item)
+        if chunk and on_skill is not None:
+            on_skill(name, chunk)
     if not out:
         raise LLMOperationError("no valid role-quiz questions")
     return out

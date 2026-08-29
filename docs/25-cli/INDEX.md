@@ -23,7 +23,7 @@ Document the `skillsynth` console entrypoint and every script that actually exis
 ## Command Reference
 | Command | Purpose | Working Dir |
 |---------|---------|-------------|
-| `skillsynth run [--host H] [--port P] [--dev] [--skip-backend] [--skip-frontend] [--skip-admin]` | Run the full project: backend (uvicorn) on :8000 + frontend `pnpm dev` on :3000 + admin `pnpm dev` on :3001; HOST/PORT/MODE env defaults, flags override; reload when MODE=dev or --dev; skip flags disable a component | repo root |
+| `skillsynth run [--host H] [--port P] [--dev] [--skip-backend] [--skip-frontend] [--skip-admin]` | Run the full project: backend (uvicorn) on :8000 + frontend `pnpm dev` on :3000 + admin `pnpm dev` on :3001; HOST/PORT/MODE env defaults, flags override; reload when MODE=dev or --dev; skip flags disable a component; cross-platform (Windows uses pnpm.cmd + taskkill, POSIX uses session groups + killpg) | repo root |
 | `skillsynth seed [--db PATH]` | Seed all 15 tables (~1,109 rows, idempotent, FK-gated) into PATH (default skillsynth.db); dev DB never touched when --db points elsewhere | repo root |
 | `skillsynth test [args...]` | Run `pytest tests/` in a subprocess (PYTHONPATH=src); exit code passthrough | repo root |
 | `skillsynth schema` | Run tools/verify_schema.py → prints SCHEMA MATCH; exit code passthrough | repo root |

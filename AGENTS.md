@@ -10,7 +10,7 @@ pip install -r requirements-ai.txt   # optional SS-AI local inference (CUDA buil
 #        skillsynth doctor --strict confirms presence when AI_ENABLED=true (AI_ENABLED defaults to false)
 
 # CLI (after pip install -e . — or use ./skillsynth shim without installing)
-skillsynth run            # run full stack: backend :8000 + frontend :3000 + admin :3001 (--skip-backend/--skip-frontend/--skip-admin; HOST/PORT/MODE env; --host/--port/--dev override)
+skillsynth run            # run full stack: backend :8000 + frontend :3000 + admin :3001 (--skip-backend/--skip-frontend/--skip-admin; HOST/PORT/MODE env; --host/--port/--dev override); cross-platform (Linux/macOS/Windows)
 skillsynth seed           # seed dev db; skillsynth seed --db /tmp/x.db isolates target
 skillsynth test           # pytest wrapper (PYTHONPATH=src); e.g. skillsynth test -k auth
 skillsynth schema         # DDL ↔ ORM verifier → SCHEMA MATCH

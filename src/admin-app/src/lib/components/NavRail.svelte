@@ -1,30 +1,31 @@
-<!-- Admin contents rail. English-only; 15 sections; is_admin gate handled by
-     the auth store + layout guard. No locale switcher (admin is EN-only). -->
+<!-- Admin contents rail. Bilingual (AR/EN); 15 sections. -->
 <script lang="ts">
   import { page } from '$app/stores';
   import { authStore, logout } from '$lib/stores/auth';
   import { goto } from '$app/navigation';
   import Icon from '$lib/icons/Icon.svelte';
   import Logo from '$lib/components/Logo.svelte';
+  import LocaleSwitcher from '$lib/components/LocaleSwitcher.svelte';
+  import { t } from '$lib/i18n';
   import { getInitials } from '$lib/util';
 
-  const items = [
-    { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { href: '/users', label: 'Users', icon: 'users' },
-    { href: '/categories', label: 'Categories', icon: 'category' },
-    { href: '/skills', label: 'Skills', icon: 'learn' },
-    { href: '/resources', label: 'Resources', icon: 'resource' },
-    { href: '/job-roles', label: 'Job Roles', icon: 'role' },
-    { href: '/assessments', label: 'Assessments', icon: 'quiz' },
-    { href: '/paths', label: 'Paths', icon: 'path' },
-    { href: '/reports', label: 'Reports', icon: 'analytics' },
-    { href: '/health', label: 'System Health', icon: 'shield' },
-    { href: '/settings', label: 'Settings', icon: 'settings' },
-    { href: '/audit-logs', label: 'Audit Logs', icon: 'activity' },
-    { href: '/backups', label: 'Backups', icon: 'database' },
-    { href: '/db-inspector', label: 'DB Inspector', icon: 'layers' },
-    { href: '/feature-flags', label: 'Feature Flags', icon: 'flag' }
-  ];
+  const items = $derived([
+    { href: '/dashboard', label: t('admin.nav.dashboard'), icon: 'dashboard' },
+    { href: '/users', label: t('admin.nav.users'), icon: 'users' },
+    { href: '/categories', label: t('admin.nav.categories'), icon: 'category' },
+    { href: '/skills', label: t('admin.nav.skills'), icon: 'learn' },
+    { href: '/resources', label: t('admin.nav.resources'), icon: 'resource' },
+    { href: '/job-roles', label: t('admin.nav.jobRoles'), icon: 'role' },
+    { href: '/assessments', label: t('admin.nav.assessments'), icon: 'quiz' },
+    { href: '/paths', label: t('admin.nav.paths'), icon: 'path' },
+    { href: '/reports', label: t('admin.nav.reports'), icon: 'analytics' },
+    { href: '/health', label: t('admin.nav.systemHealth'), icon: 'shield' },
+    { href: '/settings', label: t('admin.nav.settings'), icon: 'settings' },
+    { href: '/audit-logs', label: t('admin.nav.auditLogs'), icon: 'activity' },
+    { href: '/backups', label: t('admin.nav.backups'), icon: 'database' },
+    { href: '/db-inspector', label: t('admin.nav.dbInspector'), icon: 'layers' },
+    { href: '/feature-flags', label: t('admin.nav.featureFlags'), icon: 'flag' }
+  ]);
 
   function isActive(href: string): boolean {
     const p = $page.url.pathname;
@@ -40,7 +41,7 @@
   <div class="brand"><Logo /></div>
   <nav class="nav">
     {#each items as it}
-      <a class="nav-item" class:active={isActive(it.href)} href={it.href}>
+      <a class="nav-item" class:active={isActive(it.href)} href={it.href} aria-current={isActive(it.href) ? 'page' : undefined}>
         <span class="marker"></span>
         <Icon name={it.icon} size={18} />
         <span>{it.label}</span>
@@ -52,10 +53,13 @@
       <span class="avatar">{getInitials($authStore.user?.full_name, $authStore.user?.email)}</span>
       <span class="meta">
         <strong>{$authStore.user?.full_name || $authStore.user?.email}</strong>
-        <small class="muted">Administrator</small>
+        <small class="muted">{t('admin.common.administrator')}</small>
       </span>
     </div>
-    <button class="logout" onclick={doLogout} aria-label="Sign out"><Icon name="logout" size={18} /></button>
+    <div class="foot-actions">
+      <LocaleSwitcher />
+      <button class="logout" onclick={doLogout} aria-label={t('nav.logout')}><Icon name="logout" size={18} /></button>
+    </div>
   </div>
 </aside>
 
@@ -68,16 +72,18 @@
   .brand { padding: 0.3rem 0.5rem 1rem; }
   .nav { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; overflow-y: auto; }
   .nav-item {
-    display: flex; align-items: center; gap: 0.65rem; padding: 0.5rem 0.7rem;
+    display: flex; align-items: center; gap: 0.65rem; padding: 0.6rem 0.7rem; min-height: 44px;
     color: var(--ink-soft); border-radius: var(--radius); font-weight: 600; font-size: 0.92rem; position: relative;
   }
-  .nav-item:hover { background: rgba(181, 134, 46, 0.08); text-decoration: none; color: var(--ink); }
+  .nav-item:hover { background: var(--accent-soft); text-decoration: none; color: var(--ink); }
   .marker { width: 6px; height: 6px; border-radius: 50%; background: var(--line-strong); transition: background 0.15s; }
-  .nav-item.active { color: var(--ochre-deep); background: rgba(181, 134, 46, 0.12); }
-  .nav-item.active .marker { background: var(--ochre); }
+  .nav-item.active { color: var(--accent-deep); background: var(--accent-soft); }
+  .nav-item.active .marker { background: var(--accent); }
+  .nav-item:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
   .foot { border-top: 1px dashed var(--line-strong); padding-top: 0.8rem; display: flex; align-items: center; justify-content: space-between; }
   .who { display: flex; align-items: center; gap: 0.6rem; overflow: hidden; }
-  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--sage); color: #f3f6ee; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+  .foot-actions { display: flex; align-items: center; gap: 0.5rem; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-deep); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
   .meta { display: flex; flex-direction: column; line-height: 1.2; overflow: hidden; }
   .meta small { font-size: 0.7rem; }
   .logout { background: transparent; border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 0.35rem; cursor: pointer; color: var(--muted); display: inline-flex; }
