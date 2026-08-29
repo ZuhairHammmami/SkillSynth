@@ -7,23 +7,20 @@ backend/main.py. Every route is admin-only via the router-level
 require_admin dependency; consumed by the admin-app pages.
 """
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 import logging
 
-from backend.config.app_settings import (
-    ACCESS_TOKEN_EXPIRE_MINUTES, AI_MODEL_PATH, APP_MODE,
-    CORS_ORIGINS, CSRF_ENABLED, LOGIN_LOCKOUT_MINUTES, MAX_LOGIN_ATTEMPTS,
-    PASSWORD_MIN_LENGTH,
-)
 from backend.database import get_db
 from backend.dto.admin import AdminCreateUser, AdminUserUpdate, PathAdminView
+from backend.limiter import limiter
 from backend.policies.auth_policy import get_current_user, require_admin
 from backend.routers.error_mapping import status_for_error
 from backend.services import admin_service, auth_service
-from backend.services import llm_engine, settings_service
+from backend.services import llm_engine, settings_schema, settings_service
 
 logger = logging.getLogger(__name__)
 
@@ -125,60 +122,50 @@ def db_inspector(db: Session = Depends(get_db)):
     return admin_service.db_inspector(db)
 
 
-class FeatureFlagsUpdate(BaseModel):
-    """PUT /api/admin/feature-flags body — the AI toggle payload."""
-
-    ai_enabled: bool
-
-
 @router.get("/feature-flags")
 def feature_flags():
-    """Return the system configuration object for the admin feature-flags
-    page; AI fields now reflect the runtime, file-backed toggle from
-    settings_service rather than the startup env value."""
-    ai_enabled = settings_service.is_ai_enabled()
-    return {
-        "app_mode": APP_MODE,
-        "registration_enabled": True,
-        "ai_enabled": ai_enabled,
-        "ai_path_generation": ai_enabled,
-        "ai_local_model": AI_MODEL_PATH,
-        "real_time_updates": True,
-        "csrf_protection": CSRF_ENABLED,
-        "rate_limiting": True,
-        "password_policy": {
-            "min_length": PASSWORD_MIN_LENGTH,
-            "require_uppercase": True,
-            "require_lowercase": True,
-            "require_digit": True,
-            "require_special_char": True,
-        },
-        "session_timeout_hours": ACCESS_TOKEN_EXPIRE_MINUTES // 60,
-        "account_lockout_attempts": MAX_LOGIN_ATTEMPTS,
-        "lockout_minutes": LOGIN_LOCKOUT_MINUTES,
-        "cors_origins": CORS_ORIGINS,
-    }
+    """Return the flat 13-key runtime flag map for the admin feature-flags
+    page. Produced by settings_schema.build_runtime_flags() so the merged
+    persisted/runtime values live only in settings_schema; admin page."""
+    return settings_schema.build_runtime_flags()
+
+
+@router.get("/feature-flags/schema")
+def feature_flags_schema():
+    """Return the serializable FLAG_SCHEMA (per-key type, editable, live,
+    restart, min/max/min_length/max_length, default) so the admin
+    feature-flags page can render schema-driven per-type controls. Values
+    are plain JSON; no functions/nested objects."""
+    return settings_schema.FLAG_SCHEMA
 
 
 @router.put("/feature-flags")
-def update_feature_flags(data: FeatureFlagsUpdate):
-    """Persist the runtime AI toggle from the admin feature-flags page.
+def update_feature_flags(payload: dict[str, Any]):
+    """Validate and persist a bulk feature-flag update, then apply runtime
+    side effects and return the updated flat 13-key map.
 
-    Called by PUT /api/admin/feature-flags; requires admin via the
-    router-level dependency. Delegates the write to settings_service, then
-    on enable eagerly warms the engine (non-fatal — surfaces model/VRAM
-    problems immediately instead of on the next quiz) and on disable clears
-    any failed-load latch so a later re-enable retries cleanly. Returns the
-    updated ai_enabled state."""
-    settings_service.set_ai_enabled(data.ai_enabled)
-    if data.ai_enabled:
-        try:
-            llm_engine.warmup()
-        except Exception as exc:  # noqa: BLE001 — non-fatal toggle side-effect
-            logger.warning("feature-flags: AI warmup on enable failed: %s", exc)
-    else:
-        llm_engine.reset_load_failure()
-    return {"ai_enabled": settings_service.is_ai_enabled()}
+    Called by PUT /api/admin/feature-flags from the admin page; gated by
+    the router-level require_admin dependency. Delegates validation to
+    settings_schema.validate_update (422 with per-key messages on error) and
+    persistence to settings_service.set_setting per cleaned key. On ai_enabled
+    change keeps the warmup-on-enable / reset_load_failure-on-disable
+    behavior; on rate_limiting change flips limiter.enabled."""
+    cleaned, errors = settings_schema.validate_update(payload)
+    if errors:
+        raise HTTPException(status_code=422, detail=errors)
+    for key, value in cleaned.items():
+        settings_service.set_setting(key, value)
+    if "ai_enabled" in cleaned:
+        if cleaned["ai_enabled"]:
+            try:
+                llm_engine.warmup()
+            except Exception as exc:  # noqa: BLE001 — non-fatal toggle side-effect
+                logger.warning("feature-flags: AI warmup on enable failed: %s", exc)
+        else:
+            llm_engine.reset_load_failure()
+    if "rate_limiting" in cleaned:
+        limiter.enabled = bool(cleaned["rate_limiting"])
+    return settings_schema.build_runtime_flags()
 
 
 @router.get("/reports/aggregated")
