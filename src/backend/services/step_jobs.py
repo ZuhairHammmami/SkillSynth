@@ -55,18 +55,19 @@ def _apply_adjustment(db, user_id: int, skill_id: int, verdict: dict) -> None:
     Callee of review_and_adjust on an applied (bounded ±1) verdict; writes the
     ai_proficiency_review audit row and syncs the caller's step current_level.
     """
-    from backend.events.publisher import send_event
+    from backend.events.publisher import send_admin_activity, send_event
     from backend.repositories import (
         assess_repository as arepo, engagement_repository,
         learning_repository as lrepo,
     )
     arepo.upsert_user_skill(db, user_id, skill_id, verdict["final_level"])
     db.commit()
-    engagement_repository.write(
+    row = engagement_repository.write(
         db, "audit", "ai_proficiency_review", user_id=user_id,
         entity_type="skill", entity_id=skill_id,
         data={"delta": verdict["delta"], "rationale": verdict["rationale"],
               "final_level": verdict["final_level"]})
+    send_admin_activity(row)
     lrepo.update_step_current_level_for_skill(
         db, user_id, skill_id, verdict["final_level"])
     send_event(user_id, "proficiency_adjusted",

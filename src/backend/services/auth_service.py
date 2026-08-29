@@ -109,12 +109,16 @@ def build_profile_out(db, user: User) -> ProfileOut:
 
 def log_auth(db, user_id: int | None, email: str, success: bool,
              ip: str | None) -> None:
-    """Persist an auth activity row via engagement_repository.write."""
-    engagement_repository.write(
+    """Persist an auth activity row and broadcast it to admin streams.
+    Wraps engagement_repository.write then send_admin_activity so the
+    admin audit feed's sse:activity prepend stays live."""
+    from backend.events.publisher import send_admin_activity
+    row = engagement_repository.write(
         db, category="auth", action="login" if success else "login_failed",
         user_id=user_id, entity_type="user", entity_id=user_id,
         data={"email": email, "success": success}, ip_address=ip,
     )
+    send_admin_activity(row)
 
 
 class AuthService:
@@ -192,17 +196,20 @@ class AuthService:
         enumeration); when the account exists the signed 30-minute
         reset JWT is included as "reset_token" so the flow works
         without the removed email layer. An auth activity row is
-        written via engagement_repository.write(db, ...).
+        written via engagement_repository.write(db, ...) and broadcast
+        to the admin channel.
         """
+        from backend.events.publisher import send_admin_activity
         payload = {"message": ("If an account with this email exists, a "
                                "password reset link has been sent.")}
         user = identity_repository.get_by_email(db, email)
         if user:
             payload["reset_token"] = create_password_reset_token(user.email)
-            engagement_repository.write(
+            row = engagement_repository.write(
                 db, category="auth", action="password_reset_requested",
                 user_id=user.id, entity_type="user", entity_id=user.id,
                 data={"email": email}, ip_address=None)
+            send_admin_activity(row)
         return payload
 
     @staticmethod

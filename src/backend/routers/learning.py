@@ -77,10 +77,12 @@ def rate_proficiency(skill_id: int, data: RateProficiencyIn,
         raise HTTPException(status_code=400,
                             detail=f"Skill {skill_id} not found")
     arepo.upsert_user_skill(db, current_user.id, skill_id, data.level)
-    engagement_repository.write(
+    from backend.events.publisher import send_admin_activity
+    row = engagement_repository.write(
         db, "learning", "rate.proficiency.set",
         user_id=current_user.id, entity_type="skill", entity_id=skill_id,
         data={"level": data.level})
+    send_admin_activity(row)
     steps = lrepo.update_step_current_level_for_skill(
         db, current_user.id, skill_id, data.level)
     return {"skill_id": skill_id, "level": data.level,

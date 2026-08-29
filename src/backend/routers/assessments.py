@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
-from backend.events.publisher import send_event
+from backend.events.publisher import send_admin_event, send_event
 from backend.policies.auth_policy import get_current_user
 from backend.repositories import assess_repository as arepo
 from backend.repositories import catalog_repository
@@ -64,6 +64,36 @@ def get_assessment_questions(skill_id: int, db: Session = Depends(get_db),
     return _questions_for_skill_id(db, skill_id)
 
 
+@router.get("/assessments/{assessment_id}")
+def get_assessment_by_id(assessment_id: int, db: Session = Depends(get_db),
+                         current_user=Depends(get_current_user)):
+    """Return one assessment and its questions by id.
+
+    Consumed by the AI practice-test flow: the ai_test_ready SSE event
+    carries assessment_id, and the learner app fetches this to open the
+    QuizRunner with the persisted [AI] assessment's own questions."""
+    assessment = arepo.get_assessment(db, assessment_id)
+    if not assessment:
+        raise HTTPException(status_code=404, detail="assessment not found")
+    skill = (catalog_repository.get_skill(db, assessment.skill_id)
+             if assessment.skill_id else None)
+    label = skill.name if skill else assessment.title
+    questions = [{
+        "id": f"{assess_service.normalize_key(label).lower()}_q{i}",
+        "skill": label,
+        "topic": label,
+        "text": q.prompt,
+        "options": q.options or [],
+    } for i, q in enumerate(arepo.get_questions(db, assessment.id))]
+    return {
+        "assessment_id": assessment.id,
+        "skill_id": assessment.skill_id,
+        "title": assessment.title,
+        "skill": label,
+        "questions": questions,
+    }
+
+
 @router.get("/assessments/role/{job_role_title}")
 def get_role_questions(job_role_title: str, db: Session = Depends(get_db),
                        current_user=Depends(get_current_user)):
@@ -80,11 +110,18 @@ def get_role_questions(job_role_title: str, db: Session = Depends(get_db),
 def submit_assessment(data: AssessmentSubmitInput, db: Session = Depends(get_db),
                       current_user=Depends(get_current_user)):
     """Grade a submission and persist the result + proficiency. Calls
-    assess_service.submit_result; broadcasts an assessment_completed SSE event."""
+    assess_service.submit_result; broadcasts an assessment_completed SSE
+    event to the owner and the admin channel (invalidates the admin
+    assessments list)."""
     result, error, status = assess_service.submit_result(db, current_user, data)
     if error:
         raise HTTPException(status_code=status, detail=error)
     send_event(current_user.id, "assessment_completed", {
+        "assessment_id": data.assessment_id,
+        "score": result["score"],
+        "total_questions": result["total_questions"],
+    })
+    send_admin_event("assessment_completed", {
         "assessment_id": data.assessment_id,
         "score": result["score"],
         "total_questions": result["total_questions"],

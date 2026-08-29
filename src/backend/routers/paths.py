@@ -16,7 +16,7 @@ from backend.dto.learning import (
     GeneratePathIn, PathDetailOut, PathUpdate,
     StepCompletionResponse, WizardAnalysisIn, WizardOptionsOut,
 )
-from backend.events.publisher import send_event
+from backend.events.publisher import send_admin_event, send_event
 from backend.policies.auth_policy import get_current_user
 from backend.repositories import assess_repository as arepo
 from backend.repositories import catalog_repository
@@ -34,11 +34,15 @@ router = APIRouter()
 def generate_path(data: GeneratePathIn, db: Session = Depends(get_db),
                   current_user=Depends(get_current_user)):
     """Generate a learning path from wizard input. Calls
-    learning_service.generate_path; consumed by usePathApi.useGeneratePath()."""
+    learning_service.generate_path; consumed by usePathApi.useGeneratePath().
+    Broadcasts to both the owner's channel and the admin SSE channel so the
+    admin /paths table can refresh."""
     result, error = learning_service.generate_path(db, current_user, data)
     if error:
         raise HTTPException(status_code=400, detail=error)
     send_event(current_user.id, "path_generated", {"path_id": result["id"]})
+    send_admin_event("path_generated", {
+        "path_id": result["id"], "title": result.get("title")})
     return result
 
 

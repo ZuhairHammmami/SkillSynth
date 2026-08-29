@@ -13,6 +13,7 @@ from backend.repositories import assess_repository as arepo
 from backend.repositories import catalog_repository
 from backend.repositories import engagement_repository
 from backend.services import llm_pipeline
+from backend.services import settings_service
 
 MASTERY_SCALE = 5
 
@@ -115,7 +116,7 @@ def submit_result(db, user, input_data) -> tuple[dict | None, str | None, int]:
                            round(correct / total * MASTERY_SCALE)))
         arepo.upsert_user_skill(db, user.id, assessment.skill_id, level)
         db.commit()
-        if settings.AI_ENABLED and _engine_ready():
+        if settings_service.is_ai_enabled() and _engine_ready():
             skill = catalog_repository.get_skill(db, assessment.skill_id)
             _queue_review(user.id, assessment.skill_id, correct, total,
                           result.id, skill.difficulty_level or 1,
@@ -175,7 +176,7 @@ def _review_and_adjust(user_id, skill_id, correct, total, result_id,
     proficiency_adjusted SSE; otherwise returns silently.
     """
     from backend.database import SessionLocal
-    from backend.events.publisher import send_event
+    from backend.events.publisher import send_admin_activity, send_event
     verdict = review_level(correct, total, difficulty, attempt_no,
                            level_now)
     if not verdict["applied"]:
@@ -185,13 +186,14 @@ def _review_and_adjust(user_id, skill_id, correct, total, result_id,
         arepo.upsert_user_skill(db, user_id, skill_id,
                                 verdict["final_level"])
         db.commit()
-        engagement_repository.write(
+        row = engagement_repository.write(
             db, "audit", "ai_proficiency_review", user_id=user_id,
             entity_type="skill", entity_id=skill_id,
             data={"delta": verdict["delta"],
                   "rationale": verdict["rationale"],
                   "result_id": result_id,
                   "final_level": verdict["final_level"]})
+        send_admin_activity(row)
         skill = catalog_repository.get_skill(db, skill_id)
         send_event(user_id, "proficiency_adjusted",
                    {"skill_id": skill_id,
