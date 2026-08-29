@@ -193,7 +193,7 @@
           </div>
         {:else if meta.type === 'str'}
           <div class="field">
-            <input class="ctl" type="text" value={staged[key]} maxlength={meta.max_length}
+            <input class="ctl" type="text" value={staged[key]} maxlength={meta.max_length} pattern="\S*"
                    aria-label={key} aria-invalid={errors[key] ? 'true' : undefined}
                    oninput={(e) => stageStr(key, (e.currentTarget as HTMLInputElement).value)} />
             {#if key === 'ai_local_model'}<span class="hint">{t('admin.flags.modelPatternHint')}</span>{/if}
