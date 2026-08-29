@@ -23,6 +23,7 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
+    "forceDelete": "Force delete",
     "edit": "Edit",
     "create": "Create",
     "refresh": "Refresh Page",

@@ -8,11 +8,20 @@
   import { error as toastError, success } from '$lib/components/ui/toast';
   import { ApiError } from '$lib/api/client';
   import Illustration from '$lib/components/Illustration.svelte';
+  import { t } from '$lib/i18n';
+  import { email as validateEmail } from '$lib/validation';
 
   let email = $state('');
   let password = $state('');
   let loading = $state(false);
   let err = $state('');
+  let pwTouched = $state(false);
+
+  // Live client-side login validity (T16): invalid email shows on non-empty;
+  // blank required password surfaces after the field is blurred.
+  const emailKey = $derived(email.trim() ? validateEmail(email) : null);
+  const pwKey = $derived(pwTouched && !password ? 'admin.validation.required' : null);
+  const valid = $derived(validateEmail(email) === null && password.trim() !== '');
 
   $effect(() => {
     if ($authStore.user && $page.url.pathname === '/') goto('/dashboard');
@@ -24,10 +33,10 @@
     loading = true;
     try {
       await login(email, password);
-      success('Welcome back');
+      success(t('admin.login.welcome'));
       await goto('/dashboard');
     } catch (e) {
-      const msg = e instanceof ApiError ? e.detail : e instanceof Error ? e.message : 'Login failed';
+      const msg = e instanceof ApiError ? e.detail : e instanceof Error ? e.message : t('admin.common.loginFailed');
       err = msg;
       toastError(msg);
     } finally {
@@ -39,15 +48,15 @@
 <div class="wrap">
   <div class="side">
     <Illustration name="hero" width={320} />
-    <h1>SkillSynth Admin</h1>
-    <p class="muted">Operational console for the Adaptive Learning OS.</p>
+    <h1>SkillSynth {t('admin.common.admin')}</h1>
+    <p class="muted">{t('admin.login.subtitle')}</p>
   </div>
   <form class="card" onsubmit={submit}>
-    <h2>Sign in</h2>
+    <h2>{t('admin.login.signIn')}</h2>
     {#if err}<p class="form-err">{err}</p>{/if}
-    <Input label="Email" type="email" bind:value={email} placeholder="admin@skillsynth.io" required />
-    <Input label="Password" type="password" bind:value={password} placeholder="••••••••" required />
-    <Button type="submit" {loading} disabled={loading || !email || !password}>Sign in</Button>
+    <Input label={t('admin.common.email')} type="email" bind:value={email} placeholder="admin@skillsynth.io" required error={emailKey ? t(emailKey, { field: t('admin.common.email') }) : ''} />
+    <Input label={t('admin.common.password')} type="password" bind:value={password} placeholder="••••••••" required onblur={() => (pwTouched = true)} error={pwKey ? t(pwKey, { field: t('admin.common.password') }) : ''} />
+    <Button type="submit" {loading} disabled={loading || !valid}>{t('admin.login.signIn')}</Button>
   </form>
 </div>
 

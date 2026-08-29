@@ -12,6 +12,7 @@
   import Icon from '$lib/icons/Icon.svelte';
   import { success, error as toastError } from '$lib/components/ui/toast';
   import { t } from '$lib/i18n';
+  import { maxLength, options as validateOptions } from '$lib/validation';
 
   let { open = $bindable(false), assessment = undefined, onchange = () => {} }: {
     open?: boolean;
@@ -27,6 +28,28 @@
   let qForm = $state<any>({});
   let qFormErrors = $state<Record<string, string>>({});
   let qSaving = $state(false);
+  let qTouched = $state<Record<string, boolean>>({});
+
+  // Live client-side question validity (T16); server 422/400 stay authority.
+  // The correct-option index re-derives its [0, options.length) bounds live as
+  // the options textarea changes; the whole question gates the Save button.
+  const qOpts = $derived(qPayload().options);
+  const qOptsLen = $derived(qOpts.length);
+  const qOptMax = $derived(Math.max(0, qOptsLen - 1));
+  const promptErr = $derived((qForm.prompt ?? '').trim() ? maxLength(String(qForm.prompt ?? ''), 2000) : 'admin.validation.required');
+  const tooLongOption = $derived(qOpts.some((o: string) => o.length > 500) ? 'admin.validation.maxLen' : null);
+  const optionsErr = $derived(tooLongOption ?? validateOptions(qOpts));
+  const correctErr = $derived(
+    qForm.correct_index === '' || qForm.correct_index == null
+      ? 'admin.validation.required'
+      : Number.isInteger(Number(qForm.correct_index)) && Number(qForm.correct_index) >= 0 && Number(qForm.correct_index) < qOptsLen
+        ? null
+        : 'admin.validation.minMax'
+  );
+  const promptKey = $derived(qTouched.prompt || (qForm.prompt ?? '') ? promptErr : null);
+  const optionsKey = $derived(qTouched.options || qOptsLen ? optionsErr : null);
+  const correctKey = $derived(qTouched.correct_index || qOptsLen ? correctErr : null);
+  const qValid = $derived(promptErr === null && optionsErr === null && correctErr === null);
 
   $effect(() => {
     if (open && assessment) refreshQuestions();
@@ -42,8 +65,8 @@
     finally { qLoading = false; }
   }
 
-  function openQCreate() { qEditing = null; qFormErrors = {}; qForm = { prompt: '', options: '', correct_index: 0 }; qDialogOpen = true; }
-  function openQEdit(q: any) { qEditing = q; qFormErrors = {}; qForm = { prompt: q.prompt, options: (q.options ?? []).join('\n'), correct_index: q.correct_index ?? 0 }; qDialogOpen = true; }
+  function openQCreate() { qEditing = null; qFormErrors = {}; qTouched = {}; qForm = { prompt: '', options: '', correct_index: 0 }; qDialogOpen = true; }
+  function openQEdit(q: any) { qEditing = q; qFormErrors = {}; qTouched = {}; qForm = { prompt: q.prompt, options: (q.options ?? []).join('\n'), correct_index: q.correct_index ?? 0 }; qDialogOpen = true; }
 
   function qPayload() {
     const opts = (qForm.options ?? '').split('\n').map((s: string) => s.trim()).filter(Boolean);
@@ -126,21 +149,21 @@
 </Dialog>
 
 <Dialog open={qDialogOpen} onclose={() => (qDialogOpen = false)} title={qEditing ? t('admin.assessments.editQuestion') : t('admin.assessments.addQuestion')}>
-  <Field label={t('admin.assessments.prompt')} error={qFormErrors.prompt}>
-    <Textarea bind:value={qForm.prompt} rows="3" placeholder="What does X do?" />
+  <Field label={t('admin.assessments.prompt')} error={promptKey ? t(promptKey, { field: t('admin.assessments.prompt'), max: 2000 }) : qFormErrors.prompt}>
+    <Textarea bind:value={qForm.prompt} rows="3" placeholder="What does X do?" onblur={() => (qTouched.prompt = true)} />
   </Field>
-  <Field label={t('admin.assessments.options')} error={qFormErrors.options}>
-    <Textarea bind:value={qForm.options} rows="4" placeholder="Option A&#10;Option B&#10;Option C" />
+  <Field label={t('admin.assessments.options')} error={optionsKey ? t(optionsKey, { field: t('admin.assessments.options'), min: 2, max: 500 }) : qFormErrors.options}>
+    <Textarea bind:value={qForm.options} rows="4" placeholder="Option A&#10;Option B&#10;Option C" onblur={() => (qTouched.options = true)} />
   </Field>
-  <Field label={t('admin.assessments.correctIndex')} error={qFormErrors.correct_index}>
-    <Input bind:value={qForm.correct_index} type="number" min="0" />
+  <Field label={t('admin.assessments.correctIndex')} error={correctKey ? t(correctKey, { field: t('admin.assessments.correctIndex'), min: 0, max: qOptMax }) : qFormErrors.correct_index}>
+    <Input bind:value={qForm.correct_index} type="number" min="0" onblur={() => (qTouched.correct_index = true)} />
   </Field>
   {#if Object.keys(qFormErrors).length}
     <p class="form-err" role="alert">{t('admin.common.checkFields')}</p>
   {/if}
   {#snippet footer()}
     <Button variant="ghost" onclick={() => (qDialogOpen = false)} disabled={qSaving}>{t('common.cancel')}</Button>
-    <Button variant="primary" onclick={saveQuestion} loading={qSaving}>{t('common.save')}</Button>
+    <Button variant="primary" onclick={saveQuestion} loading={qSaving} disabled={qSaving || !qValid}>{t('common.save')}</Button>
   {/snippet}
 </Dialog>
 

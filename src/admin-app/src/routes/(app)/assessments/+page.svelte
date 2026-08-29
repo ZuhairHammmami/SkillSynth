@@ -15,6 +15,7 @@
   import { success, error as toastError } from '$lib/components/ui/toast';
   import Icon from '$lib/icons/Icon.svelte';
   import { t } from '$lib/i18n';
+  import { name, maxLength, range, positiveInt } from '$lib/validation';
 
   let rows = $state<any[]>([]);
   let skills = $state<any[]>([]);
@@ -34,6 +35,20 @@
 
   let showQuestions = $state(false);
   let focusAssessment = $state<any>(null);
+  let touched = $state<Record<string, boolean>>({});
+
+  // Live client-side dialog validity (T16); server 422 fieldErrors stay
+  // authority. The skill FK is optional so positiveInt only runs when set;
+  // passing_score arrives as a string from the number input — coerce first.
+  const titleErr = $derived(name(String(form.title ?? '')));
+  const descErr = $derived(maxLength(String(form.description ?? ''), 2000));
+  const passErr = $derived(range(String(form.passing_score ?? ''), 0, 100));
+  const skillErr = $derived(form.skill_id != null && form.skill_id !== '' ? positiveInt(form.skill_id) : null);
+  const titleKey = $derived(touched.title || (form.title ?? '') ? titleErr : null);
+  const descKey = $derived((form.description ?? '') ? descErr : null);
+  const passKey = $derived(touched.passing_score || (form.passing_score ?? '') !== '' ? passErr : null);
+  const skillKey = $derived(form.skill_id != null && form.skill_id !== '' ? skillErr : null);
+  const dialogValid = $derived(titleErr === null && descErr === null && passErr === null && skillErr === null);
 
   async function load() {
     loading = true;
@@ -55,8 +70,8 @@
     return skills.map((s) => ({ value: s.id, label: s.name }));
   }
 
-  function openCreate() { editing = null; formErrors = {}; form = { title: '', passing_score: 60, description: '' }; showForm = true; }
-  function openEdit(r: any) { editing = r; formErrors = {}; form = { skill_id: r.skill_id, title: r.title, description: r.description ?? '', passing_score: r.passing_score ?? 60 }; showForm = true; }
+  function openCreate() { editing = null; formErrors = {}; touched = {}; form = { title: '', passing_score: 60, description: '' }; showForm = true; }
+  function openEdit(r: any) { editing = r; formErrors = {}; touched = {}; form = { skill_id: r.skill_id, title: r.title, description: r.description ?? '', passing_score: r.passing_score ?? 60 }; showForm = true; }
 
   async function save() {
     formErrors = {};
@@ -146,24 +161,24 @@
 </Panel>
 
 <Dialog open={showForm} onclose={() => (showForm = false)} title={editing ? t('admin.assessments.edit') : t('admin.assessments.add')}>
-  <Field label={t('admin.assessments.titleField')} error={formErrors.title}>
-    <Input bind:value={form.title} placeholder="JavaScript Basics" />
+  <Field label={t('admin.assessments.titleField')} error={titleKey ? t(titleKey, { field: t('admin.assessments.titleField'), max: 100 }) : formErrors.title}>
+    <Input bind:value={form.title} placeholder="JavaScript Basics" onblur={() => (touched.title = true)} />
   </Field>
-  <Field label={t('admin.assessments.skillLabel')} error={formErrors.skill_id}>
+  <Field label={t('admin.assessments.skillLabel')} error={skillKey ? t(skillKey, { field: t('admin.assessments.skillLabel') }) : formErrors.skill_id}>
     <Select bind:value={form.skill_id} options={skillOptions()} placeholder="None" />
   </Field>
-  <Field label={t('admin.assessments.typeField')} error={formErrors.description}>
+  <Field label={t('admin.assessments.typeField')} error={descKey ? t(descKey, { field: t('admin.assessments.typeField'), max: 2000 }) : formErrors.description}>
     <Input bind:value={form.description} placeholder="quiz" />
   </Field>
-  <Field label={t('admin.assessments.passingScore')} error={formErrors.pass_score}>
-    <Input bind:value={form.passing_score} type="number" min="0" max="100" />
+  <Field label={t('admin.assessments.passingScore')} error={passKey ? t(passKey, { field: t('admin.assessments.passingScore'), min: 0, max: 100 }) : formErrors.pass_score}>
+    <Input bind:value={form.passing_score} type="number" min="0" max="100" onblur={() => (touched.passing_score = true)} />
   </Field>
   {#if Object.keys(formErrors).length}
     <p class="form-err" role="alert">{t('admin.common.checkFields')}</p>
   {/if}
   {#snippet footer()}
     <Button variant="ghost" onclick={() => (showForm = false)} disabled={saving}>{t('common.cancel')}</Button>
-    <Button variant="primary" onclick={save} loading={saving}>{t('common.save')}</Button>
+    <Button variant="primary" onclick={save} loading={saving} disabled={saving || !dialogValid}>{t('common.save')}</Button>
   {/snippet}
 </Dialog>
 
