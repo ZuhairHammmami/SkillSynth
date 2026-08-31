@@ -23,3 +23,5 @@ No interdependent software files; tasks share media artifacts only. No plan-vs-c
 ## Task 5: complete (subagent 202b42c7, controller-verified) - picture_only.mp4 60.03s, 1920x1080@30, h264 High yuv420p, NO audio. 6 QA frames all non-blank. render.sh cwd-independent (re-verified). Interim segments cleaned by implementer.
 
 ## Task 6: complete (controller) - CC0 music bed sourced + downloaded: "Waiting Around (LoFi, Calm)" HoliznaCC0, CC0 1.0 Public Domain, instrumental, not AI-generated, MP3 48k stereo 320kbps 2:31. attribution.txt written. Mux (T7) trims to 60.03s @ 0.6 vol + fadeout.
+
+## Task 7: complete (subagent 62027c70, controller-verified) - skillsynth-promo.mp4 60.033s 1920x1080@30 h264 High yuv420p + aac 48k 192k, faststart (moov@36<mdat@66725), 21.9MB. 4 QA frames non-blank; audio decodes.
