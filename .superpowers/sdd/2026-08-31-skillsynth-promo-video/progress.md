@@ -19,3 +19,5 @@ No interdependent software files; tasks share media artifacts only. No plan-vs-c
 ## Task 3: complete (controller via playwright) - 33 screens, all 1920x1080 non-blank, committed ba90b071. Screens: landing, login, register, dashboard, wizard-{job,field,role,self,preferences,review}, catalog, catalog-category, catalog-skill, learn, analytics, profile, settings, admin-{login,dashboard,users,skills,categories,job-roles,resources,paths,assessments,reports,feature-flags,health,audit-logs,db-inspector,backups,settings}.
 
 ## Task 4: complete (subagent eb7aaf41, controller-verified) - make_cards.py + 4 frames (welcome, section-discover, section-admin, close). Re-ran script: all 1920x1080, cmap OK (no tofu), RTL mixed-line delta 0, non-blank. Section cards got a small 160px mark (implementer concern, on-brand, accepted).
+
+## Task 5: complete (subagent 202b42c7, controller-verified) - picture_only.mp4 60.03s, 1920x1080@30, h264 High yuv420p, NO audio. 6 QA frames all non-blank. render.sh cwd-independent (re-verified). Interim segments cleaned by implementer.
