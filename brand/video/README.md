@@ -8,7 +8,7 @@
 
 The final edit is assembled from three streams, then muxed once:
 
-1. **Ken Burns body** — a stills edit of **25 real app screens** plus **4 PIL title cards**, each given a slow zoom/pan (zoompan) and chained with **0.4 s crossfades**. Rendered to `work/clips/picture_only.mp4` (~60 s).
+1. **Ken Burns body** — a stills edit of **13 distinct real app screens** (login, dashboard, wizard flow, catalog, category, skill detail, learn, analytics, and admin tools) plus **4 PIL title cards**, each given a slow zoom/pan (zoompan) and chained with **0.4 s crossfades**. Rendered to `work/clips/picture_only.mp4` (~60 s).
 2. **Intro/outro bookends** — abstract texture clips that open and close the video.
 3. **CC0 music bed** — trimmed to the cut at the mux stage.
 

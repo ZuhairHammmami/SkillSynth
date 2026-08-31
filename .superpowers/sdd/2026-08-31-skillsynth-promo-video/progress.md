@@ -25,3 +25,6 @@ No interdependent software files; tasks share media artifacts only. No plan-vs-c
 ## Task 6: complete (controller) - CC0 music bed sourced + downloaded: "Waiting Around (LoFi, Calm)" HoliznaCC0, CC0 1.0 Public Domain, instrumental, not AI-generated, MP3 48k stereo 320kbps 2:31. attribution.txt written. Mux (T7) trims to 60.03s @ 0.6 vol + fadeout.
 
 ## Task 7: complete (subagent 62027c70, controller-verified) - skillsynth-promo.mp4 60.033s 1920x1080@30 h264 High yuv420p + aac 48k 192k, faststart (moov@36<mdat@66725), 21.9MB. 4 QA frames non-blank; audio decodes.
+- Review approach for media tasks (T4/T5/T7/T8): controller-side programmatic verification (dims, cmap, stats, ffprobe, atom order) rather than dispatching separate reviewer subagents — no reviewer in this model can view frames and the checks are deterministic.
+## Task 8: complete (subagent 1d9decf5 + controller README accuracy fix) - README written, honest about belt fallback. Final controller review: render.sh & verify.sh solid (offset math verified), README corrected "25 screens" -> "13 distinct screens"; verify.sh end-to-end on final file passes (h264 High 1920x1080@30 yuv420p, 1 video + 1 audio, 60.03s).
+## ALL TASKS COMPLETE. Final deliverable: brand/video/skillsynth-promo.mp4 (60.03s, 1920x1080@30, h264 High yuv420p, aac 48k ~192k, faststart, 21.9MB; contact sheet + QA frames verified).
