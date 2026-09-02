@@ -357,3 +357,12 @@ def get_categories_map(db: Session) -> dict[int, Category]:
     """Return {id: Category} for all categories; name lookups in loops."""
     rows = db.query(Category).all()
     return {c.id: c for c in rows}
+
+
+def get_job_role_skill_map(db: Session) -> dict[int, list[int]]:
+    """job_role_id -> [skill_id] for all roles; batch role→skill hydration."""
+    rows = db.query(JobRoleSkill.job_role_id, JobRoleSkill.skill_id).all()
+    result: dict[int, list[int]] = {}
+    for role_id, skill_id in rows:
+        result.setdefault(role_id, []).append(skill_id)
+    return result
