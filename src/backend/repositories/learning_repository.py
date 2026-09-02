@@ -10,7 +10,7 @@ from datetime import datetime, UTC
 from sqlalchemy import func, desc
 from sqlalchemy.orm import Session
 
-from backend.entities.learning import Path, PathStep, StepProgress
+from backend.entities.learning import Path, PathStep, StepProgress, UserSkill
 
 
 def get_path(db: Session, path_id: int,
@@ -287,3 +287,28 @@ def sum_total_hours(db: Session, user_id: int | None = None) -> float:
     if user_id is not None:
         query = query.filter(Path.user_id == user_id)
     return query.scalar() or 0
+# ── Batch-fetch helpers (N+1 elimination) ──
+
+def get_user_skills_bulk(db: Session, user_id: int,
+                         skill_ids: list[int]) -> dict[int, "UserSkill"]:
+    """Fetch user_skills for one user by skill ID list."""
+    if not skill_ids:
+        return {}
+    rows = db.query(UserSkill).filter(
+        UserSkill.user_id == user_id,
+        UserSkill.skill_id.in_(skill_ids),
+    ).all()
+    return {r.skill_id: r for r in rows}
+
+
+def get_completed_step_ids_bulk(db: Session, user_id: int,
+                                step_ids: list[int]) -> set[int]:
+    """Return the set of step_ids completed for a user, filtered to input."""
+    if not step_ids:
+        return set()
+    rows = db.query(StepProgress.step_id).filter(
+        StepProgress.user_id == user_id,
+        StepProgress.step_id.in_(step_ids),
+        StepProgress.completed_at.isnot(None),
+    ).all()
+    return {r[0] for r in rows}
