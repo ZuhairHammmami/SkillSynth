@@ -17,6 +17,8 @@ class ActivityLog(Base):
     __tablename__ = "activity_log"
     __table_args__ = (
         Index('idx_activity_log_user_id', 'user_id'),
+        Index('idx_activity_log_category', 'category'),
+        Index('idx_activity_log_created_at', 'created_at'),
     )
 
     id = Column(Integer, primary_key=True, index=True)

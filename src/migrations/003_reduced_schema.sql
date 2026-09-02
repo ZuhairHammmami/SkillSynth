@@ -144,6 +144,7 @@ CREATE TABLE assessment_results (
 CREATE INDEX ix_assessment_results_id ON assessment_results (id);
 CREATE INDEX idx_assessment_results_user_id ON assessment_results (user_id);
 CREATE INDEX idx_assessment_results_assessment_id ON assessment_results (assessment_id);
+CREATE INDEX idx_assessment_results_user_completed ON assessment_results(user_id, completed_at);
 
 -- ─── Learning ───────────────────────────────────────────────────
 
@@ -176,6 +177,7 @@ CREATE TABLE paths (
 );
 CREATE INDEX ix_paths_id ON paths (id);
 CREATE INDEX idx_paths_user_id ON paths (user_id);
+CREATE INDEX idx_paths_user_status ON paths(user_id, status);
 
 CREATE TABLE path_steps (
 	id INTEGER NOT NULL,
@@ -208,6 +210,7 @@ CREATE TABLE step_progress (
 	FOREIGN KEY(step_id) REFERENCES path_steps (id) ON DELETE CASCADE
 );
 CREATE INDEX idx_step_progress_step_id ON step_progress (step_id);
+CREATE INDEX idx_step_progress_user_step ON step_progress(user_id, step_id);
 
 -- ─── Engagement ─────────────────────────────────────────────────
 
@@ -227,3 +230,5 @@ CREATE TABLE activity_log (
 );
 CREATE INDEX ix_activity_log_id ON activity_log (id);
 CREATE INDEX idx_activity_log_user_id ON activity_log (user_id);
+CREATE INDEX idx_activity_log_category ON activity_log(category);
+CREATE INDEX idx_activity_log_created_at ON activity_log(created_at);

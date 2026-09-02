@@ -32,6 +32,7 @@ class Path(Base):
     __tablename__ = "paths"
     __table_args__ = (
         Index('idx_paths_user_id', 'user_id'),
+        Index('idx_paths_user_status', 'user_id', 'status'),
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -78,6 +79,7 @@ class StepProgress(Base):
     __tablename__ = "step_progress"
     __table_args__ = (
         Index('idx_step_progress_step_id', 'step_id'),
+        Index('idx_step_progress_user_step', 'user_id', 'step_id'),
     )
 
     user_id = Column(Integer, ForeignKey("users.id", ondelete='CASCADE'), primary_key=True)

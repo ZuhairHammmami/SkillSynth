@@ -51,6 +51,7 @@ class AssessmentResult(Base):
     __table_args__ = (
         Index('idx_assessment_results_user_id', 'user_id'),
         Index('idx_assessment_results_assessment_id', 'assessment_id'),
+        Index('idx_assessment_results_user_completed', 'user_id', 'completed_at'),
     )
 
     id = Column(Integer, primary_key=True, index=True)
