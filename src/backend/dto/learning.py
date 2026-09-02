@@ -215,10 +215,10 @@ class PathUpdate(BaseModel):
 class RateProficiencyIn(BaseModel):
     """PUT /learning/skills/{skill_id}/proficiency body; level 0..5.
 
-    Range is validated in the router so out-of-range yields 400 (this
-    repo's validation convention) rather than FastAPI's 422."""
+    Range is enforced by Pydantic (ge=0, le=5), so out-of-range yields
+    FastAPI's 422 validation error rather than a router 400."""
 
-    level: int
+    level: int = Field(ge=0, le=5)
 
 
 class WizardAnalysisIn(BaseModel):

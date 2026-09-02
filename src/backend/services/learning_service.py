@@ -101,7 +101,7 @@ def _score_answers(db, skill_rows: list, answers: dict[str, int],
                 correct = sum(
                     1 for i, q in enumerate(questions)
                     if i in answered and answered[i] == q.correct_index)
-                level = max(0, min(5, round(correct / len(questions) * 5)))
+                level = round(correct / len(questions) * 5)
             else:
                 level = current.get(name, 0)
         levels[skill.id] = level
