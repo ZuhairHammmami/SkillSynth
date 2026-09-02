@@ -12,6 +12,7 @@ on success; prints aligned diffs and exits 1 otherwise.
 """
 
 import os
+import re
 import sqlite3
 import sys
 
@@ -119,6 +120,30 @@ def get_uniques(conn, table):
     return out
 
 
+def get_checks(conn, table):
+    """Set of normalized CHECK constraint expressions for a table.
+
+    Parsed from the CREATE TABLE statement stored in sqlite_master (SQLite does
+    not expose CHECK constraints via PRAGMA). Each expression is normalized by
+    collapsing whitespace to lowercase so minor formatting drift between the DDL
+    file and SQLAlchemy's DDL compiler does not trip the gate. Only named
+    ``CONSTRAINT <name> CHECK(...)`` constraints are captured — the same shape
+    that both the canonical DDL and the ORM CheckConstraint(name=...) emit.
+    """
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (table,)
+    ).fetchone()
+    if not row or not row[0]:
+        return set()
+    ddl_text = row[0]
+    checks = set()
+    for m in re.finditer(
+        r"CONSTRAINT\s+\w+\s+CHECK\s*\((.*?)\)\s*,?", ddl_text, re.IGNORECASE | re.DOTALL
+    ):
+        checks.add(re.sub(r"\s+", " ", m.group(1)).strip().lower())
+    return checks
+
+
 def main():
     """Build both sides, diff every facet, print verdict; exit 0 on match."""
     ddl = load_ddl_tables()
@@ -162,6 +187,11 @@ def main():
             failures.append((f"{table}.unique_constraints",
                              f"ddl-only={sorted(uq_ddl - uq_orm)}",
                              f"orm-only={sorted(uq_orm - uq_ddl)}"))
+        ck_ddl, ck_orm = get_checks(ddl, table), get_checks(orm, table)
+        if ck_ddl != ck_orm:
+            failures.append((f"{table}.check_constraints",
+                             f"ddl-only={sorted(ck_ddl - ck_orm)}",
+                             f"orm-only={sorted(ck_orm - ck_ddl)}"))
 
     ddl.close()
     orm.close()

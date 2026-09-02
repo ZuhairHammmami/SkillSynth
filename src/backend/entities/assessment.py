@@ -5,7 +5,7 @@ JSON column) and assessment_results. Depends on identity and catalog
 layers; DDL twin lives in src/migrations/003_reduced_schema.sql.
 """
 
-from sqlalchemy import Boolean, Column, ForeignKey, Index, Integer, String, Text, JSON, TIMESTAMP, func
+from sqlalchemy import Boolean, CheckConstraint, Column, ForeignKey, Index, Integer, String, Text, JSON, TIMESTAMP, func
 
 from backend.entities.base import Base
 
@@ -16,6 +16,10 @@ class Assessment(Base):
     __tablename__ = "assessments"
     __table_args__ = (
         Index('idx_assessments_skill_id', 'skill_id'),
+        CheckConstraint(
+            'pass_score >= 0 AND pass_score <= 100',
+            name='chk_pass_score',
+        ),
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -34,6 +38,7 @@ class AssessmentQuestion(Base):
     __tablename__ = "assessment_questions"
     __table_args__ = (
         Index('idx_assessment_questions_assessment_id', 'assessment_id'),
+        CheckConstraint('correct_index >= 0', name='chk_correct'),
     )
 
     id = Column(Integer, primary_key=True, index=True)

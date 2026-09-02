@@ -6,7 +6,7 @@ identity and catalog layers; DDL twin lives in
 src/migrations/003_reduced_schema.sql.
 """
 
-from sqlalchemy import Column, ForeignKey, Index, Integer, String, Text, JSON, TIMESTAMP, func, text
+from sqlalchemy import CheckConstraint, Column, ForeignKey, Index, Integer, String, Text, JSON, TIMESTAMP, func, text
 
 from backend.entities.base import Base
 
@@ -17,6 +17,10 @@ class UserSkill(Base):
     __tablename__ = "user_skills"
     __table_args__ = (
         Index('idx_user_skills_skill_id', 'skill_id'),
+        CheckConstraint(
+            'proficiency_level >= 0 AND proficiency_level <= 5',
+            name='chk_proficiency',
+        ),
     )
 
     user_id = Column(Integer, ForeignKey("users.id", ondelete='CASCADE'), primary_key=True)
@@ -56,6 +60,14 @@ class PathStep(Base):
     __table_args__ = (
         Index('idx_path_steps_path_id', 'path_id'),
         Index('idx_path_steps_skill_id', 'skill_id'),
+        CheckConstraint(
+            'selected_level >= 0 AND selected_level <= 5',
+            name='chk_selected_level',
+        ),
+        CheckConstraint(
+            'current_level >= 0 AND current_level <= 5',
+            name='chk_step_level',
+        ),
     )
 
     id = Column(Integer, primary_key=True, index=True)

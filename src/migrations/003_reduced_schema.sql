@@ -52,6 +52,8 @@ CREATE TABLE skills (
 	topics JSON,  -- documented JSON exception: list of topic strings
 	PRIMARY KEY (id),
 	UNIQUE (name),
+	CONSTRAINT chk_difficulty CHECK(difficulty_level >= 1 AND difficulty_level <= 10),
+	CONSTRAINT chk_hours CHECK(estimated_hours >= 0),
 	FOREIGN KEY(category_id) REFERENCES categories (id) ON DELETE SET NULL
 );
 CREATE INDEX ix_skills_id ON skills (id);
@@ -112,6 +114,7 @@ CREATE TABLE assessments (
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	PRIMARY KEY (id),
+	CONSTRAINT chk_pass_score CHECK(pass_score >= 0 AND pass_score <= 100),
 	FOREIGN KEY(skill_id) REFERENCES skills (id) ON DELETE SET NULL
 );
 CREATE INDEX ix_assessments_id ON assessments (id);
@@ -125,6 +128,7 @@ CREATE TABLE assessment_questions (
 	options JSON NOT NULL,
 	correct_index INTEGER NOT NULL,
 	PRIMARY KEY (id),
+	CONSTRAINT chk_correct CHECK(correct_index >= 0),
 	FOREIGN KEY(assessment_id) REFERENCES assessments (id) ON DELETE CASCADE
 );
 CREATE INDEX ix_assessment_questions_id ON assessment_questions (id);
@@ -155,6 +159,7 @@ CREATE TABLE user_skills (
 	last_assessed_at TIMESTAMP,
 	weak_points JSON,  -- documented JSON exception: list of weak-point strings
 	PRIMARY KEY (user_id, skill_id),
+	CONSTRAINT chk_proficiency CHECK(proficiency_level >= 0 AND proficiency_level <= 5),
 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE,
 	FOREIGN KEY(skill_id) REFERENCES skills (id) ON DELETE CASCADE
 );
@@ -193,6 +198,8 @@ CREATE TABLE path_steps (
 	selected_level INTEGER NOT NULL DEFAULT 0,
 	current_level INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY (id),
+	CONSTRAINT chk_selected_level CHECK(selected_level >= 0 AND selected_level <= 5),
+	CONSTRAINT chk_step_level CHECK(current_level >= 0 AND current_level <= 5),
 	FOREIGN KEY(path_id) REFERENCES paths (id) ON DELETE CASCADE,
 	FOREIGN KEY(skill_id) REFERENCES skills (id) ON DELETE SET NULL
 );

@@ -5,7 +5,7 @@ resources. Referenced by the learning, assessment and engagement layers;
 DDL twin lives in src/migrations/003_reduced_schema.sql.
 """
 
-from sqlalchemy import Boolean, Column, ForeignKey, Index, Integer, JSON, String, Text
+from sqlalchemy import Boolean, CheckConstraint, Column, ForeignKey, Index, Integer, JSON, String, Text
 from backend.entities.base import Base
 
 
@@ -30,6 +30,11 @@ class Skill(Base):
     __tablename__ = "skills"
     __table_args__ = (
         Index('idx_skills_category_id', 'category_id'),
+        CheckConstraint(
+            'difficulty_level >= 1 AND difficulty_level <= 10',
+            name='chk_difficulty',
+        ),
+        CheckConstraint('estimated_hours >= 0', name='chk_hours'),
     )
 
     id = Column(Integer, primary_key=True, index=True)
