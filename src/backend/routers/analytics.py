@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
+from backend.dto.pagination import paginate
 from backend.policies.auth_policy import get_current_user
 from backend.services import analytics_service
 
@@ -23,11 +24,13 @@ def dashboard(db: Session = Depends(get_db),
 
 
 @router.get("/skill-growth")
-def skill_growth(db: Session = Depends(get_db),
+def skill_growth(page: int = 1, page_size: int = 50,
+                 db: Session = Depends(get_db),
                  current_user=Depends(get_current_user)):
-    """Return per-skill growth with mastered/learning/not_started buckets.
-    Calls analytics_service.skill_growth; consumed by useAnalyticsApi.useSkillGrowth()."""
-    return analytics_service.skill_growth(db, current_user.id)
+    """Return per-skill growth paginated. Calls
+    analytics_service.skill_growth; consumed by useAnalyticsApi.useSkillGrowth()."""
+    payload = analytics_service.skill_growth(db, current_user.id)
+    return paginate(payload["skills"], page, page_size)
 
 
 @router.get("/path-progress/{path_id}")

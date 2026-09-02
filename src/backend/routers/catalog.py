@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
+from backend.dto.pagination import paginate
 from backend.entities.catalog import Category
 from backend.policies.auth_policy import get_current_user
 from backend.repositories import catalog_repository as repo
@@ -19,12 +20,14 @@ router = APIRouter()
 
 
 @router.get("/categories")
-def list_categories(db: Session = Depends(get_db),
+def list_categories(page: int = 1, page_size: int = 50,
+                    db: Session = Depends(get_db),
                     current_user=Depends(get_current_user)):
-    """Return every category serialized with its skills. Calls
+    """Return categories paginated with envelope. Calls
     catalog_service._serialize_category for each repo.get_all_categories(db)."""
-    return [catalog_service._serialize_category(db, c)
-            for c in repo.get_all_categories(db)]
+    items = [catalog_service._serialize_category(db, c)
+             for c in repo.get_all_categories(db)]
+    return paginate(items, page, page_size)
 
 
 @router.get("/categories/{category_id}")
@@ -39,12 +42,14 @@ def get_category(category_id: int, db: Session = Depends(get_db),
 
 
 @router.get("/skills")
-def list_skills(db: Session = Depends(get_db),
+def list_skills(page: int = 1, page_size: int = 50,
+                db: Session = Depends(get_db),
                 current_user=Depends(get_current_user)):
-    """Return every skill serialized individually. Calls
+    """Return skills paginated with envelope. Calls
     catalog_service._serialize_skill for each repo.get_all_skills(db)."""
-    return [catalog_service._serialize_skill(db, s)
-            for s in repo.get_all_skills(db)]
+    items = [catalog_service._serialize_skill(db, s)
+             for s in repo.get_all_skills(db)]
+    return paginate(items, page, page_size)
 
 
 @router.get("/skills/{skill_id}")

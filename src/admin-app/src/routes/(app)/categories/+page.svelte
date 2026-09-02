@@ -38,7 +38,7 @@
   async function load() {
     loading = true;
     err = null;
-    try { rows = await query(['CATS'], () => apiFetch('/admin/categories')); }
+    try { rows = (await query(['CATS'], () => apiFetch('/admin/categories'))).items; }
     catch (e) { err = e instanceof ApiError ? e.detail : t('admin.common.failedLoad', { entity: t('admin.nav.categories') }); }
     finally { loading = false; }
   }

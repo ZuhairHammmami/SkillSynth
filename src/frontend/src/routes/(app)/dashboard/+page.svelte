@@ -26,11 +26,12 @@
     loading = true;
     loadError = '';
     try {
-      [dash, history, paths] = await Promise.all([
+      const [d, h, p] = await Promise.all([
         query(['analyticsDashboard'], () => apiFetch('/analytics/dashboard')),
         query(['learningHistory'], () => apiFetch('/analytics/learning-history')),
         query(['paths'], () => apiFetch('/paths/'))
       ]);
+      dash = d; history = h; paths = p?.items ?? [];
     } catch (e) {
       loadError = e instanceof ApiError ? e.detail : t('dashboardPage.errorDesc');
       toastError(loadError);

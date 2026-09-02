@@ -16,6 +16,7 @@ from backend.dto.catalog import (
     CategoryCreate, CategoryUpdate, JobRoleCreate, JobRoleUpdate,
     ResourceCreate, ResourceUpdate, SkillCreate, SkillUpdate,
 )
+from backend.dto.pagination import paginate
 from backend.policies.auth_policy import require_admin
 from backend.routers.error_mapping import status_for_error
 from backend.repositories import catalog_repository
@@ -51,9 +52,10 @@ def _resource_out(resource) -> dict:
 # ── Skills ────────────────────────────────────────────────────────────
 
 @router.get("/skills")
-def list_skills(db: Session = Depends(get_db)):
-    """List all skills. Calls catalog_service.list_skills; admin page."""
-    return catalog_service.list_skills(db)
+def list_skills(page: int = 1, page_size: int = 50,
+                db: Session = Depends(get_db)):
+    """List all skills paginated. Calls catalog_service.list_skills; admin page."""
+    return paginate(catalog_service.list_skills(db), page, page_size)
 
 
 @router.post("/skills")
@@ -89,12 +91,12 @@ def delete_skill(skill_id: int, force: bool = False,
 # ── Categories ────────────────────────────────────────────────────────
 
 @router.get("/categories")
-def list_categories(db: Session = Depends(get_db)):
-    """List all categories serialized via _category_out; the admin
-    Categories page renders Description/Parent columns and prefills
-    its edit dialog from this payload."""
-    return [_category_out(c)
-            for c in catalog_repository.get_all_categories(db)]
+def list_categories(page: int = 1, page_size: int = 50,
+                    db: Session = Depends(get_db)):
+    """List all categories paginated. Calls _category_out for each; the admin
+    Categories page renders Description/Parent columns."""
+    items = [_category_out(c) for c in catalog_repository.get_all_categories(db)]
+    return paginate(items, page, page_size)
 
 
 @router.post("/categories")
@@ -174,9 +176,10 @@ def delete_resource(resource_id: int, force: bool = False,
 # ── Job roles ─────────────────────────────────────────────────────────
 
 @router.get("/job-roles")
-def list_job_roles(db: Session = Depends(get_db)):
-    """List all job roles serialized with skill_ids; admin CRUD page."""
-    return catalog_service.list_job_roles(db)
+def list_job_roles(page: int = 1, page_size: int = 50,
+                   db: Session = Depends(get_db)):
+    """List all job roles paginated. Calls catalog_service.list_job_roles."""
+    return paginate(catalog_service.list_job_roles(db), page, page_size)
 
 
 @router.post("/job-roles")

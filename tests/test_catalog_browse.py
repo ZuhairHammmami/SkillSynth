@@ -16,7 +16,8 @@ def _fresh(prefix):
 class TestCatalogSkillDetail:
 
     def test_get_skill_detail_shape(self, api_client, auth_headers):
-        skills = api_client.get("/api/catalog/skills", headers=auth_headers).json()
+        skills = api_client.get("/api/catalog/skills",
+                                headers=auth_headers).json()["items"]
         assert skills
         skill_id = skills[0]["id"]
         response = api_client.get(f"/api/catalog/skills/{skill_id}",

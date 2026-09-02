@@ -43,10 +43,12 @@
     loading = true;
     err = null;
     try {
-      [rows, skills] = await Promise.all([
+      const [r, sk] = await Promise.all([
         query(['ROLES'], () => apiFetch('/admin/job-roles')),
         query(['SKILLS_PICK_ROLES'], () => apiFetch('/admin/skills'))
       ]);
+      rows = r.items;
+      skills = sk.items;
     } catch (e) { err = e instanceof ApiError ? e.detail : t('admin.common.failedLoad', { entity: t('admin.nav.jobRoles') }); }
     finally { loading = false; }
   }

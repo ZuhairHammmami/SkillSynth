@@ -23,7 +23,7 @@ class TestAdminUsers:
     def test_list_users(self, api_client, admin_headers):
         response = api_client.get("/api/admin/users", headers=admin_headers)
         assert response.status_code == 200
-        users = response.json()
+        users = response.json()["items"]
         assert len(users) >= 5
         assert {"id", "email", "is_admin"} <= set(users[0])
 
@@ -46,7 +46,8 @@ class TestAdminUsers:
         assert response.status_code == 400
 
     def test_delete_self_guard(self, api_client, admin_headers):
-        users = api_client.get("/api/admin/users", headers=admin_headers).json()
+        users = api_client.get("/api/admin/users",
+                               headers=admin_headers).json()["items"]
         admin = next(u for u in users if u["email"] == "admin@skillsynth.io")
         response = api_client.delete(f"/api/admin/users/{admin['id']}",
                                      headers=admin_headers)
@@ -202,7 +203,8 @@ class TestAdminUserUpdates:
         api_client.post("/api/admin/users", json={
             "email": email, "password": "Zephyr#7781kq",
         }, headers=admin_headers)
-        users = api_client.get("/api/admin/users", headers=admin_headers).json()
+        users = api_client.get("/api/admin/users",
+                               headers=admin_headers).json()["items"]
         user_id = next(u for u in users if u["email"] == email)["id"]
         updated = api_client.put(f"/api/admin/users/{user_id}", json={
             "password": "Glimmer#Vex39qu",
@@ -245,13 +247,14 @@ class TestAdminUserUpdates:
         assert response.status_code == 404
 
     def test_demote_self_guard_409(self, api_client, admin_headers):
-        users = api_client.get("/api/admin/users", headers=admin_headers).json()
+        users = api_client.get("/api/admin/users",
+                               headers=admin_headers).json()["items"]
         admin = next(u for u in users if u["email"] == "admin@skillsynth.io")
         response = api_client.put(f"/api/admin/users/{admin['id']}",
                                   json={"is_admin": False},
                                   headers=admin_headers)
         assert response.status_code == 409
         still_admin = next(u for u in api_client.get(
-            "/api/admin/users", headers=admin_headers).json()
+            "/api/admin/users", headers=admin_headers).json()["items"]
             if u["id"] == admin["id"])
         assert still_admin["is_admin"] is True

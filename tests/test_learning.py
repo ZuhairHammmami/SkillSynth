@@ -42,12 +42,12 @@ class TestPaths:
     def test_list_paths(self, api_client, auth_headers):
         response = api_client.get("/api/paths/", headers=auth_headers)
         assert response.status_code == 200
-        paths = response.json()
-        assert isinstance(paths, list)
-        assert len(paths) == 2
+        data = response.json()
+        assert isinstance(data["items"], list)
+        assert data["total"] == 2
 
     def test_get_path_detail(self, api_client, auth_headers):
-        paths = api_client.get("/api/paths/", headers=auth_headers).json()
+        paths = api_client.get("/api/paths/", headers=auth_headers).json()["items"]
         detail = api_client.get(f"/api/paths/{paths[0]['id']}",
                                 headers=auth_headers)
         assert detail.status_code == 200
@@ -58,7 +58,7 @@ class TestPaths:
         assert api_client.get("/api/paths/99999", headers=auth_headers).status_code == 404
 
     def test_update_path(self, api_client, auth_headers):
-        paths = api_client.get("/api/paths/", headers=auth_headers).json()
+        paths = api_client.get("/api/paths/", headers=auth_headers).json()["items"]
         update = api_client.put(f"/api/paths/{paths[0]['id']}", json={
             "title": "Updated Path Title",
         }, headers=auth_headers)

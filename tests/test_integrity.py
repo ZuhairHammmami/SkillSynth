@@ -278,7 +278,7 @@ def test_admin_category_edit_roundtrip_preserves_parent(
     child = mk_category(api_client, admin_headers, parent_id=parent["id"])
     try:
         listed = {c["id"]: c for c in api_client.get(
-            "/api/admin/categories", headers=admin_headers).json()}
+            "/api/admin/categories", headers=admin_headers).json()["items"]}
         assert listed[child]["parent_id"] == parent["id"]
         assert listed[parent["id"]]["description"] == "parent desc"
         roundtrip = api_client.put(f"/api/admin/categories/{child}", json={

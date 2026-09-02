@@ -40,7 +40,7 @@ class TestRenameDuplicates:
 
     def test_put_category_rename_duplicate_409(self, api_client, admin_headers):
         names = [c["name"] for c in api_client.get(
-            "/api/admin/categories", headers=admin_headers).json()]
+            "/api/admin/categories", headers=admin_headers).json()["items"]]
         created = api_client.post("/api/admin/categories",
                                   json={"name": _fresh("Cat")},
                                   headers=admin_headers)
@@ -257,7 +257,8 @@ class TestForceDeletes:
             f"/api/admin/categories/{cat['id']}?force=true", headers=admin_headers)
         assert response.status_code == 200
         skill = next(s for s in api_client.get(
-            "/api/admin/skills", headers=admin_headers).json() if s["id"] == sid)
+            "/api/admin/skills?page_size=1000", headers=admin_headers)
+            .json()["items"] if s["id"] == sid)
         assert skill["category_id"] is None
         api_client.delete(f"/api/admin/skills/{sid}", headers=admin_headers)
 

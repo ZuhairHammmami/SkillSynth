@@ -50,10 +50,12 @@
     loading = true;
     err = null;
     try {
-      [rows, cats] = await Promise.all([
+      const [r, c] = await Promise.all([
         query(['SKILLS'], () => apiFetch('/admin/skills')),
         query(['CATS_PICK'], () => apiFetch('/admin/categories'))
       ]);
+      rows = r.items;
+      cats = c.items;
     } catch (e) { err = e instanceof ApiError ? e.detail : t('admin.common.failedLoad', { entity: t('admin.nav.skills') }); }
     finally { loading = false; }
   }

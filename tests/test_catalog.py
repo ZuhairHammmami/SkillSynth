@@ -15,16 +15,16 @@ class TestCatalogListings:
         response = api_client.get("/api/admin/categories", headers=admin_headers)
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
-        assert len(data) == 16
+        assert isinstance(data["items"], list)
+        assert data["total"] == 16
 
     def test_list_skills(self, api_client, admin_headers):
         response = api_client.get("/api/admin/skills", headers=admin_headers)
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
-        assert len(data) == 152
-        assert {"id", "name", "category_id"} <= set(data[0])
+        assert isinstance(data["items"], list)
+        assert data["total"] == 152
+        assert {"id", "name", "category_id"} <= set(data["items"][0])
 
     def test_list_resources(self, api_client, admin_headers):
         response = api_client.get("/api/admin/resources", headers=admin_headers)
@@ -88,7 +88,7 @@ class TestJobRoleListing:
     def test_get_job_roles_returns_serialized_list(self, api_client, admin_headers):
         response = api_client.get("/api/admin/job-roles", headers=admin_headers)
         assert response.status_code == 200
-        roles = response.json()
+        roles = response.json()["items"]
         assert isinstance(roles, list) and len(roles) >= 20
         assert {"id", "title", "description", "career_field", "skill_ids"} <= set(roles[0])
         assert isinstance(roles[0]["skill_ids"], list)

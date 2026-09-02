@@ -46,7 +46,7 @@
   async function load() {
     loading = true;
     err = null;
-    try { rows = await query(['USERS'], () => apiFetch('/admin/users')); }
+    try { rows = (await query(['USERS'], () => apiFetch('/admin/users'))).items; }
     catch (e) { err = e instanceof ApiError ? e.detail : t('admin.common.failedLoad', { entity: t('admin.nav.users') }); }
     finally { loading = false; }
   }
