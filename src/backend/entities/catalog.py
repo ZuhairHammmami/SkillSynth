@@ -6,6 +6,7 @@ DDL twin lives in src/migrations/003_reduced_schema.sql.
 """
 
 from sqlalchemy import Boolean, CheckConstraint, Column, ForeignKey, Index, Integer, JSON, String, Text
+from sqlalchemy import Float, text
 from backend.entities.base import Base
 
 
@@ -31,7 +32,7 @@ class Skill(Base):
     __table_args__ = (
         Index('idx_skills_category_id', 'category_id'),
         CheckConstraint(
-            'difficulty_level >= 1 AND difficulty_level <= 10',
+            'difficulty_level >= 0 AND difficulty_level <= 10',
             name='chk_difficulty',
         ),
         CheckConstraint('estimated_hours >= 0', name='chk_hours'),
@@ -40,8 +41,8 @@ class Skill(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, nullable=False)
     description = Column(Text, nullable=True)
-    difficulty_level = Column(Integer, default=5)
-    estimated_hours = Column(Integer, default=10)
+    difficulty_level = Column(Integer, default=0, nullable=False, server_default=text('0'))
+    estimated_hours = Column(Float, default=0.0, nullable=False, server_default=text('0.0'))
     icon = Column(String, nullable=True)
     color = Column(String, nullable=True)
     category_id = Column(Integer, ForeignKey("categories.id", ondelete='SET NULL'), nullable=True)

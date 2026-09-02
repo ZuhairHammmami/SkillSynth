@@ -44,15 +44,15 @@ CREATE TABLE skills (
 	id INTEGER NOT NULL,
 	name VARCHAR(100) NOT NULL,
 	description TEXT,
-	difficulty_level INTEGER,
-	estimated_hours INTEGER,
+	difficulty_level INTEGER NOT NULL DEFAULT 0,
+	estimated_hours REAL NOT NULL DEFAULT 0.0,
 	icon VARCHAR,
 	color VARCHAR,
 	category_id INTEGER,
 	topics JSON,  -- documented JSON exception: list of topic strings
 	PRIMARY KEY (id),
 	UNIQUE (name),
-	CONSTRAINT chk_difficulty CHECK(difficulty_level >= 1 AND difficulty_level <= 10),
+	CONSTRAINT chk_difficulty CHECK(difficulty_level >= 0 AND difficulty_level <= 10),
 	CONSTRAINT chk_hours CHECK(estimated_hours >= 0),
 	FOREIGN KEY(category_id) REFERENCES categories (id) ON DELETE SET NULL
 );
@@ -155,7 +155,7 @@ CREATE INDEX idx_assessment_results_user_completed ON assessment_results(user_id
 CREATE TABLE user_skills (
 	user_id INTEGER NOT NULL,
 	skill_id INTEGER NOT NULL,
-	proficiency_level INTEGER,
+	proficiency_level INTEGER NOT NULL DEFAULT 0,
 	last_assessed_at TIMESTAMP,
 	weak_points JSON,  -- documented JSON exception: list of weak-point strings
 	PRIMARY KEY (user_id, skill_id),
@@ -212,6 +212,7 @@ CREATE TABLE step_progress (
 	step_id INTEGER NOT NULL,
 	completed_at TIMESTAMP,
 	score INTEGER,
+	current_level INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY (user_id, step_id),
 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE,
 	FOREIGN KEY(step_id) REFERENCES path_steps (id) ON DELETE CASCADE

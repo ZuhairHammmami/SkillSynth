@@ -25,7 +25,7 @@ class UserSkill(Base):
 
     user_id = Column(Integer, ForeignKey("users.id", ondelete='CASCADE'), primary_key=True)
     skill_id = Column(Integer, ForeignKey("skills.id", ondelete='CASCADE'), primary_key=True)
-    proficiency_level = Column(Integer, default=1)
+    proficiency_level = Column(Integer, default=0, nullable=False, server_default=text('0'))
     last_assessed_at = Column(TIMESTAMP(timezone=True), nullable=True)
     weak_points = Column(JSON, nullable=True)
 
@@ -98,3 +98,4 @@ class StepProgress(Base):
     step_id = Column(Integer, ForeignKey("path_steps.id", ondelete='CASCADE'), primary_key=True)
     completed_at = Column(TIMESTAMP(timezone=True), nullable=True)
     score = Column(Integer, nullable=True)
+    current_level = Column(Integer, default=0, nullable=False, server_default=text('0'))
