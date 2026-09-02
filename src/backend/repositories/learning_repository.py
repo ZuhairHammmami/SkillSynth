@@ -301,6 +301,22 @@ def get_user_skills_bulk(db: Session, user_id: int,
     return {r.skill_id: r for r in rows}
 
 
+def get_steps_by_path_ids(db: Session,
+                          path_ids: list[int]) -> dict[int, list[PathStep]]:
+    """Batch-fetch steps for multiple paths; returns {path_id: [step]}."""
+    if not path_ids:
+        return {}
+    rows = (
+        db.query(PathStep).filter(PathStep.path_id.in_(path_ids))
+        .order_by(PathStep.path_id, PathStep.position).all()
+    )
+    result: dict[int, list[PathStep]] = {pid: [] for pid in path_ids}
+    for row in rows:
+        if row.path_id in result:
+            result[row.path_id].append(row)
+    return result
+
+
 def get_completed_step_ids_bulk(db: Session, user_id: int,
                                 step_ids: list[int]) -> set[int]:
     """Return the set of step_ids completed for a user, filtered to input."""
