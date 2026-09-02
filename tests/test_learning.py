@@ -145,7 +145,7 @@ class TestLeveledGeneration:
         """format as a list accepts resources whose type is in the list; a
         single-string exact match still excludes mismatched types."""
         from backend.repositories import catalog_repository as crepo
-        from backend.services import learning_service as ls
+        from backend.services.learning_persistence import pick_resource_ids
 
         skill = crepo.get_all_skills(db_session)[0]
         sample = crepo.get_all_resources(db_session)[0]
@@ -153,11 +153,12 @@ class TestLeveledGeneration:
         other = "nonexistent_type_xyz"
         prefs = {"is_free": False, "language": sample.language,
                  "format": [rt, other]}
-        listed = ls._pick_resource_ids(db_session, skill, prefs)
+        pool = crepo.get_all_resources(db_session)
+        listed = pick_resource_ids(pool, skill, prefs)
         assert sample.id in listed
-        exact = ls._pick_resource_ids(
-            db_session, skill, {"is_free": False,
-                               "language": sample.language, "format": other})
+        exact = pick_resource_ids(
+            pool, skill, {"is_free": False,
+                          "language": sample.language, "format": other})
         assert sample.id not in exact
 
 

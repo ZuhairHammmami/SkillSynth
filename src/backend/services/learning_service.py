@@ -1,4 +1,4 @@
-"""Learning service — graph, path generation and step progress.
+"""Learning service — path generation and step progress.
 
 Called by the learning/progress/path routers (Task 3). Generation is
 deterministic: goals are gap-filled against user_skills, ordered by a
@@ -7,65 +7,23 @@ path + path_steps + user_skills rows. Wire keys stay frozen (int
 path ids, steps[].is_completed); gap analysis lives in analytics_service.
 """
 
-from collections import defaultdict, deque
 from datetime import datetime, timedelta, UTC
 
 from backend.dto.learning import StepCompletionResponse
-from backend.entities.learning import Path, UserSkill
+from backend.entities.learning import Path, PathStep
 from backend.repositories import assess_repository, catalog_repository
 from backend.repositories import learning_repository as lrepo
 from backend.services.assess_service import normalize_key
+from backend.services.learning_graph import _order_by_prereqs, build_graph, topological_sort
+from backend.services.learning_persistence import (
+    persist_plan, user_proficiency_by_name,
+)
+from backend.services.learning_serialization import (
+    collect_ids_from_steps, path_progress, path_skills,
+    selected_levels_by_step, serialize_step,
+)
 
 MASTERY_LEVEL = 3
-
-
-def build_graph(db) -> dict:
-    """Knowledge-graph payload (nodes/edges/categories) for
-    GET /learning/graph; node decoration comes from catalog counts."""
-    counts = catalog_repository.count_skill_resources(db)
-    categories = catalog_repository.get_all_categories(db)
-    nodes = [{
-        "id": s.id, "name": s.name, "difficulty": s.difficulty_level or 1,
-        "icon": s.icon, "color": s.color,
-        "category_ids": [s.category_id] if s.category_id else [],
-        "resource_count": counts.get(s.id, 0),
-    } for s in catalog_repository.get_all_skills(db)]
-    edges = [{"source": p, "target": sid, "type": "prerequisite"}
-             for sid, prereqs in
-             catalog_repository.get_prerequisite_graph(db).items()
-             for p in prereqs]
-    return {"nodes": nodes, "edges": edges,
-            "categories": [{"id": c.id, "name": c.name} for c in categories]}
-
-
-def topological_sort(db) -> list[int]:
-    """Kahn topo-sort over all skills; deterministic id tie-break."""
-    return [s.id for s in _order_by_prereqs(
-        db, catalog_repository.get_all_skills(db))]
-
-
-def _order_by_prereqs(db, skill_rows: list) -> list:
-    """Topo-order a skill subset so prerequisites come first."""
-    graph = catalog_repository.get_prerequisite_graph(db)
-    ids = {s.id for s in skill_rows}
-    by_id = {s.id: s for s in skill_rows}
-    indeg = {sid: len([p for p in graph.get(sid, []) if p in ids]) for sid in ids}
-    dependents: dict[int, list[int]] = defaultdict(list)
-    for sid in ids:
-        for prereq in graph.get(sid, []):
-            if prereq in ids:
-                dependents[prereq].append(sid)
-    queue = deque(sorted(sid for sid, deg in indeg.items() if deg == 0))
-    ordered = []
-    while queue:
-        sid = queue.popleft()
-        ordered.append(by_id[sid])
-        for dep in sorted(dependents[sid]):
-            indeg[dep] -= 1
-            if indeg[dep] == 0:
-                queue.append(dep)
-    ordered.extend(by_id[sid] for sid in sorted(ids - {s.id for s in ordered}))
-    return ordered
 
 
 def _score_answers(db, skill_rows: list, answers: dict[str, int],
@@ -76,8 +34,7 @@ def _score_answers(db, skill_rows: list, answers: dict[str, int],
     (clamped then rounded). Legacy quiz answers keyed "<norm(name)>_q<i>"
     are graded against correct_index when present. A skill keeps its
     existing level when the user gave no signal for it. persist=False
-    stays read-only for /wizard/analysis. Caller: generate_path,
-    _build_report_rows.
+    stays read-only for /wizard/analysis. Caller: generate_path.
     """
     ids = [s.id for s in skill_rows]
     assessments = assess_repository.get_assessments_for_skills(db, ids)
@@ -92,15 +49,12 @@ def _score_answers(db, skill_rows: list, answers: dict[str, int],
             assessment = assessments.get(skill.id)
             questions = (assess_repository.get_questions(db, assessment.id)
                          if assessment else [])
-            answered = {
-                i: answers[f"{normalize_key(name).lower()}_q{i}"]
-                for i in range(len(questions))
-                if f"{normalize_key(name).lower()}_q{i}" in answers
-            }
+            norm = normalize_key(name).lower()
+            answered = {i: answers[f"{norm}_q{i}"]
+                        for i in range(len(questions)) if f"{norm}_q{i}" in answers}
             if questions and answered:
-                correct = sum(
-                    1 for i, q in enumerate(questions)
-                    if i in answered and answered[i] == q.correct_index)
+                correct = sum(1 for i, q in enumerate(questions)
+                              if i in answered and answered[i] == q.correct_index)
                 level = round(correct / len(questions) * 5)
             else:
                 level = current.get(name, 0)
@@ -108,69 +62,6 @@ def _score_answers(db, skill_rows: list, answers: dict[str, int],
         if persist:
             assess_repository.upsert_user_skill(db, user_id, skill.id, level)
     return levels
-
-
-def _pick_resource_ids(db, skill, preferences: dict) -> list[int]:
-    """Up to two resource ids for a step: skill-owned first, then any
-    pool entries matching is_free/format/language preferences.
-
-    format accepts a single string (exact match), "any"/empty (accept all),
-    or a list of strings (resource type in that list).
-    """
-    preferences = preferences or {}
-    pool = catalog_repository.get_all_resources(db)
-    owned = [r for r in pool if r.skill_id == skill.id]
-    free = preferences.get("is_free", True)
-    candidates = [r for r in pool if not free or r.is_free]
-    fmt = preferences.get("format") or "any"
-    if fmt != "any":
-        if isinstance(fmt, list):
-            candidates = [r for r in candidates if r.type in fmt]
-        else:
-            candidates = [r for r in candidates if r.type == fmt]
-    lang = preferences.get("language") or "en"
-    matched = [r for r in candidates if r.language == lang] or candidates
-    ordered = owned + [r for r in matched if r not in owned]
-    return [r.id for r in ordered[:2]]
-
-
-def _user_proficiency_by_name(db, user_id: int, skill_rows: list) -> dict[str, int]:
-    """Map skill name -> existing proficiency from user_skills; 0 unknown."""
-    rows = db.query(UserSkill).filter_by(user_id=user_id).all()
-    by_id = {r.skill_id: r.proficiency_level for r in rows}
-    return {s.name: by_id.get(s.id, 0) for s in skill_rows}
-
-
-def _persist_plan(db, user_id: int, title: str, description: str,
-                  target_role: str | None, plan: list,
-                  levels: dict[str, int], current: dict[str, int],
-                  preferences: dict) -> Path:
-    """Create path + ordered steps (+ resource bridges); commits.
-
-    levels/current are name-keyed; selected_level starts at the desired
-    level (levels) falling back to the user's current proficiency.
-    """
-    total_hours = sum((s.estimated_hours or 10) for s in plan)
-    path = lrepo.create_path(
-        db, user_id=user_id, title=title, description=description,
-        target_role=target_role, total_hours=total_hours,
-        total_weeks=max(1, round(total_hours / max(preferences.get("weekly_hours", 10), 1))))
-    for position, skill in enumerate(plan, start=1):
-        resource_ids = _pick_resource_ids(db, skill, preferences.get("prefs") or {})
-        selected = levels.get(skill.name, current.get(skill.name, 0))
-        step = lrepo.create_step(
-            db, path_id=path.id, position=position,
-            title=f"Master {skill.name}",
-            description=(f"Achieve proficiency in {skill.name}. "
-                         f"Current level: {selected}. "
-                         f"Target: {MASTERY_LEVEL}."),
-            estimated_hours=skill.estimated_hours or 8,
-            resource_ids=resource_ids)
-        step.skill_id = skill.id
-        step.selected_level = selected
-        step.current_level = selected
-    db.commit()
-    return path
 
 
 def generate_path(db, user, data) -> tuple[dict | None, str | None]:
@@ -194,9 +85,9 @@ def generate_path(db, user, data) -> tuple[dict | None, str | None]:
     hours = sum((s.estimated_hours or 10) for s in plan)
     weeks = max(1, round(hours / max(data.weekly_hours, 1)))
     scored_by_name = {s.name: scored[s.id] for s in skill_rows}
-    current = _user_proficiency_by_name(db, user.id, skill_rows)
+    current = user_proficiency_by_name(db, user.id, skill_rows)
     levels = {**scored_by_name, **(data.levels or {})}
-    path = _persist_plan(
+    path = persist_plan(
         db, user.id, f"{role.title} Learning Path",
         f"Personalized path toward {role.title}. Estimated {hours}h over {weeks} weeks.",
         role.title, plan, levels, current, preferences)
@@ -212,7 +103,7 @@ def generate_path_for_skill(db, user, skill_id: int,
     Builds a plan from the target skill plus its prerequisite closure,
     drops prerequisites already mastered (>= MASTERY_LEVEL), duplicate-
     guards the target so a skill can't open two paths, then reuses
-    _persist_plan/format_path_detail. Caller: routers/catalog.
+    persist_plan/format_path_detail. Caller: routers/catalog.
     """
     skill = catalog_repository.get_skill(db, skill_id)
     if not skill:
@@ -221,7 +112,7 @@ def generate_path_for_skill(db, user, skill_id: int,
         return None, "Skill is already in one of your paths"
     chain = catalog_repository.get_prerequisite_chain(db, skill_id)
     rows = catalog_repository.get_skills_by_ids(db, chain)
-    current = _user_proficiency_by_name(db, user.id, rows)
+    current = user_proficiency_by_name(db, user.id, rows)
     plan_rows = [s for s in rows if current[s.name] < MASTERY_LEVEL]
     if skill not in plan_rows:
         plan_rows.append(skill)
@@ -233,114 +124,80 @@ def generate_path_for_skill(db, user, skill_id: int,
     hours = sum((s.estimated_hours or 10) for s in plan)
     weeks = max(1, round(hours / weekly))
     levels = {s.name: current[s.name] for s in rows}
-    path = _persist_plan(
+    path = persist_plan(
         db, user.id, f"Master {skill.name}",
         f"Learning path for {skill.name}. Estimated {hours}h over {weeks} weeks.",
         None, plan, levels, current, prefs)
     return format_path_detail(db, path, user.id), None
 
 
-def _serialize_step(db, step, completed_ids: set[int], user_id: int) -> dict:
-    """One steps[] entry; content mirrors description and is_completed
-    comes from the completed-step id set. Emits skill linkage, ordering
-    and duration so the frontend detail view renders without remapping.
-    current_topic is the first of the skill's topics still in the
-    learner's weak_points (the topic to master now); falls back to the
-    skill's first topic when no weak points remain."""
-    resources = []
-    for resource in catalog_repository.get_resources_by_ids(
-            db, step.resource_ids or []):
-        resources.append({"id": resource.id, "title": resource.title,
-                          "url": resource.url, "type": resource.type})
-    skill = None
-    current_topic = None
-    if step.skill_id:
-        sk = catalog_repository.get_skill(db, step.skill_id)
-        if sk:
-            skill = {"id": sk.id, "name": sk.name,
-                      "difficulty_level": sk.difficulty_level}
-            topics = [str(x) for x in (sk.topics or []) if str(x).strip()]
-            if topics:
-                us = db.query(UserSkill).filter_by(
-                    user_id=user_id, skill_id=sk.id).first()
-                weak = set(us.weak_points or []) if us else set()
-                current_topic = next(
-                    (t for t in topics if t in weak), topics[0])
-    return {
-        "id": step.id, "step_number": step.position, "title": step.title,
-        "content": step.description, "is_completed": step.id in completed_ids,
-        "skill_id": step.skill_id, "order_index": step.position,
-        "duration_hours": step.estimated_hours, "skill": skill,
-        "current_topic": current_topic,
-        "selected_level": step.selected_level,
-        "current_level": step.current_level,
-        "resources": resources, "resource_ids": step.resource_ids or [],
-        "assessment_ids": step.assessment_ids or [],
-    }
+def _batch_fetch_context(db, steps: list[PathStep],
+                         user_id: int) -> tuple[dict, dict, dict]:
+    """Batch-fetch resources, skills and user_skills for a set of steps.
 
-
-def _path_progress(steps: list[dict]) -> float:
-    """Fraction (0..1) of steps marked is_completed; 0 when empty.
-
-    Caller passes already-serialized steps so the same logic serves both
-    the detail and list serializers without re-querying completions.
+    Returns (resource_map, skill_map, user_skill_map) dicts keyed by id.
     """
-    if not steps:
-        return 0
-    done = sum(1 for s in steps if s.get("is_completed"))
-    return round(done / len(steps), 4)
-
-
-def _path_skills(db, path: Path) -> list[dict]:
-    """Distinct [{id,name}] skill list derived from step skill links
-    (the reduced schema has no separate path-skill mapping)."""
-    seen, out = set(), []
-    for step in lrepo.get_steps(db, path.id):
-        if step.skill_id and step.skill_id not in seen:
-            seen.add(step.skill_id)
-            skill = catalog_repository.get_skill(db, step.skill_id)
-            if skill:
-                out.append({"id": skill.id, "name": skill.name})
-    return out
+    resource_ids, skill_ids = collect_ids_from_steps(steps)
+    resource_map = catalog_repository.get_resources_by_map(db, resource_ids)
+    skill_map = catalog_repository.get_skills_by_map(db, skill_ids)
+    user_skill_map = lrepo.get_user_skills_bulk(db, user_id, skill_ids)
+    return resource_map, skill_map, user_skill_map
 
 
 def format_path_detail(db, path: Path, user_id: int) -> dict:
-    """Full path payload (int ids, goal_job_role, skills[], steps[])."""
+    """Full path payload (int ids, goal_job_role, skills[], steps[]).
+
+    Batch-fetches all resources, skills and user_skills for the path's
+    steps before serialization to avoid per-step N+1 queries.
+    """
     completed = lrepo.completed_step_ids(db, user_id)
-    steps = [_serialize_step(db, s, completed, user_id)
-             for s in lrepo.get_steps(db, path.id)]
+    steps = lrepo.get_steps(db, path.id)
+    resource_map, skill_map, user_skill_map = _batch_fetch_context(
+        db, steps, user_id)
+    serialized = [serialize_step(s, completed, resource_map, skill_map,
+                                 user_skill_map) for s in steps]
     return {
         "id": path.id, "profile_id": path.user_id,
         "title": path.title or "", "description": path.description,
         "status": path.status or "active",
-        "progress": _path_progress(steps),
+        "progress": path_progress(serialized),
         "total_estimated_hours": path.total_estimated_hours,
         "total_hours": path.total_estimated_hours,
         "total_estimated_weeks": path.total_estimated_weeks,
         "goal_job_role": path.target_role,
         "created_at": path.created_at.isoformat() if path.created_at else None,
-        "skills": _path_skills(db, path),
-        "levels": _selected_levels_by_step(db, path.id),
-        "steps": steps,
+        "skills": path_skills(skill_map, steps),
+        "levels": selected_levels_by_step(skill_map, steps),
+        "steps": serialized,
     }
 
 
-def _selected_levels_by_step(db, path_id: int) -> dict[str, int]:
-    """Skill name -> selected_level for a path's steps; frontend contract."""
-    out = {}
-    for step in lrepo.get_steps(db, path_id):
-        if step.skill_id:
-            skill = catalog_repository.get_skill(db, step.skill_id)
-            if skill:
-                out[skill.name] = step.selected_level
-    return out
+def _serialize_path_block(path, completed, resource_map, skill_map,
+                          user_skill_map, db) -> dict:
+    """One path entry for the progress dashboard paths[] block.
+
+    Separate function to keep progress_dashboard under 40 lines.
+    """
+    steps = lrepo.get_steps(db, path.id)
+    psteps = [serialize_step(s, completed, resource_map, skill_map,
+                             user_skill_map) for s in steps]
+    return {
+        "id": path.id, "title": path.title or "", "description": path.description,
+        "total_estimated_hours": path.total_estimated_hours,
+        "total_hours": path.total_estimated_hours,
+        "total_estimated_weeks": path.total_estimated_weeks,
+        "goal_job_role": path.target_role,
+        "created_at": path.created_at.isoformat() if path.created_at else None,
+        "steps": psteps, "progress": path_progress(psteps),
+    }
 
 
 def progress_dashboard(db, user_id: int) -> dict:
-    """GET /progress/dashboard payload — frontend-owned key contract:
-    total_paths/total_steps/completed_steps/completion_percentage/
-    remaining_hours/total_hours (+ additive weekly + paths blocks).
-    Completions come from step_progress.completed_at."""
+    """GET /progress/dashboard payload — frontend-owned key contract.
+
+    Completions come from step_progress.completed_at. Batch-fetches
+    all resources/skills/user_skills across every path to avoid N+1.
+    """
     seven_ago = datetime.now(UTC) - timedelta(days=7)
     paths = lrepo.get_paths_by_user(db, user_id)
     completed = lrepo.completed_step_ids(db, user_id)
@@ -349,6 +206,14 @@ def progress_dashboard(db, user_id: int) -> dict:
     pct = round(completed_steps / total_steps * 100, 1) if total_steps else 0
     total_hours = lrepo.sum_total_hours(db, user_id)
     completed_hours = round(total_hours * (pct / 100), 1) if pct > 0 else 0
+    all_steps = []
+    for p in paths:
+        all_steps.extend(lrepo.get_steps(db, p.id))
+    resource_map, skill_map, user_skill_map = _batch_fetch_context(
+        db, all_steps, user_id)
+    path_blocks = [_serialize_path_block(
+        p, completed, resource_map, skill_map, user_skill_map, db
+    ) for p in paths]
     return {
         "total_paths": len(paths),
         "total_steps": total_steps,
@@ -357,17 +222,7 @@ def progress_dashboard(db, user_id: int) -> dict:
         "remaining_hours": round(max(0.0, total_hours - completed_hours), 1),
         "total_hours": total_hours,
         "weekly": lrepo.count_completions(db, user_id, since=seven_ago),
-        "paths": [{
-            "id": p.id, "title": p.title or "", "description": p.description,
-            "total_estimated_hours": p.total_estimated_hours,
-            "total_hours": p.total_estimated_hours,
-            "total_estimated_weeks": p.total_estimated_weeks,
-            "goal_job_role": p.target_role,
-            "created_at": p.created_at.isoformat() if p.created_at else None,
-            "steps": (_psteps := [_serialize_step(db, s, completed, user_id)
-                                  for s in lrepo.get_steps(db, p.id)]),
-            "progress": _path_progress(_psteps),
-        } for p in paths],
+        "paths": path_blocks,
     }
 
 
@@ -395,6 +250,43 @@ def undo_complete_step(db, user_id: int, step_id: int):
 
 
 def list_user_paths(db, user_id: int) -> list[dict]:
-    """All of a user's paths as full detail payloads (GET /paths/)."""
-    return [format_path_detail(db, p, user_id)
-            for p in lrepo.get_paths_by_user(db, user_id)]
+    """All of a user's paths as full detail payloads (GET /paths/).
+
+    Batch-fetches resources/skills/user_skills across ALL paths first
+    so each build call uses the shared pre-fetched maps.
+    """
+    paths = lrepo.get_paths_by_user(db, user_id)
+    completed = lrepo.completed_step_ids(db, user_id)
+    all_steps = []
+    for p in paths:
+        all_steps.extend(lrepo.get_steps(db, p.id))
+    resource_map, skill_map, user_skill_map = _batch_fetch_context(
+        db, all_steps, user_id)
+    return [_build_path_detail(p, db, user_id, completed, resource_map,
+                               skill_map, user_skill_map) for p in paths]
+
+
+def _build_path_detail(path: Path, db, user_id: int, completed: set[int],
+                       resource_map: dict, skill_map: dict,
+                       user_skill_map: dict) -> dict:
+    """Build a single path detail dict using pre-fetched context maps.
+
+    Separate function to keep list_user_paths under the 40-line limit.
+    """
+    steps = lrepo.get_steps(db, path.id)
+    serialized = [serialize_step(s, completed, resource_map, skill_map,
+                                 user_skill_map) for s in steps]
+    return {
+        "id": path.id, "profile_id": path.user_id,
+        "title": path.title or "", "description": path.description,
+        "status": path.status or "active",
+        "progress": path_progress(serialized),
+        "total_estimated_hours": path.total_estimated_hours,
+        "total_hours": path.total_estimated_hours,
+        "total_estimated_weeks": path.total_estimated_weeks,
+        "goal_job_role": path.target_role,
+        "created_at": path.created_at.isoformat() if path.created_at else None,
+        "skills": path_skills(skill_map, steps),
+        "levels": selected_levels_by_step(skill_map, steps),
+        "steps": serialized,
+    }
