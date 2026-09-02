@@ -7,6 +7,8 @@ follow routers/error_mapping.status_for_error: '*not found*' → 404,
 'already exists' → 409, invalid references/cycles → 400.
 """
 
+from cachetools import TTLCache
+
 from backend.dto.catalog import (
     CategoryCreate, CategoryUpdate, JobRoleCreate, JobRoleUpdate,
     ResourceCreate, ResourceUpdate, SkillCreate, SkillUpdate,
@@ -14,6 +16,23 @@ from backend.dto.catalog import (
 from backend.entities.catalog import Category
 from backend.repositories import catalog_repository as repo
 from backend.services import catalog_integrity as integrity
+
+# ── In-memory TTL caches for hot read paths ─────────────────────────
+_skill_cache: TTLCache = TTLCache(maxsize=256, ttl=60)
+_category_cache: TTLCache = TTLCache(maxsize=32, ttl=120)
+_prereq_graph_cache: TTLCache = TTLCache(maxsize=1, ttl=300)
+_job_role_cache: TTLCache = TTLCache(maxsize=64, ttl=120)
+
+
+def invalidate_skill_cache(skill_id: int | None = None):
+    """Clear skill cache entry (or all if skill_id is None) and dependent caches."""
+    if skill_id is not None:
+        _skill_cache.pop(skill_id, None)
+    else:
+        _skill_cache.clear()
+    _category_cache.clear()
+    _prereq_graph_cache.clear()
+    _job_role_cache.clear()
 
 
 def _skill_ids(raw: list | None) -> list[int]:
@@ -107,7 +126,9 @@ def create_skill(db, data: SkillCreate) -> tuple[dict | None, str | None]:
         db, data.prerequisite_ids, "prerequisite_ids")
     if error:
         return None, error
-    return _serialize_skill(db, repo.create_skill(db, data)), None
+    result = _serialize_skill(db, repo.create_skill(db, data))
+    invalidate_skill_cache()
+    return result, None
 
 
 def update_skill(db, skill_id: int,
@@ -134,7 +155,9 @@ def update_skill(db, skill_id: int,
             db, skill.id, fields["prerequisite_ids"])
         if error:
             return None, error
-    return _serialize_skill(db, repo.update_skill(db, skill, fields)), None
+    result = _serialize_skill(db, repo.update_skill(db, skill, fields))
+    invalidate_skill_cache(skill_id)
+    return result, None
 
 
 def delete_skill(db, skill_id: int,
@@ -151,6 +174,7 @@ def delete_skill(db, skill_id: int,
         if conflict:
             return False, conflict
     repo.delete_skill(db, skill_id)
+    invalidate_skill_cache()
     return True, None
 
 
@@ -171,6 +195,7 @@ def create_category(db, data: CategoryCreate) -> tuple[dict | None, str | None]:
     db.add(cat)
     db.commit()
     db.refresh(cat)
+    invalidate_skill_cache()
     return cat, None
 
 
@@ -196,6 +221,7 @@ def update_category(db, category_id: int,
         setattr(cat, key, value)
     db.commit()
     db.refresh(cat)
+    invalidate_skill_cache()
     return cat, None
 
 
@@ -213,6 +239,7 @@ def delete_category(db, category_id: int,
         if conflict:
             return False, conflict
     repo.delete_category(db, category_id)
+    invalidate_skill_cache()
     return True, None
 
 
@@ -226,7 +253,9 @@ def create_resource(db, data: ResourceCreate) -> tuple[dict | None, str | None]:
     error = integrity.ensure_resource_skill_exists(db, data.skill_id)
     if error:
         return None, error
-    return repo.create_resource(db, data.model_dump(exclude_unset=True)), None
+    result = repo.create_resource(db, data.model_dump(exclude_unset=True))
+    invalidate_skill_cache()
+    return result, None
 
 
 def update_resource(db, resource_id: int,
@@ -242,7 +271,9 @@ def update_resource(db, resource_id: int,
         error = integrity.ensure_resource_skill_exists(db, fields["skill_id"])
         if error:
             return None, error
-    return repo.update_resource(db, resource, fields), None
+    result = repo.update_resource(db, resource, fields)
+    invalidate_skill_cache()
+    return result, None
 
 
 def delete_resource(db, resource_id: int,
@@ -262,6 +293,7 @@ def delete_resource(db, resource_id: int,
             return False, conflict
     if not repo.delete_resource(db, resource_id):
         return False, "Resource not found"
+    invalidate_skill_cache()
     return True, None
 
 
@@ -311,6 +343,7 @@ def create_job_role(db, data: JobRoleCreate) -> tuple[dict | None, str | None]:
     else:
         db.commit()
         db.refresh(role)
+    invalidate_skill_cache()
     return _serialize_job_role(db, role), None
 
 
@@ -340,6 +373,7 @@ def update_job_role(db, job_role_id: int,
     else:
         db.commit()
         db.refresh(updated)
+    invalidate_skill_cache()
     return _serialize_job_role(db, updated), None
 
 
@@ -357,6 +391,7 @@ def delete_job_role(db, job_role_id: int,
         if conflict:
             return False, conflict
     repo.delete_job_role(db, job_role_id)
+    invalidate_skill_cache()
     return True, None
 
 
