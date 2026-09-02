@@ -212,7 +212,6 @@ CREATE TABLE step_progress (
 	step_id INTEGER NOT NULL,
 	completed_at TIMESTAMP,
 	score INTEGER,
-	current_level INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY (user_id, step_id),
 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE,
 	FOREIGN KEY(step_id) REFERENCES path_steps (id) ON DELETE CASCADE

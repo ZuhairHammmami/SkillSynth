@@ -98,4 +98,3 @@ class StepProgress(Base):
     step_id = Column(Integer, ForeignKey("path_steps.id", ondelete='CASCADE'), primary_key=True)
     completed_at = Column(TIMESTAMP(timezone=True), nullable=True)
     score = Column(Integer, nullable=True)
-    current_level = Column(Integer, default=0, nullable=False, server_default=text('0'))
