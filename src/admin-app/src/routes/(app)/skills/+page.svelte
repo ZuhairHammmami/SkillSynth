@@ -12,6 +12,7 @@
   import { success, error as toastError } from '$lib/components/ui/toast';
   import Icon from '$lib/icons/Icon.svelte';
   import { t } from '$lib/i18n';
+  import { onMount } from 'svelte';
   import { name, maxLength, range, nonNegative, positiveInt, hexColor } from '$lib/validation';
 
   let rows = $state<any[]>([]);
@@ -59,7 +60,7 @@
     } catch (e) { err = e instanceof ApiError ? e.detail : t('admin.common.failedLoad', { entity: t('admin.nav.skills') }); }
     finally { loading = false; }
   }
-  $effect(() => { load(); });
+  onMount(() => { load(); });
 
   function catOptions() {
     return cats.map((c) => ({ value: c.id, label: c.name }));

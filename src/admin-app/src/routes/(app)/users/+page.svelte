@@ -10,6 +10,7 @@
   import { success, error as toastError } from '$lib/components/ui/toast';
   import Icon from '$lib/icons/Icon.svelte';
   import { t } from '$lib/i18n';
+  import { onMount } from 'svelte';
   import { email, name, password as validatePw, DEFAULT_PASSWORD_POLICY } from '$lib/validation';
 
   let rows = $state<any[]>([]);
@@ -50,7 +51,7 @@
     catch (e) { err = e instanceof ApiError ? e.detail : t('admin.common.failedLoad', { entity: t('admin.nav.users') }); }
     finally { loading = false; }
   }
-  $effect(() => { load(); });
+  onMount(() => { load(); });
 
   function openCreate() { editing = null; formErrors = {}; touched = {}; form = { is_admin: false }; showForm = true; }
   function openEdit(r: any) { editing = r; formErrors = {}; touched = {}; form = { ...r }; showForm = true; }

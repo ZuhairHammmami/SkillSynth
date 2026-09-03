@@ -15,6 +15,7 @@
   import { success, error as toastError } from '$lib/components/ui/toast';
   import Icon from '$lib/icons/Icon.svelte';
   import { t } from '$lib/i18n';
+  import { onMount } from 'svelte';
   import { name, maxLength, range, positiveInt } from '$lib/validation';
 
   let rows = $state<any[]>([]);
@@ -66,7 +67,7 @@
       loading = false;
     }
   }
-  $effect(() => { load(); });
+  onMount(() => { load(); });
 
   function skillOptions(): { value: number; label: string }[] {
     return skills.map((s) => ({ value: s.id, label: s.name }));

@@ -17,6 +17,21 @@ function safeParse(d: string): any {
 function onFrame(type: string, data: any): void {
   if (type === 'path_generated') invalidate(['PATHS']);
   if (type === 'assessment_completed') invalidate(['ASMT']);
+  if (type === 'skill_created' || type === 'skill_updated' || type === 'skill_deleted') {
+    invalidate(['SKILLS']);
+    invalidate(['CATS_PICK']);
+    invalidate(['SKILLS_PICK']);
+  }
+  if (type === 'category_created' || type === 'category_updated' || type === 'category_deleted') {
+    invalidate(['CATS']);
+    invalidate(['CATS_PICK']);
+  }
+  if (type === 'resource_created' || type === 'resource_updated' || type === 'resource_deleted') {
+    invalidate(['RESOURCES']);
+  }
+  if (type === 'user_created' || type === 'user_updated' || type === 'user_deleted') {
+    invalidate(['USERS']);
+  }
   if (browser) window.dispatchEvent(new CustomEvent('sse:' + type, { detail: data }));
 }
 

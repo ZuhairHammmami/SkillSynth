@@ -11,6 +11,7 @@
   import { success, error as toastError } from '$lib/components/ui/toast';
   import Icon from '$lib/icons/Icon.svelte';
   import { t } from '$lib/i18n';
+  import { onMount } from 'svelte';
   import { name, maxLength, url, positiveInt } from '$lib/validation';
 
   let rows = $state<any[]>([]);
@@ -56,7 +57,7 @@
     } catch (e) { err = e instanceof ApiError ? e.detail : t('admin.common.failedLoad', { entity: t('admin.nav.resources') }); }
     finally { loading = false; }
   }
-  $effect(() => { load(); });
+  onMount(() => { load(); });
 
   function skillOptions() {
     return skills.map((s) => ({ value: s.id, label: s.name }));
