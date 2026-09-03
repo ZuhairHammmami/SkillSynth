@@ -43,7 +43,11 @@ export function connectSSE(): void {
   es = new EventSource(`${BASE}/realtime/admin/events?token=${encodeURIComponent(token)}`);
   es.onopen = () => sseStatus.set('open');
   es.onerror = () => sseStatus.set('closed');
-  ['path_generated', 'assessment_completed', 'connected', 'ping', 'activity'].forEach((f) => {
+  ['path_generated', 'assessment_completed', 'connected', 'ping', 'activity',
+   'skill_created', 'skill_updated', 'skill_deleted',
+   'category_created', 'category_updated', 'category_deleted',
+   'resource_created', 'resource_updated', 'resource_deleted',
+   'user_created', 'user_updated', 'user_deleted'].forEach((f) => {
     es!.addEventListener(f, (e) => onFrame(f, safeParse((e as MessageEvent).data)));
   });
 }
