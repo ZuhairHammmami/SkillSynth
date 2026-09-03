@@ -133,14 +133,14 @@ def test_rate_proficiency_happy_path(api_client, auth_headers, db_session):
 @pytest.mark.parametrize("level", [-1, 6])
 def test_rate_proficiency_out_of_range(api_client, auth_headers, db_session,
                                        level):
-    """Levels outside 0..5 → 400 (router range check)."""
+    """Levels outside 0..5 → 422 (Pydantic Field ge=0, le=5)."""
     skill_id, _ = _rate_veteran_step(db_session)
     if skill_id is None:
         pytest.skip("no seeded veteran step with a skill link")
     response = api_client.put(
         f"/api/learning/skills/{skill_id}/proficiency",
         json={"level": level}, headers=auth_headers)
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 def test_rate_proficiency_unknown_skill(api_client, auth_headers):

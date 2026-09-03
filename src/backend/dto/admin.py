@@ -39,6 +39,14 @@ class AdminCreateUser(BaseModel):
         """Field rule: validate password."""
         return PasswordValidator.validate(v)
 
+    @field_validator("full_name")
+    @classmethod
+    def sanitize_full_name(cls, v: Optional[str]) -> Optional[str]:
+        """Strip markup from full name."""
+        if v is None:
+            return None
+        return PasswordValidator.sanitize_name(v)
+
 
 class AdminUserUpdate(BaseModel):
     """PUT /admin/users/{id} body; None fields left untouched."""
@@ -53,6 +61,14 @@ class AdminUserUpdate(BaseModel):
     def validate_password(cls, v: Optional[str]) -> Optional[str]:
         """Field rule: validate password."""
         return PasswordValidator.validate(v) if v is not None else v
+
+    @field_validator("full_name")
+    @classmethod
+    def sanitize_full_name(cls, v: Optional[str]) -> Optional[str]:
+        """Strip markup from full name."""
+        if v is None:
+            return None
+        return PasswordValidator.sanitize_name(v)
 
 
 class AdminUserOut(BaseModel):
@@ -174,6 +190,15 @@ class AssessmentCreate(BaseModel):
         """Strip markup via the shared sanitizer."""
         return _sanitize(v)
 
+    @field_validator("description")
+    @classmethod
+    def sanitize_description(cls, v: Optional[str]) -> Optional[str]:
+        """Strip markup from description text."""
+        if v is None:
+            return None
+        v = v.strip()
+        return _sanitize(v) if v else None
+
 
 class AssessmentUpdate(BaseModel):
     """PUT /admin/assessments/{id} body; None fields left untouched."""
@@ -188,6 +213,15 @@ class AssessmentUpdate(BaseModel):
     def sanitize_title(cls, v: Optional[str]) -> Optional[str]:
         """Strip markup when a new value is supplied."""
         return _sanitize(v) if v is not None else v
+
+    @field_validator("description")
+    @classmethod
+    def sanitize_description(cls, v: Optional[str]) -> Optional[str]:
+        """Strip markup from description text."""
+        if v is None:
+            return None
+        v = v.strip()
+        return _sanitize(v) if v else None
 
 
 class QuestionCreate(BaseModel):
@@ -207,6 +241,22 @@ class QuestionCreate(BaseModel):
         """Strip markup via the shared sanitizer."""
         return _sanitize(v)
 
+    @field_validator("options")
+    @classmethod
+    def sanitize_options(cls, v: List[str]) -> List[str]:
+        """Strip, sanitize, and enforce max length on each option string."""
+        if not v or len(v) < 2:
+            raise ValueError("At least 2 options are required")
+        cleaned = []
+        for opt in v:
+            opt = opt.strip()
+            if not opt:
+                raise ValueError("Options must not be empty strings")
+            if len(opt) > 500:
+                raise ValueError("Each option must be 500 characters or fewer")
+            cleaned.append(_sanitize(opt))
+        return cleaned
+
 
 class QuestionUpdate(BaseModel):
     """PUT /admin/assessments/{id}/questions/{qid} body; None left as-is."""
@@ -221,6 +271,24 @@ class QuestionUpdate(BaseModel):
     def sanitize_prompt(cls, v: Optional[str]) -> Optional[str]:
         """Strip markup when a new value is supplied."""
         return _sanitize(v) if v is not None else v
+
+    @field_validator("options")
+    @classmethod
+    def sanitize_options(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+        """Strip, sanitize, and enforce max length on each option string."""
+        if v is None:
+            return None
+        if len(v) < 2:
+            raise ValueError("At least 2 options are required")
+        cleaned = []
+        for opt in v:
+            opt = opt.strip()
+            if not opt:
+                raise ValueError("Options must not be empty strings")
+            if len(opt) > 500:
+                raise ValueError("Each option must be 500 characters or fewer")
+            cleaned.append(_sanitize(opt))
+        return cleaned
 
 
 class AssessmentQuestionOut(BaseModel):

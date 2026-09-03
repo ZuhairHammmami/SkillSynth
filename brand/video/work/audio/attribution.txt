@@ -1,0 +1,8 @@
+Music bed — SkillSynth promo video
+===================================
+Track:   "Waiting Around (LoFi, Calm)" by HoliznaCC0
+License: CC0 1.0 Universal (Public Domain) — no attribution required (recorded for transparency)
+Source:  https://freemusicarchive.org/music/holiznacc0/public-domain-lofi/waiting-around-lofi-calm/
+         Direct: https://files.freemusicarchive.org/storage-freemusicarchive-org/tracks/aVNvUkfJVw1NI9zHSC3I8d760YbwCt31a3Wi6Ydl.mp3
+Facts:   Instrumental: yes · AI-generated: no · Duration: 2:31 · MP3 48 kHz stereo 320 kbps
+Usage:   Trimmed to the 60.03 s edit, volume 0.6, gentle fade-out at the mux stage (Task 7).

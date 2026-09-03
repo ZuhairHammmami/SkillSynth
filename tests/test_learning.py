@@ -42,12 +42,12 @@ class TestPaths:
     def test_list_paths(self, api_client, auth_headers):
         response = api_client.get("/api/paths/", headers=auth_headers)
         assert response.status_code == 200
-        paths = response.json()
-        assert isinstance(paths, list)
-        assert len(paths) == 2
+        data = response.json()
+        assert isinstance(data["items"], list)
+        assert data["total"] == 2
 
     def test_get_path_detail(self, api_client, auth_headers):
-        paths = api_client.get("/api/paths/", headers=auth_headers).json()
+        paths = api_client.get("/api/paths/", headers=auth_headers).json()["items"]
         detail = api_client.get(f"/api/paths/{paths[0]['id']}",
                                 headers=auth_headers)
         assert detail.status_code == 200
@@ -58,7 +58,7 @@ class TestPaths:
         assert api_client.get("/api/paths/99999", headers=auth_headers).status_code == 404
 
     def test_update_path(self, api_client, auth_headers):
-        paths = api_client.get("/api/paths/", headers=auth_headers).json()
+        paths = api_client.get("/api/paths/", headers=auth_headers).json()["items"]
         update = api_client.put(f"/api/paths/{paths[0]['id']}", json={
             "title": "Updated Path Title",
         }, headers=auth_headers)
@@ -145,7 +145,7 @@ class TestLeveledGeneration:
         """format as a list accepts resources whose type is in the list; a
         single-string exact match still excludes mismatched types."""
         from backend.repositories import catalog_repository as crepo
-        from backend.services import learning_service as ls
+        from backend.services.learning_persistence import pick_resource_ids
 
         skill = crepo.get_all_skills(db_session)[0]
         sample = crepo.get_all_resources(db_session)[0]
@@ -153,11 +153,12 @@ class TestLeveledGeneration:
         other = "nonexistent_type_xyz"
         prefs = {"is_free": False, "language": sample.language,
                  "format": [rt, other]}
-        listed = ls._pick_resource_ids(db_session, skill, prefs)
+        pool = crepo.get_all_resources(db_session)
+        listed = pick_resource_ids(pool, skill, prefs)
         assert sample.id in listed
-        exact = ls._pick_resource_ids(
-            db_session, skill, {"is_free": False,
-                               "language": sample.language, "format": other})
+        exact = pick_resource_ids(
+            pool, skill, {"is_free": False,
+                          "language": sample.language, "format": other})
         assert sample.id not in exact
 
 

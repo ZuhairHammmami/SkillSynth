@@ -69,9 +69,6 @@ def rate_proficiency(skill_id: int, data: RateProficiencyIn,
     PathStep rows and audits a rate.proficiency.set event. Called by the
     student ladder; the frontend re-fetches the path after.
     """
-    if not 0 <= data.level <= 5:
-        raise HTTPException(status_code=400,
-                            detail="level must be between 0 and 5")
     skill = catalog_repository.get_skill(db, skill_id)
     if skill is None:
         raise HTTPException(status_code=400,

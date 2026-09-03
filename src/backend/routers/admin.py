@@ -16,6 +16,7 @@ import logging
 
 from backend.database import get_db
 from backend.dto.admin import AdminCreateUser, AdminUserUpdate, PathAdminView
+from backend.dto.pagination import paginate
 from backend.limiter import limiter
 from backend.policies.auth_policy import get_current_user, require_admin
 from backend.routers.error_mapping import status_for_error
@@ -38,9 +39,12 @@ def _user_out(user) -> dict:
 
 
 @router.get("/users")
-def list_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def list_users(page: int = 1, page_size: int = 50,
+               db: Session = Depends(get_db)):
     """Paged user listing. Calls admin_service.list_users; admin users page."""
-    return [_user_out(u) for u in admin_service.list_users(db, skip, limit)]
+    users = [_user_out(u)
+             for u in admin_service.list_users(db, page - 1, page_size)]
+    return paginate(users, page, page_size)
 
 
 @router.post("/users")

@@ -23,6 +23,7 @@ sendgrid
 
 # Caching
 redis>=4.0
+cachetools>=5.0
 
 # Test dependencies
 pytest>=8.0.0

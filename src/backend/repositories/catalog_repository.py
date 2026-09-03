@@ -252,6 +252,20 @@ def get_job_role_skill_ids(db: Session, job_role_id: int) -> list[int]:
     return [sid for (sid,) in rows]
 
 
+def get_job_role_skill_names(db: Session, job_role_id: int) -> list[str]:
+    """Required-skill names for one role, ordered by mapping insertion.
+
+    Called by wizard_service.wizard_options to preview a field's skills
+    in the frontend combobox; joins JobRoleSkill -> Skill.name."""
+    return [
+        name for (name,) in db.query(Skill.name)
+        .join(JobRoleSkill, JobRoleSkill.skill_id == Skill.id)
+        .filter(JobRoleSkill.job_role_id == job_role_id)
+        .order_by(JobRoleSkill.skill_id)
+        .all()
+    ]
+
+
 def get_path_skill_ids(db: Session) -> list[int]:
     """Every skill id mapped to any job role; most-requested report.
 
@@ -304,3 +318,51 @@ def delete_job_role(db: Session, job_role_id: int) -> bool:
     db.delete(role)
     db.commit()
     return True
+# ── Batch-fetch helpers (N+1 elimination) ──
+
+def get_skills_by_map(db: Session, ids: list[int]) -> dict[int, Skill]:
+    """Fetch skills by ID list, return {id: Skill} dict. Skips missing."""
+    if not ids:
+        return {}
+    rows = db.query(Skill).filter(Skill.id.in_(ids)).all()
+    return {r.id: r for r in rows}
+
+
+def get_resources_by_map(db: Session, ids: list[int]) -> dict[int, Resource]:
+    """Fetch resources by ID list, return {id: Resource} dict."""
+    if not ids:
+        return {}
+    rows = db.query(Resource).filter(Resource.id.in_(ids)).all()
+    return {r.id: r for r in rows}
+
+
+def get_prereqs_by_skill_ids(db: Session,
+                             skill_ids: list[int]) -> dict[int, list[Skill]]:
+    """skill_id -> [prerequisite Skills] for batch prerequisite hydration."""
+    if not skill_ids:
+        return {}
+    edges = db.query(SkillPrerequisite).filter(
+        SkillPrerequisite.skill_id.in_(skill_ids)).all()
+    prereq_ids = {e.prerequisite_id for e in edges}
+    prereq_map = get_skills_by_map(db, list(prereq_ids))
+    result: dict[int, list[Skill]] = {sid: [] for sid in skill_ids}
+    for e in edges:
+        skill_obj = prereq_map.get(e.prerequisite_id)
+        if skill_obj:
+            result[e.skill_id].append(skill_obj)
+    return result
+
+
+def get_categories_map(db: Session) -> dict[int, Category]:
+    """Return {id: Category} for all categories; name lookups in loops."""
+    rows = db.query(Category).all()
+    return {c.id: c for c in rows}
+
+
+def get_job_role_skill_map(db: Session) -> dict[int, list[int]]:
+    """job_role_id -> [skill_id] for all roles; batch role→skill hydration."""
+    rows = db.query(JobRoleSkill.job_role_id, JobRoleSkill.skill_id).all()
+    result: dict[int, list[int]] = {}
+    for role_id, skill_id in rows:
+        result.setdefault(role_id, []).append(skill_id)
+    return result

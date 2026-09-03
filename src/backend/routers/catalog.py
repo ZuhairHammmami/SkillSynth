@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
+from backend.dto.pagination import paginate
 from backend.entities.catalog import Category
 from backend.policies.auth_policy import get_current_user
 from backend.repositories import catalog_repository as repo
@@ -19,12 +20,20 @@ router = APIRouter()
 
 
 @router.get("/categories")
-def list_categories(db: Session = Depends(get_db),
+def list_categories(page: int = 1, page_size: int = 50,
+                    db: Session = Depends(get_db),
                     current_user=Depends(get_current_user)):
-    """Return every category serialized with its skills. Calls
-    catalog_service._serialize_category for each repo.get_all_categories(db)."""
-    return [catalog_service._serialize_category(db, c)
-            for c in repo.get_all_categories(db)]
+    """Return categories paginated with envelope. Batch-fetches all
+    skills + resources to eliminate N+1 queries across categories."""
+    categories = repo.get_all_categories(db)
+    all_skills = repo.get_all_skills(db)
+    skill_map = {s.id: s for s in all_skills}
+    prereq_map, resource_map = catalog_service._build_skill_maps(
+        db, all_skills)
+    items = [catalog_service._serialize_category(
+                db, c, skill_map, prereq_map, resource_map)
+             for c in categories]
+    return paginate(items, page, page_size)
 
 
 @router.get("/categories/{category_id}")
@@ -39,12 +48,14 @@ def get_category(category_id: int, db: Session = Depends(get_db),
 
 
 @router.get("/skills")
-def list_skills(db: Session = Depends(get_db),
+def list_skills(page: int = 1, page_size: int = 50,
+                db: Session = Depends(get_db),
                 current_user=Depends(get_current_user)):
-    """Return every skill serialized individually. Calls
+    """Return skills paginated with envelope. Calls
     catalog_service._serialize_skill for each repo.get_all_skills(db)."""
-    return [catalog_service._serialize_skill(db, s)
-            for s in repo.get_all_skills(db)]
+    items = [catalog_service._serialize_skill(db, s)
+             for s in repo.get_all_skills(db)]
+    return paginate(items, page, page_size)
 
 
 @router.get("/skills/{skill_id}")

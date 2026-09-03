@@ -12,6 +12,7 @@
   import { success, error as toastError } from '$lib/components/ui/toast';
   import Icon from '$lib/icons/Icon.svelte';
   import { t } from '$lib/i18n';
+  import { onMount } from 'svelte';
   import { name, maxLength } from '$lib/validation';
 
   let rows = $state<any[]>([]);
@@ -43,14 +44,16 @@
     loading = true;
     err = null;
     try {
-      [rows, skills] = await Promise.all([
+      const [r, sk] = await Promise.all([
         query(['ROLES'], () => apiFetch('/admin/job-roles')),
         query(['SKILLS_PICK_ROLES'], () => apiFetch('/admin/skills'))
       ]);
+      rows = r.items;
+      skills = sk.items;
     } catch (e) { err = e instanceof ApiError ? e.detail : t('admin.common.failedLoad', { entity: t('admin.nav.jobRoles') }); }
     finally { loading = false; }
   }
-  $effect(() => { load(); });
+  onMount(() => { load(); });
 
   const filteredSkills = $derived(
     (skills || []).filter((s) => s.name.toLowerCase().includes(skillFilter.trim().toLowerCase()))

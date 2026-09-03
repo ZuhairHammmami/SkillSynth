@@ -6,7 +6,7 @@ identity and catalog layers; DDL twin lives in
 src/migrations/003_reduced_schema.sql.
 """
 
-from sqlalchemy import Column, ForeignKey, Index, Integer, String, Text, JSON, TIMESTAMP, func, text
+from sqlalchemy import CheckConstraint, Column, ForeignKey, Index, Integer, String, Text, JSON, TIMESTAMP, func, text
 
 from backend.entities.base import Base
 
@@ -17,11 +17,15 @@ class UserSkill(Base):
     __tablename__ = "user_skills"
     __table_args__ = (
         Index('idx_user_skills_skill_id', 'skill_id'),
+        CheckConstraint(
+            'proficiency_level >= 0 AND proficiency_level <= 5',
+            name='chk_proficiency',
+        ),
     )
 
     user_id = Column(Integer, ForeignKey("users.id", ondelete='CASCADE'), primary_key=True)
     skill_id = Column(Integer, ForeignKey("skills.id", ondelete='CASCADE'), primary_key=True)
-    proficiency_level = Column(Integer, default=1)
+    proficiency_level = Column(Integer, default=0, nullable=False, server_default=text('0'))
     last_assessed_at = Column(TIMESTAMP(timezone=True), nullable=True)
     weak_points = Column(JSON, nullable=True)
 
@@ -32,6 +36,7 @@ class Path(Base):
     __tablename__ = "paths"
     __table_args__ = (
         Index('idx_paths_user_id', 'user_id'),
+        Index('idx_paths_user_status', 'user_id', 'status'),
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -55,6 +60,14 @@ class PathStep(Base):
     __table_args__ = (
         Index('idx_path_steps_path_id', 'path_id'),
         Index('idx_path_steps_skill_id', 'skill_id'),
+        CheckConstraint(
+            'selected_level >= 0 AND selected_level <= 5',
+            name='chk_selected_level',
+        ),
+        CheckConstraint(
+            'current_level >= 0 AND current_level <= 5',
+            name='chk_step_level',
+        ),
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -78,6 +91,7 @@ class StepProgress(Base):
     __tablename__ = "step_progress"
     __table_args__ = (
         Index('idx_step_progress_step_id', 'step_id'),
+        Index('idx_step_progress_user_step', 'user_id', 'step_id'),
     )
 
     user_id = Column(Integer, ForeignKey("users.id", ondelete='CASCADE'), primary_key=True)

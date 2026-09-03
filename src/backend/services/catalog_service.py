@@ -7,6 +7,8 @@ follow routers/error_mapping.status_for_error: '*not found*' → 404,
 'already exists' → 409, invalid references/cycles → 400.
 """
 
+from cachetools import TTLCache
+
 from backend.dto.catalog import (
     CategoryCreate, CategoryUpdate, JobRoleCreate, JobRoleUpdate,
     ResourceCreate, ResourceUpdate, SkillCreate, SkillUpdate,
@@ -15,6 +17,23 @@ from backend.entities.catalog import Category
 from backend.repositories import catalog_repository as repo
 from backend.services import catalog_integrity as integrity
 
+# ── In-memory TTL caches for hot read paths ─────────────────────────
+_skill_cache: TTLCache = TTLCache(maxsize=256, ttl=60)
+_category_cache: TTLCache = TTLCache(maxsize=32, ttl=120)
+_prereq_graph_cache: TTLCache = TTLCache(maxsize=1, ttl=300)
+_job_role_cache: TTLCache = TTLCache(maxsize=64, ttl=120)
+
+
+def invalidate_skill_cache(skill_id: int | None = None):
+    """Clear skill cache entry (or all if skill_id is None) and dependent caches."""
+    if skill_id is not None:
+        _skill_cache.pop(skill_id, None)
+    else:
+        _skill_cache.clear()
+    _category_cache.clear()
+    _prereq_graph_cache.clear()
+    _job_role_cache.clear()
+
 
 def _skill_ids(raw: list | None) -> list[int]:
     """Normalize JobRoleCreate.skill_ids entries (dicts or ints)."""
@@ -22,13 +41,21 @@ def _skill_ids(raw: list | None) -> list[int]:
             for item in (raw or []) if item]
 
 
-def _serialize_skill(db, skill) -> dict:
-    """Skill row + prerequisite/resource id lists for admin payloads."""
-    from backend.entities.catalog import Resource, SkillPrerequisite
-    prerequisite_ids = [row.prerequisite_id for row in db.query(
-        SkillPrerequisite).filter(SkillPrerequisite.skill_id == skill.id).all()]
-    resource_ids = [row.id for row in db.query(Resource).filter(
-        Resource.skill_id == skill.id).all()]
+def _serialize_skill(db, skill, prereq_map=None, resource_map=None) -> dict:
+    """Skill row + prerequisite/resource id lists for admin payloads.
+
+    prereq_map/resource_map (batch mode) skip per-skill queries; when
+    absent, fall back to single-skill lookups."""
+    if prereq_map is not None and resource_map is not None:
+        prerequisite_ids = [p.id for p in prereq_map.get(skill.id, [])]
+        resource_ids = [r.id for r in resource_map.get(skill.id, [])]
+    else:
+        from backend.entities.catalog import Resource, SkillPrerequisite
+        prerequisite_ids = [row.prerequisite_id for row in db.query(
+            SkillPrerequisite).filter(
+                SkillPrerequisite.skill_id == skill.id).all()]
+        resource_ids = [row.id for row in db.query(Resource).filter(
+            Resource.skill_id == skill.id).all()]
     return {
         "id": skill.id, "name": skill.name, "description": skill.description,
         "difficulty_level": skill.difficulty_level,
@@ -39,24 +66,50 @@ def _serialize_skill(db, skill) -> dict:
     }
 
 
-def _serialize_category(db, category) -> dict:
+def _build_skill_maps(db, skills):
+    """Batch-fetch prerequisite and resource maps for a list of skills.
+
+    Returns (prereq_map, resource_map) dicts keyed by skill_id.
+    Used by list_skills and the catalog router to eliminate N+1 queries."""
+    skill_ids = [s.id for s in skills]
+    prereq_map = repo.get_prereqs_by_skill_ids(db, skill_ids)
+    all_resources = repo.get_all_resources(db)
+    resource_map: dict[int, list] = {}
+    for r in all_resources:
+        if r.skill_id is not None:
+            resource_map.setdefault(r.skill_id, []).append(r)
+    return prereq_map, resource_map
+
+
+def _serialize_category(db, category, skill_map=None,
+                         prereq_map=None, resource_map=None) -> dict:
     """Category row + its serialized skills; admin category payloads.
 
-    Called by catalog_service category serializers; uses
-    repo.get_skills_by_category then _serialize_skill per skill."""
+    When skill_map is provided, look up skills by category_id from the
+    pre-built map instead of querying per category (batch mode)."""
+    if skill_map is not None:
+        skills = [s for s in skill_map.values()
+                  if s.category_id == category.id]
+    else:
+        skills = repo.get_skills_by_category(db, category.id)
     return {
         "id": category.id,
         "name": category.name,
         "description": category.description,
         "parent_id": category.parent_id,
-        "skills": [_serialize_skill(db, s)
-                   for s in repo.get_skills_by_category(db, category.id)],
+        "skills": [_serialize_skill(db, s, prereq_map, resource_map)
+                   for s in skills],
     }
 
 
 def list_skills(db) -> list[dict]:
-    """All skills serialized; admin skills page."""
-    return [_serialize_skill(db, s) for s in repo.get_all_skills(db)]
+    """All skills serialized; admin skills page.
+
+    Batch-fetches prerequisites and resources to eliminate N+1 queries."""
+    skills = repo.get_all_skills(db)
+    prereq_map, resource_map = _build_skill_maps(db, skills)
+    return [_serialize_skill(db, s, prereq_map, resource_map)
+            for s in skills]
 
 
 def create_skill(db, data: SkillCreate) -> tuple[dict | None, str | None]:
@@ -73,7 +126,9 @@ def create_skill(db, data: SkillCreate) -> tuple[dict | None, str | None]:
         db, data.prerequisite_ids, "prerequisite_ids")
     if error:
         return None, error
-    return _serialize_skill(db, repo.create_skill(db, data)), None
+    result = _serialize_skill(db, repo.create_skill(db, data))
+    invalidate_skill_cache()
+    return result, None
 
 
 def update_skill(db, skill_id: int,
@@ -100,7 +155,9 @@ def update_skill(db, skill_id: int,
             db, skill.id, fields["prerequisite_ids"])
         if error:
             return None, error
-    return _serialize_skill(db, repo.update_skill(db, skill, fields)), None
+    result = _serialize_skill(db, repo.update_skill(db, skill, fields))
+    invalidate_skill_cache(skill_id)
+    return result, None
 
 
 def delete_skill(db, skill_id: int,
@@ -117,6 +174,7 @@ def delete_skill(db, skill_id: int,
         if conflict:
             return False, conflict
     repo.delete_skill(db, skill_id)
+    invalidate_skill_cache()
     return True, None
 
 
@@ -137,6 +195,7 @@ def create_category(db, data: CategoryCreate) -> tuple[dict | None, str | None]:
     db.add(cat)
     db.commit()
     db.refresh(cat)
+    invalidate_skill_cache()
     return cat, None
 
 
@@ -162,6 +221,7 @@ def update_category(db, category_id: int,
         setattr(cat, key, value)
     db.commit()
     db.refresh(cat)
+    invalidate_skill_cache()
     return cat, None
 
 
@@ -179,6 +239,7 @@ def delete_category(db, category_id: int,
         if conflict:
             return False, conflict
     repo.delete_category(db, category_id)
+    invalidate_skill_cache()
     return True, None
 
 
@@ -192,7 +253,9 @@ def create_resource(db, data: ResourceCreate) -> tuple[dict | None, str | None]:
     error = integrity.ensure_resource_skill_exists(db, data.skill_id)
     if error:
         return None, error
-    return repo.create_resource(db, data.model_dump(exclude_unset=True)), None
+    result = repo.create_resource(db, data.model_dump(exclude_unset=True))
+    invalidate_skill_cache()
+    return result, None
 
 
 def update_resource(db, resource_id: int,
@@ -208,7 +271,9 @@ def update_resource(db, resource_id: int,
         error = integrity.ensure_resource_skill_exists(db, fields["skill_id"])
         if error:
             return None, error
-    return repo.update_resource(db, resource, fields), None
+    result = repo.update_resource(db, resource, fields)
+    invalidate_skill_cache()
+    return result, None
 
 
 def delete_resource(db, resource_id: int,
@@ -228,23 +293,35 @@ def delete_resource(db, resource_id: int,
             return False, conflict
     if not repo.delete_resource(db, resource_id):
         return False, "Resource not found"
+    invalidate_skill_cache()
     return True, None
 
 
 # ── Job roles ─────────────────────────────────────────────────────────
 
-def _serialize_job_role(db, role) -> dict:
-    """Job role row + ordered required-skill ids from job_role_skills."""
+def _serialize_job_role(db, role, role_skill_map=None) -> dict:
+    """Job role row + ordered required-skill ids from job_role_skills.
+
+    When role_skill_map is provided (batch mode), look up skill ids
+    from the pre-built dict instead of querying per role."""
+    if role_skill_map is not None:
+        skill_ids = role_skill_map.get(role.id, [])
+    else:
+        skill_ids = repo.get_job_role_skill_ids(db, role.id)
     return {
         "id": role.id, "title": role.title, "description": role.description,
         "career_field": role.career_field,
-        "skill_ids": repo.get_job_role_skill_ids(db, role.id),
+        "skill_ids": skill_ids,
     }
 
 
 def list_job_roles(db) -> list[dict]:
-    """All job roles serialized; admin CRUD + wizard source data."""
-    return [_serialize_job_role(db, r) for r in repo.get_all_job_roles(db)]
+    """All job roles serialized; admin CRUD + wizard source data.
+
+    Batch-fetches role-skill mappings to eliminate N+1 queries."""
+    roles = repo.get_all_job_roles(db)
+    role_skill_map = repo.get_job_role_skill_map(db)
+    return [_serialize_job_role(db, r, role_skill_map) for r in roles]
 
 
 def create_job_role(db, data: JobRoleCreate) -> tuple[dict | None, str | None]:
@@ -266,6 +343,7 @@ def create_job_role(db, data: JobRoleCreate) -> tuple[dict | None, str | None]:
     else:
         db.commit()
         db.refresh(role)
+    invalidate_skill_cache()
     return _serialize_job_role(db, role), None
 
 
@@ -295,6 +373,7 @@ def update_job_role(db, job_role_id: int,
     else:
         db.commit()
         db.refresh(updated)
+    invalidate_skill_cache()
     return _serialize_job_role(db, updated), None
 
 
@@ -312,14 +391,21 @@ def delete_job_role(db, job_role_id: int,
         if conflict:
             return False, conflict
     repo.delete_job_role(db, job_role_id)
+    invalidate_skill_cache()
     return True, None
 
 
 # ── Learner catalog (public browse) ───────────────────────────────────
 
-def _skill_link(db, skill_id: int) -> dict | None:
-    """Tiny {id, name} for a skill or None; prerequisite/follower strips."""
-    skill = repo.get_skill(db, skill_id)
+def _skill_link(db, skill_id: int, skill_map=None) -> dict | None:
+    """Tiny {id, name} for a skill or None; prerequisite/follower strips.
+
+    When skill_map is provided (batch mode), look up the skill by id
+    from the pre-built dict instead of querying the database."""
+    if skill_map is not None:
+        skill = skill_map.get(skill_id)
+    else:
+        skill = repo.get_skill(db, skill_id)
     if not skill:
         return None
     details = {"id": skill.id, "name": skill.name,
@@ -329,11 +415,18 @@ def _skill_link(db, skill_id: int) -> dict | None:
     return details
 
 
-def _category_name(db, category_id: int | None) -> str | None:
-    """Human name for a category id, or None when absent."""
+def _category_name(db, category_id: int | None,
+                   categories_map=None) -> str | None:
+    """Human name for a category id, or None when absent.
+
+    When categories_map is provided (batch mode), look up the category
+    by id from the pre-built dict instead of querying the database."""
     if category_id is None:
         return None
-    cat = db.query(Category).filter(Category.id == category_id).first()
+    if categories_map is not None:
+        cat = categories_map.get(category_id)
+    else:
+        cat = db.query(Category).filter(Category.id == category_id).first()
     return cat.name if cat else None
 
 
@@ -345,14 +438,21 @@ def serialize_skill_detail(db, skill) -> dict:
     catalog.get_skill_detail; consumed by the catalog skill view."""
     base = _serialize_skill(db, skill)
     graph = repo.get_prerequisite_graph(db)
-    prereqs = [_skill_link(db, pid) for pid in sorted(graph.get(skill.id, []))]
+    all_skill_ids = set(graph.keys())
+    for pres in graph.values():
+        all_skill_ids.update(pres)
+    skill_map = repo.get_skills_by_map(db, list(all_skill_ids))
+    categories_map = repo.get_categories_map(db)
+    prereqs = [_skill_link(db, pid, skill_map)
+               for pid in sorted(graph.get(skill.id, []))]
     prereqs = [p for p in prereqs if p is not None]
     followers = [fid for fid, pres in graph.items()
                  if skill.id in pres]
-    follower_links = [_skill_link(db, fid)
+    follower_links = [_skill_link(db, fid, skill_map)
                       for fid in sorted(followers)]
     follower_links = [f for f in follower_links if f is not None]
-    base["category_name"] = _category_name(db, skill.category_id)
+    base["category_name"] = _category_name(
+        db, skill.category_id, categories_map)
     base["prerequisites"] = prereqs
     base["recommended"] = follower_links
     return base
@@ -362,11 +462,19 @@ def list_catalog_roles(db) -> list[dict]:
     """Lean learner-facing job-role list with ordered skill names.
 
     Called by routers/catalog.list_roles; drives the catalog role picker
-    and RecommendedStrip joins without admin skill_ids plumbing."""
+    and RecommendedStrip joins without admin skill_ids plumbing.
+    Batch-fetches all role-skill mappings and skills to eliminate N+1."""
+    roles = repo.get_all_job_roles(db)
+    role_skill_map = repo.get_job_role_skill_map(db)
+    all_skill_ids = set()
+    for sids in role_skill_map.values():
+        all_skill_ids.update(sids)
+    skill_map = repo.get_skills_by_map(db, list(all_skill_ids))
     out = []
-    for role in repo.get_all_job_roles(db):
-        skill_ids = repo.get_job_role_skill_ids(db, role.id)
-        skills = [s for s in (_skill_link(db, sid) for sid in skill_ids)
+    for role in roles:
+        skill_ids = role_skill_map.get(role.id, [])
+        skills = [s for s in (_skill_link(db, sid, skill_map)
+                              for sid in skill_ids)
                   if s is not None]
         out.append({
             "id": role.id, "title": role.title,

@@ -98,6 +98,17 @@ QUESTION_BANK = {
     ],
 }
 
+def _validate_question_bank():
+    """Assert all question bank entries have valid correct indices."""
+    for questions in QUESTION_BANK.values():
+        for entry in questions:
+            assert isinstance(entry.get("correct"), int), f"bad correct type: {entry['question']}"
+            assert 0 <= entry["correct"] < len(entry["options"]), (
+                f"correct index {entry['correct']} out of range for {len(entry['options'])} options: {entry['question']}"
+            )
+
+_validate_question_bank()
+
 # Detailed sub-topics for major skills; everything else falls back to
 # [name] + [c for c in cats if c != name] (see _seed_skills).
 TOPICS = {

@@ -18,7 +18,7 @@
   async function load() {
     loading = true;
     loadError = '';
-    try { paths = await query(['paths'], () => apiFetch('/paths/')); }
+    try { paths = (await query(['paths'], () => apiFetch('/paths/'))).items ?? []; }
     catch (e) {
       loadError = e instanceof ApiError ? e.detail : 'Failed to load paths';
       toastError(loadError);

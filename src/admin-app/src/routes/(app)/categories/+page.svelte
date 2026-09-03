@@ -12,6 +12,7 @@
   import { success, error as toastError } from '$lib/components/ui/toast';
   import Icon from '$lib/icons/Icon.svelte';
   import { t } from '$lib/i18n';
+  import { onMount } from 'svelte';
   import { name, maxLength } from '$lib/validation';
 
   let rows = $state<any[]>([]);
@@ -38,11 +39,11 @@
   async function load() {
     loading = true;
     err = null;
-    try { rows = await query(['CATS'], () => apiFetch('/admin/categories')); }
+    try { rows = (await query(['CATS'], () => apiFetch('/admin/categories'))).items; }
     catch (e) { err = e instanceof ApiError ? e.detail : t('admin.common.failedLoad', { entity: t('admin.nav.categories') }); }
     finally { loading = false; }
   }
-  $effect(() => { load(); });
+  onMount(() => { load(); });
 
   function parentOptions() {
     return rows

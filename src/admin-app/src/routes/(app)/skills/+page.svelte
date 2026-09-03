@@ -12,6 +12,7 @@
   import { success, error as toastError } from '$lib/components/ui/toast';
   import Icon from '$lib/icons/Icon.svelte';
   import { t } from '$lib/i18n';
+  import { onMount } from 'svelte';
   import { name, maxLength, range, nonNegative, positiveInt, hexColor } from '$lib/validation';
 
   let rows = $state<any[]>([]);
@@ -37,27 +38,31 @@
   const diffErr = $derived(range(String(form.difficulty_level ?? ''), 0, 5));
   const hoursErr = $derived(nonNegative(String(form.estimated_hours ?? '')));
   const colorErr = $derived(hexColor(String(form.color ?? '')));
+  const iconErr = $derived(maxLength(String(form.icon ?? ''), 100));
   const catErr = $derived(form.category_id != null && form.category_id !== '' ? positiveInt(form.category_id) : null);
   const nameKey = $derived(touched.name || (form.name ?? '') ? nameErr : null);
   const descKey = $derived((form.description ?? '') ? descErr : null);
   const diffKey = $derived(touched.difficulty_level || (form.difficulty_level ?? '') !== '' ? diffErr : null);
   const hoursKey = $derived(touched.estimated_hours || (form.estimated_hours ?? '') !== '' ? hoursErr : null);
   const colorKey = $derived((form.color ?? '') ? colorErr : null);
+  const iconKey = $derived((form.icon ?? '') ? iconErr : null);
   const catKey = $derived(form.category_id != null && form.category_id !== '' ? catErr : null);
-  const dialogValid = $derived(nameErr === null && descErr === null && diffErr === null && hoursErr === null && colorErr === null && catErr === null);
+  const dialogValid = $derived(nameErr === null && descErr === null && diffErr === null && hoursErr === null && colorErr === null && iconErr === null && catErr === null);
 
   async function load() {
     loading = true;
     err = null;
     try {
-      [rows, cats] = await Promise.all([
+      const [r, c] = await Promise.all([
         query(['SKILLS'], () => apiFetch('/admin/skills')),
         query(['CATS_PICK'], () => apiFetch('/admin/categories'))
       ]);
+      rows = r.items;
+      cats = c.items;
     } catch (e) { err = e instanceof ApiError ? e.detail : t('admin.common.failedLoad', { entity: t('admin.nav.skills') }); }
     finally { loading = false; }
   }
-  $effect(() => { load(); });
+  onMount(() => { load(); });
 
   function catOptions() {
     return cats.map((c) => ({ value: c.id, label: c.name }));
@@ -154,7 +159,7 @@
     </Field>
   </div>
   <div class="row">
-    <Field label={t('admin.skills.icon')} error={formErrors.icon}>
+    <Field label={t('admin.skills.icon')} error={iconKey ? t(iconKey, { field: t('admin.skills.icon'), max: 100 }) : formErrors.icon}>
       <Input bind:value={form.icon} placeholder="emoji or name" />
     </Field>
     <Field label={t('admin.skills.color')} error={colorKey ? t(colorKey, { field: t('admin.skills.color') }) : formErrors.color}>

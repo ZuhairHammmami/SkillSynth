@@ -44,14 +44,16 @@ CREATE TABLE skills (
 	id INTEGER NOT NULL,
 	name VARCHAR(100) NOT NULL,
 	description TEXT,
-	difficulty_level INTEGER,
-	estimated_hours INTEGER,
+	difficulty_level INTEGER NOT NULL DEFAULT 0,
+	estimated_hours REAL NOT NULL DEFAULT 0.0,
 	icon VARCHAR,
 	color VARCHAR,
 	category_id INTEGER,
 	topics JSON,  -- documented JSON exception: list of topic strings
 	PRIMARY KEY (id),
 	UNIQUE (name),
+	CONSTRAINT chk_difficulty CHECK(difficulty_level >= 0 AND difficulty_level <= 10),
+	CONSTRAINT chk_hours CHECK(estimated_hours >= 0),
 	FOREIGN KEY(category_id) REFERENCES categories (id) ON DELETE SET NULL
 );
 CREATE INDEX ix_skills_id ON skills (id);
@@ -112,6 +114,7 @@ CREATE TABLE assessments (
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	PRIMARY KEY (id),
+	CONSTRAINT chk_pass_score CHECK(pass_score >= 0 AND pass_score <= 100),
 	FOREIGN KEY(skill_id) REFERENCES skills (id) ON DELETE SET NULL
 );
 CREATE INDEX ix_assessments_id ON assessments (id);
@@ -125,6 +128,7 @@ CREATE TABLE assessment_questions (
 	options JSON NOT NULL,
 	correct_index INTEGER NOT NULL,
 	PRIMARY KEY (id),
+	CONSTRAINT chk_correct CHECK(correct_index >= 0),
 	FOREIGN KEY(assessment_id) REFERENCES assessments (id) ON DELETE CASCADE
 );
 CREATE INDEX ix_assessment_questions_id ON assessment_questions (id);
@@ -144,16 +148,18 @@ CREATE TABLE assessment_results (
 CREATE INDEX ix_assessment_results_id ON assessment_results (id);
 CREATE INDEX idx_assessment_results_user_id ON assessment_results (user_id);
 CREATE INDEX idx_assessment_results_assessment_id ON assessment_results (assessment_id);
+CREATE INDEX idx_assessment_results_user_completed ON assessment_results(user_id, completed_at);
 
 -- ─── Learning ───────────────────────────────────────────────────
 
 CREATE TABLE user_skills (
 	user_id INTEGER NOT NULL,
 	skill_id INTEGER NOT NULL,
-	proficiency_level INTEGER,
+	proficiency_level INTEGER NOT NULL DEFAULT 0,
 	last_assessed_at TIMESTAMP,
 	weak_points JSON,  -- documented JSON exception: list of weak-point strings
 	PRIMARY KEY (user_id, skill_id),
+	CONSTRAINT chk_proficiency CHECK(proficiency_level >= 0 AND proficiency_level <= 5),
 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE,
 	FOREIGN KEY(skill_id) REFERENCES skills (id) ON DELETE CASCADE
 );
@@ -176,6 +182,7 @@ CREATE TABLE paths (
 );
 CREATE INDEX ix_paths_id ON paths (id);
 CREATE INDEX idx_paths_user_id ON paths (user_id);
+CREATE INDEX idx_paths_user_status ON paths(user_id, status);
 
 CREATE TABLE path_steps (
 	id INTEGER NOT NULL,
@@ -191,6 +198,8 @@ CREATE TABLE path_steps (
 	selected_level INTEGER NOT NULL DEFAULT 0,
 	current_level INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY (id),
+	CONSTRAINT chk_selected_level CHECK(selected_level >= 0 AND selected_level <= 5),
+	CONSTRAINT chk_step_level CHECK(current_level >= 0 AND current_level <= 5),
 	FOREIGN KEY(path_id) REFERENCES paths (id) ON DELETE CASCADE,
 	FOREIGN KEY(skill_id) REFERENCES skills (id) ON DELETE SET NULL
 );
@@ -208,6 +217,7 @@ CREATE TABLE step_progress (
 	FOREIGN KEY(step_id) REFERENCES path_steps (id) ON DELETE CASCADE
 );
 CREATE INDEX idx_step_progress_step_id ON step_progress (step_id);
+CREATE INDEX idx_step_progress_user_step ON step_progress(user_id, step_id);
 
 -- ─── Engagement ─────────────────────────────────────────────────
 
@@ -227,3 +237,5 @@ CREATE TABLE activity_log (
 );
 CREATE INDEX ix_activity_log_id ON activity_log (id);
 CREATE INDEX idx_activity_log_user_id ON activity_log (user_id);
+CREATE INDEX idx_activity_log_category ON activity_log(category);
+CREATE INDEX idx_activity_log_created_at ON activity_log(created_at);

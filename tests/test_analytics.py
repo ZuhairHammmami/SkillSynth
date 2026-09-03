@@ -36,13 +36,9 @@ class TestSkillGrowth:
         response = api_client.get("/api/analytics/skill-growth", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
-        assert set(data) >= {
-            "skills", "mastered_count", "in_progress_count",
-            "not_started_count", "weak_skills", "strong_skills",
-            "knowledge_gaps",
-        }
-        assert isinstance(data["skills"], list)
-        assert all(set(s) == {"skill", "level", "status"} for s in data["skills"])
+        assert set(data) >= {"items", "total", "page", "page_size", "pages"}
+        assert isinstance(data["items"], list)
+        assert all(set(s) == {"skill", "level", "status"} for s in data["items"])
 
     def test_skill_growth_requires_auth(self, api_client):
         assert api_client.get("/api/analytics/skill-growth").status_code == 401
@@ -51,7 +47,7 @@ class TestSkillGrowth:
 class TestPathProgressAndHistory:
 
     def test_path_progress(self, api_client, auth_headers):
-        paths = api_client.get("/api/paths/", headers=auth_headers).json()
+        paths = api_client.get("/api/paths/", headers=auth_headers).json()["items"]
         response = api_client.get(f"/api/analytics/path-progress/{paths[0]['id']}",
                                   headers=auth_headers)
         assert response.status_code == 200

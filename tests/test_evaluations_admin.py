@@ -191,7 +191,7 @@ class TestQuestionCRUD:
         resp = api_client.post(f"/api/admin/assessments/{aid}/questions", json={
             "prompt": "Q", "options": ["only"], "correct_index": 0},
             headers=admin_headers)
-        assert resp.status_code == 400
+        assert resp.status_code == 422
 
     def test_add_question_bad_correct_index_400(self, api_client, admin_headers):
         sid = _mk_skill(api_client, admin_headers)

@@ -102,6 +102,14 @@ def get_user_counts(db: Session) -> tuple[int, int, int, int]:
     return total, new_24h, new_7d, users_with_paths
 
 
+def get_users_by_ids(db: Session, ids: list[int]) -> dict[int, User]:
+    """Batch-fetch users by ID list; returns {id: User}. Skips missing."""
+    if not ids:
+        return {}
+    rows = db.query(User).filter(User.id.in_(ids)).all()
+    return {r.id: r for r in rows}
+
+
 def most_active_users(db: Session, limit: int = 10) -> list[tuple[str, int]]:
     """Top emails by completed-step count via step_progress join.
 

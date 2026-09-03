@@ -73,8 +73,8 @@
       <ActivityBarChart data={history?.daily_activity ?? []} />
     </Panel>
     <Panel title={t('analyticsPage.knowledgeGaps')}>
-      {#if growth?.knowledge_gaps?.length}
-        <div class="wrap">{#each growth.knowledge_gaps as g}<Badge tone="warn">{g}</Badge>{/each}</div>
+      {#if growth?.items?.some((g: any) => g.status === 'not_started')}
+        <div class="wrap">{#each growth.items.filter((g: any) => g.status === 'not_started') as g}<Badge tone="warn">{g.skill}</Badge>{/each}</div>
       {:else}
         <p class="muted">{t('analyticsPage.noKnowledgeGaps')}</p>
       {/if}
@@ -118,7 +118,7 @@
 
   <Panel title={t('analyticsPage.practiceTest')}>
     <TopSkills
-      items={(growth?.skills ?? []).map((s: any) => ({
+      items={(growth?.items ?? []).map((s: any) => ({
         skill: s.skill,
         proficiency: s.level,
         status: s.status

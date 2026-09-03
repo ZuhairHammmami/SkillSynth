@@ -6,6 +6,7 @@
   import Button from '$lib/components/ui/Button.svelte';
   import Input from '$lib/components/ui/Input.svelte';
   import Select from '$lib/components/ui/Select.svelte';
+  import Combobox from '$lib/components/ui/Combobox.svelte';
   import Spinner from '$lib/components/ui/Spinner.svelte';
   import Icon from '$lib/icons/Icon.svelte';
   import { error as toastError, success } from '$lib/components/ui/toast';
@@ -62,7 +63,7 @@
       .catch(() => { aiEnabled = false; });
   });
 
-  let fields = $derived(!options ? [] : Object.keys(options.career_fields ?? {}));
+  let fieldItems = $derived((!options ? [] : Object.entries(options.career_fields ?? {}).map(([f, rs]: any) => { const ss = Array.from(new Set((rs ?? []).flatMap((r: any) => r.skills ?? []))); return { value: f, label: f, badge: t('wizard.rolesCount', { count: rs.length }), chips: ss.slice(0, 4), keywords: ss.join(' ') }; })));
   let rolesForField = $derived(
     !options ? [] : (field ? (options.career_fields?.[field] ?? []) : (options.job_roles ?? []))
   );
@@ -182,9 +183,9 @@
       {:else if optionsError}
         <p class="err-state"><Icon name="alert" size={18} /> {optionsError}</p>
       {:else}
-        <Select label={t('wizard.fieldLabel')} hint={t('wizard.fieldHint')}
-          bind:value={field} placeholder={t('wizard.fieldAll')}
-          options={fields.map((f: string) => ({ value: f, label: f }))} />
+        <Combobox label={t('wizard.fieldLabel')} hint={t('wizard.fieldHint')}
+          bind:value={field} placeholder={t('wizard.fieldSearch')}
+          items={fieldItems} emptyText={t('wizard.noFieldResults')} />
       {/if}
     </Panel>
 

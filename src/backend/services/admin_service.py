@@ -129,12 +129,10 @@ def _most_requested_skills(db) -> list[tuple[str, int]]:
     """Top job-role-mapped skills by mapping count ({skill_name,
     path_count} items keep their historical names)."""
     counts = Counter(catalog_repository.get_path_skill_ids(db))
-    out = []
-    for sid, cnt in counts.most_common(10):
-        skill = catalog_repository.get_skill(db, sid)
-        if skill:
-            out.append((skill.name, cnt))
-    return out
+    top_ids = [sid for sid, _ in counts.most_common(10)]
+    skill_map = catalog_repository.get_skills_by_map(db, top_ids)
+    return [(skill_map[sid].name, cnt)
+            for sid, cnt in counts.most_common(10) if sid in skill_map]
 
 
 def get_aggregated_report(db) -> dict:
@@ -165,16 +163,20 @@ def get_all_paths_admin(db, skip: int = 0, limit: int = 100) -> list[PathAdminVi
         db.query(PathEntity)
         .order_by(PathEntity.created_at.desc()).offset(skip).limit(limit).all()
     )
-    all_ids = [s.id for p in paths for s in lrepo.get_steps(db, p.id)]
-    comps = lrepo.completions_by_step_ids(db, all_ids)
+    path_ids = [p.id for p in paths]
+    steps_by_path = lrepo.get_steps_by_path_ids(db, path_ids)
+    all_step_ids = [s.id for steps in steps_by_path.values() for s in steps]
+    comps = lrepo.completions_by_step_ids(db, all_step_ids)
     by_user: dict[int, set[int]] = {}
     for c in comps:
         by_user.setdefault(c.user_id, set()).add(c.step_id)
+    user_ids = [p.user_id for p in paths if p.user_id]
+    owner_map = irepo.get_users_by_ids(db, user_ids)
     views = []
     for p in paths:
-        steps = lrepo.get_steps(db, p.id)
+        steps = steps_by_path.get(p.id, [])
         done = by_user.get(p.user_id, set())
-        owner = irepo.get_by_id(db, p.user_id) if p.user_id else None
+        owner = owner_map.get(p.user_id) if p.user_id else None
         views.append(PathAdminView(
             id=p.id, title=p.title,
             user_email=owner.email if owner else "Unknown",

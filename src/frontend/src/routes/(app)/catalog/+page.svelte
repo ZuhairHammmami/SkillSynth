@@ -34,7 +34,7 @@
     new Set((paths ?? []).flatMap((p: any) => (p.skills ?? []).map((s: any) => norm(s.name))))
   );
   const masteredNames = $derived(
-    new Set((growth?.skills ?? []).filter((g: any) => g.status === 'mastered').map((g: any) => norm(g.skill)))
+    new Set((growth?.items ?? []).filter((g: any) => g.status === 'mastered').map((g: any) => norm(g.skill)))
   );
   const currentMastered = $derived(!!skill && masteredNames.has(norm(skill.name)));
   const currentInPaths = $derived(!!skill && inPathNames.has(norm(skill.name)));
@@ -47,7 +47,7 @@
   async function load() {
     loading = true;
     try {
-      categories = await query(['catalog', 'categories'], () => apiFetch('/catalog/categories'));
+      categories = (await query(['catalog', 'categories'], () => apiFetch('/catalog/categories'))).items ?? [];
     } catch (e) {
       toastError(String(e instanceof ApiError && e.detail ? e.detail : t('common.error')));
     }
@@ -59,7 +59,7 @@
       progress = null;
     }
     try {
-      paths = await query(['paths'], () => apiFetch('/paths/'));
+      paths = (await query(['paths'], () => apiFetch('/paths/'))).items ?? [];
     } catch {
       paths = [];
     }
@@ -75,7 +75,9 @@
     load();
     const h = () => {
       invalidate(['paths']);
-      query(['paths'], () => apiFetch('/paths/')).then((d) => (paths = d)).catch(() => undefined);
+      query(['paths'], () => apiFetch('/paths/'))
+        .then((d) => (paths = d.items ?? []))
+        .catch(() => undefined);
     };
     window.addEventListener('sse:path_generated', h);
     return () => window.removeEventListener('sse:path_generated', h);

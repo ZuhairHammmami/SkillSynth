@@ -16,6 +16,7 @@ from backend.dto.learning import (
     GeneratePathIn, PathDetailOut, PathUpdate,
     StepCompletionResponse, WizardAnalysisIn, WizardOptionsOut,
 )
+from backend.dto.pagination import paginate
 from backend.events.publisher import send_admin_event, send_event
 from backend.policies.auth_policy import get_current_user
 from backend.repositories import assess_repository as arepo
@@ -76,11 +77,13 @@ def generate_path_for_skill(skill_id: int, data: GenerateSkillPathIn,
 
 
 @router.get("/paths/")
-def list_paths(db: Session = Depends(get_db),
+def list_paths(page: int = 1, page_size: int = 50,
+               db: Session = Depends(get_db),
                current_user=Depends(get_current_user)):
-    """List the user's paths as full detail payloads. Calls
+    """List the user's paths paginated. Calls
     learning_service.list_user_paths; consumed by usePathApi.usePaths()."""
-    return learning_service.list_user_paths(db, current_user.id)
+    return paginate(learning_service.list_user_paths(db, current_user.id),
+                    page, page_size)
 
 
 @router.get("/paths/{path_id}", response_model=PathDetailOut)

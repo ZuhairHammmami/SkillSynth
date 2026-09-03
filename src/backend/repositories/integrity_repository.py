@@ -5,6 +5,7 @@ deletes; pure data access: no business rules, no serialization. Count
 keys mirror migrations/003_reduced_schema.sql relations.
 """
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend.entities.assessment import (
@@ -96,11 +97,18 @@ def count_resource_dependents(db: Session, resource_id: int) -> dict[str, int]:
 
     Called by catalog_integrity.resource_delete_conflict; path_steps keeps
     resource_ids as a JSON array (documented 3NF exception) so the
-    reference is found by scanning the non-null lists in Python.
+    reference is found via LIKE on the JSON column. Four patterns match
+    the integer as a complete array element without false positives.
     """
-    steps = db.query(PathStep).filter(
-        PathStep.resource_ids.isnot(None)).all()
-    refs = sum(1 for s in steps if resource_id in (s.resource_ids or []))
+    rid = resource_id
+    refs = db.query(PathStep).filter(
+        or_(
+            PathStep.resource_ids.like(f'[{rid}]'),
+            PathStep.resource_ids.like(f'[{rid}, %'),
+            PathStep.resource_ids.like(f'%, {rid}]'),
+            PathStep.resource_ids.like(f'%, {rid}, %'),
+        )
+    ).count()
     return {"path_steps": refs} if refs else {}
 
 
@@ -109,15 +117,22 @@ def count_assessment_dependents(db: Session, assessment_id: int) -> dict[str, in
 
     Called by catalog_integrity.assessment_delete_conflict; counts scored
     results and questions plus path_steps that embed the id in their
-    assessment_ids JSON array (documented 3NF exception).
+    assessment_ids JSON array (documented 3NF exception). Four patterns
+    match the integer as a complete array element without false positives.
     """
     results = db.query(AssessmentResult).filter(
         AssessmentResult.assessment_id == assessment_id).count()
     questions = db.query(AssessmentQuestion).filter(
         AssessmentQuestion.assessment_id == assessment_id).count()
-    steps = db.query(PathStep).filter(
-        PathStep.assessment_ids.isnot(None)).all()
-    refs = sum(1 for s in steps if assessment_id in (s.assessment_ids or []))
+    aid = assessment_id
+    refs = db.query(PathStep).filter(
+        or_(
+            PathStep.assessment_ids.like(f'[{aid}]'),
+            PathStep.assessment_ids.like(f'[{aid}, %'),
+            PathStep.assessment_ids.like(f'%, {aid}]'),
+            PathStep.assessment_ids.like(f'%, {aid}, %'),
+        )
+    ).count()
     counts: dict[str, int] = {}
     if results:
         counts["assessment_results"] = results
