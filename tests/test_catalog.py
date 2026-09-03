@@ -102,13 +102,13 @@ class TestCatalogPuts:
                                   headers=admin_headers).json()
         new_name = _fresh("Renamed")
         response = api_client.put(f"/api/admin/skills/{created['id']}", json={
-            "name": new_name, "description": "updated", "difficulty_level": 7,
+            "name": new_name, "description": "updated", "difficulty_level": 3,
         }, headers=admin_headers)
         assert response.status_code == 200, response.text
         body = response.json()
         assert body["name"] == new_name
         assert body["description"] == "updated"
-        assert body["difficulty_level"] == 7
+        assert body["difficulty_level"] == 3
         api_client.delete(f"/api/admin/skills/{created['id']}",
                           headers=admin_headers)
 
