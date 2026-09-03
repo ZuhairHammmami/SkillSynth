@@ -39,7 +39,7 @@ def _self_or_clean_hex(value: Optional[str]) -> Optional[str]:
 def _check_positive(ids: list[int]) -> list[int]:
     """Return the id list unchanged, raising on any non-positive id."""
     for x in ids:
-        if x is not None and x <= 0:
+        if x <= 0:
             raise ValueError("IDs must be positive integers")
     return ids
 
@@ -79,7 +79,7 @@ class CategoryUpdate(BaseModel):
 
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = None
-    parent_id: Optional[int] = Field(None, gt=0)
+    parent_id: Optional[int] = None
 
     @field_validator("name")
     @classmethod
