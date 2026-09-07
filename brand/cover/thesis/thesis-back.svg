@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SkillSynth thesis — back cover panel. A4 trim 595.28 x 841.89 pt, 9pt bleed, 27pt safe.
+  Fully layered, Inkscape-editable, fonts kept as text. RGB source — convert to CMYK at print shop.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" viewBox="0 0 595.28 841.89" width="595.28" height="841.89">
+<defs>
+<clipPath id="trim"><rect x="0" y="0" width="595.28" height="841.89"/></clipPath>
+<g id="back-art" inkscape:label="back cover art"><g id="b-ground" inkscape:label="01 ground (paper-2)">
+<rect x="0" y="0" width="595.28" height="841.89" fill="#F3EDE1"/>
+</g>
+<g id="b-grid" inkscape:label="02 grid (hairline, toggle)">
+<g id="b-grid-lines" inkscape:label="grid lines" stroke="#CFC3AE" stroke-width="0.75" stroke-opacity="0.28">
+<path d="M36.00,0 V841.8897637795277"/>
+<path d="M72.00,0 V841.8897637795277"/>
+<path d="M108.00,0 V841.8897637795277"/>
+<path d="M144.00,0 V841.8897637795277"/>
+<path d="M180.00,0 V841.8897637795277"/>
+<path d="M216.00,0 V841.8897637795277"/>
+<path d="M252.00,0 V841.8897637795277"/>
+<path d="M288.00,0 V841.8897637795277"/>
+<path d="M324.00,0 V841.8897637795277"/>
+<path d="M360.00,0 V841.8897637795277"/>
+<path d="M396.00,0 V841.8897637795277"/>
+<path d="M432.00,0 V841.8897637795277"/>
+<path d="M468.00,0 V841.8897637795277"/>
+<path d="M504.00,0 V841.8897637795277"/>
+<path d="M540.00,0 V841.8897637795277"/>
+<path d="M576.00,0 V841.8897637795277"/>
+<path d="M0,36.00 H595.2755905511812"/>
+<path d="M0,72.00 H595.2755905511812"/>
+<path d="M0,108.00 H595.2755905511812"/>
+<path d="M0,144.00 H595.2755905511812"/>
+<path d="M0,180.00 H595.2755905511812"/>
+<path d="M0,216.00 H595.2755905511812"/>
+<path d="M0,252.00 H595.2755905511812"/>
+<path d="M0,288.00 H595.2755905511812"/>
+<path d="M0,324.00 H595.2755905511812"/>
+<path d="M0,360.00 H595.2755905511812"/>
+<path d="M0,396.00 H595.2755905511812"/>
+<path d="M0,432.00 H595.2755905511812"/>
+<path d="M0,468.00 H595.2755905511812"/>
+<path d="M0,504.00 H595.2755905511812"/>
+<path d="M0,540.00 H595.2755905511812"/>
+<path d="M0,576.00 H595.2755905511812"/>
+<path d="M0,612.00 H595.2755905511812"/>
+<path d="M0,648.00 H595.2755905511812"/>
+<path d="M0,684.00 H595.2755905511812"/>
+<path d="M0,720.00 H595.2755905511812"/>
+<path d="M0,756.00 H595.2755905511812"/>
+<path d="M0,792.00 H595.2755905511812"/>
+<path d="M0,828.00 H595.2755905511812"/>
+</g>
+</g>
+<g id="b-echo" inkscape:label="03 university echo line">
+<text x="297.64" y="66.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="600" fill="#4A4238">جامعة حلب — كلية الهندسة المعلوماتية</text>
+</g>
+<g id="b-rule" inkscape:label="04 top rule">
+<line x1="217.64" y1="92.00" x2="377.64" y2="92.00" stroke="#CFC3AE" stroke-width="1.0"/>
+</g>
+<g id="b-abstract" inkscape:label="05 abstract (الملخص)">
+<text x="297.64" y="168.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="15.77" font-weight="700" fill="#8A6520">الملخص</text>
+<text x="297.64" y="206.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="400" fill="#4A4238">يتناول هذا المشروع تصميم منصّة تعليمية تكيّفيّة</text>
+<text x="297.64" y="238.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="400" fill="#4A4238">تقيس كفاءات المتدرّب، وتحلّل فجوات مهاراته،</text>
+<text x="297.64" y="270.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="400" fill="#4A4238">وترسم له مسارًا شخصيًا منظّمًا نحو الهدف الوظيفي،</text>
+<text x="297.64" y="302.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="400" fill="#4A4238">مع تقييمات فورية ومساعد ذكاء اصطناعي محليّ</text>
+<text x="297.64" y="334.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="400" fill="#4A4238">يحافظ على خصوصية المستخدم وسلامة بياناته.</text>
+</g>
+<g id="b-rule2" inkscape:label="06 rule under abstract">
+<line x1="237.64" y1="384.00" x2="357.64" y2="384.00" stroke="#CFC3AE" stroke-width="1.0"/>
+</g>
+<g id="b-colors" inkscape:label="07 identity motif (route line · dots · year)">
+<line x1="187.64" y1="640.00" x2="407.64" y2="640.00" stroke="#5F6C50" stroke-width="2" stroke-dasharray="6 5" stroke-linecap="round" fill="none"/>
+<circle cx="249.64" cy="652.00" r="4.0" fill="#B5862E"/>
+<circle cx="297.64" cy="640.00" r="5.5" fill="#5F6C50"/>
+<circle cx="345.64" cy="652.00" r="4.0" fill="#B5862E"/>
+<line x1="237.64" y1="690.00" x2="357.64" y2="690.00" stroke="#CFC3AE" stroke-width="1.0"/>
+<text x="297.64" y="720.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="10.67" font-weight="500" fill="#8A6520">٢٠٢٥–٢٠٢٦</text>
+</g>
+<g id="b-mark" inkscape:label="08 single-ink project mark (project side)">
+<g id="b-mark-group" inkscape:label="sprout mark (32-grid)" transform="translate(256.04 500.00) scale(2.60)">
+<path d="M16 28C9 28 5 23 5 16c0-5 4-9 11-9s11 4 11 9c0 7-4 12-11 12z" stroke="#2A2521" stroke-width="1.8" fill="none"/>
+<path d="M16 27V13M16 18c-3-1-5-3-5-6M16 18c3-1 5-3 5-6" stroke="#2A2521" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+<circle cx="16" cy="9" r="2.2" fill="#2A2521"/>
+</g>
+</g>
+</g>
+</defs>
+
+<use href="#back-art" clip-path="url(#trim)"/>
+</svg>

@@ -28,6 +28,48 @@ if SRC_PATH not in sys.path:
 REQUIRED_DEPS = ("fastapi", "sqlalchemy", "uvicorn")
 
 
+def _cuda_lib_dir() -> str | None:
+    """Locate the CUDA runtime library dir, if any, for LD_LIBRARY_PATH.
+
+    Called by _cmd_run (and other subprocess spawners) so the backend can
+    find libcudart/libcublas when skillsynth is launched from a shell whose
+    loader path omits /opt/cuda/lib64 (the source of the recurring SS-AI
+    'libcudart.so.13 not found' startup failure). Probes CUDA_HOME, then
+    CUDACXX's dirname, then the well-known /opt/cuda/lib64; returns None when
+    no runtime library is present so no LD_LIBRARY_PATH change is made.
+    """
+    candidates: list[str] = []
+    base = os.getenv("CUDA_HOME") or os.getenv("CUDA_PATH")
+    if base:
+        candidates.append(os.path.join(base, "lib64"))
+        candidates.append(os.path.join(base, "lib"))
+    cudacxx = os.getenv("CUDACXX")
+    if cudacxx:
+        candidates.append(os.path.dirname(os.path.dirname(cudacxx)))
+    candidates.append("/opt/cuda/lib64")
+    for cand in candidates:
+        if cand and os.path.isfile(
+                os.path.join(cand, "libcudart.so")):
+            return cand
+    return None
+
+
+def _ensure_cuda_ld_library_path() -> None:
+    """Append the detected CUDA lib dir to LD_LIBRARY_PATH for child processes.
+
+    Depends on _cuda_lib_dir(); mutates the current process os.environ so
+    every subsequently spawned child (backend uvicorn, frontend/admin node)
+    inherits the path. Non-fatal and idempotent — a missing dir changes nothing.
+    """
+    lib_dir = _cuda_lib_dir()
+    if not lib_dir:
+        return
+    present = os.environ.get("LD_LIBRARY_PATH", "").split(os.pathsep)
+    if lib_dir not in present:
+        os.environ["LD_LIBRARY_PATH"] = os.pathsep.join(
+            present + [lib_dir])
+
+
 def main(argv=None):
     """Parse argv, dispatch to one subcommand handler, return its exit code.
 
@@ -38,6 +80,7 @@ def main(argv=None):
     (--help, unknown command) become status codes.
     """
     tokens = list(sys.argv[1:]) if argv is None else list(argv)
+    _ensure_cuda_ld_library_path()
     if tokens and tokens[0] == "test":
         return int(_cmd_test(argparse.Namespace(pytest_args=tokens[1:])))
     parser = _build_parser()
@@ -386,7 +429,7 @@ def _cmd_doctor(args):
     them aligned, and returns 1 solely under --strict with a failed required
     row — otherwise always 0.
     """
-    rows = _doctor_rows()
+    rows = _doctor_rows(strict=bool(args.strict))
     width = max(len(row[0]) for row in rows) + 2
     for label, ok, required, detail in rows:
         status = "OK" if ok else ("FAIL" if required else "WARN")
@@ -398,16 +441,17 @@ def _cmd_doctor(args):
     return 0
 
 
-def _doctor_rows():
+def _doctor_rows(strict: bool = False):
     """Collect (label, ok, required, detail) probe rows for the doctor table.
 
     Called by _cmd_doctor; probes required imports (_check_deps), SS-AI
     configuration and artifacts (_check_ai), and the dev database file.
-    Returns the ordered row list.
+    `strict` is forwarded to _check_ai so the model-load probe runs only under
+    --strict (it instantiates the GGUF, which is slow). Returns the row list.
     """
     dep_ok, dep_detail = _check_deps()
     rows = [("deps fastapi/sqlalchemy/uvicorn", dep_ok, True, dep_detail)]
-    rows.extend(_check_ai())
+    rows.extend(_check_ai(strict=strict))
     db_path = os.path.join(BASE_DIR, "skillsynth.db")
     rows.append(
         ("db skillsynth.db", os.path.exists(db_path), True,
@@ -427,13 +471,15 @@ def _check_deps():
     return not missing, "; ".join(missing) or "all importable"
 
 
-def _check_ai():
+def _check_ai(strict: bool = False):
     """Probe SS-AI flag, optional llama_cpp, and the GGUF model file.
 
     Called by _doctor_rows; imports config/app_settings guarded so a broken
     environment still yields rows instead of crashing doctor, and imports
-    llama_cpp only when AI_ENABLED=true. Model/dependency rows are required
-    only while AI is enabled. Returns the row list.
+    llama_cpp only when AI_ENABLED=true. Under strict, additionally probes
+    that the model artifact actually loads and completes via _ai_runtime_probe.
+    Model/dependency rows are required only while AI is enabled. Returns the
+    row list.
     """
     try:
         from backend.config.app_settings import AI_ENABLED, AI_MODEL_PATH
@@ -455,9 +501,38 @@ def _check_ai():
         except ImportError as exc:
             rows.append(("ai llama_cpp", False, True,
                          f"not importable ({exc})"))
+        if strict and os.path.exists(model_path):
+            ok, detail = _ai_runtime_probe(model_path)
+            rows.append(("ai runtime load", ok, True, detail))
     else:
         rows.append(("ai llama_cpp", True, False, "skipped (AI_ENABLED=false)"))
     return rows
+
+
+def _ai_runtime_probe(model_path: str) -> tuple[bool, str]:
+    """Load the GGUF once and run a tiny completion; returns (ok, detail).
+
+    Called by _check_ai only under --strict; instantiates llama_cpp.Llama with
+    the engine's VRAM-fit GPU layer count and asks for one short completion so
+    a missing CUDA runtime, OOM, or corrupt GGUF surfaces as a FAIL row instead
+    of a silent backend crash. Never raises; returns a (bool, str) pair.
+    """
+    try:
+        import os
+        from backend.services import llm_engine
+        from llama_cpp import Llama
+        mbytes = os.path.getsize(model_path)
+        llm = Llama(
+            model_path=model_path,
+            n_ctx=1024,
+            n_gpu_layers=llm_engine._fit_layers(  # noqa: SLF001 — internal probe
+                llm_engine._free_vram_mb(), mbytes,
+                int(os.getenv("AI_N_GPU_LAYERS", "-1"))),
+            verbose=False)
+        out = llm("Reply with only: ok", max_tokens=4, temperature=0)
+        return True, f"loaded, replied {out['choices'][0]['text']!r}"
+    except Exception as exc:  # noqa: BLE001 — probe reports, never raises
+        return False, f"failed to load/run: {exc}"
 
 
 def _fmt_size(path):

@@ -27,13 +27,14 @@ def ai_enrich_job(user_id: int, step_id: int, skill_id: int,
     from backend.database import SessionLocal
     from backend.events.publisher import send_event
     from backend.repositories import assess_repository as arepo
-    from backend.services import llm_pipeline
+    from backend.services import knowledge_layer, llm_pipeline
     db = SessionLocal()
     try:
         raw = llm_pipeline.generate_skill_quiz(
             skill_name, difficulty=difficulty, n=4,
             proficiency_level=proficiency, topics=topics or None,
-            locale=locale)
+            locale=locale,
+            context=knowledge_layer.skill_context(db, skill_id))
         assessment = arepo.create_assessment_with_questions(
             db, skill_id, f"[AI] {skill_name} — step {step_id} test",
             "Targeted step completion test", 60, raw)
@@ -113,7 +114,8 @@ def _emit_diagnostic(db, user_id: int, skill_id: int, correct: int,
     """Emit ai_step_diagnostic SSE with refined weak points, if narrative."""
     from backend.events.publisher import send_event
     from backend.repositories import catalog_repository
-    from backend.services import learning_service, llm_pipeline
+    from backend.services import (
+        knowledge_layer, learning_service, llm_pipeline)
     skill = catalog_repository.get_skill(db, skill_id)
     if not skill:
         return
@@ -121,7 +123,8 @@ def _emit_diagnostic(db, user_id: int, skill_id: int, correct: int,
                   "assessed_level": level_now,
                   "gap": max(0, learning_service.MASTERY_LEVEL - level_now)}]
     narrative = llm_pipeline.analyze_diagnostic(
-        per_skill, topics=topics, locale=locale)
+        per_skill, topics=topics, locale=locale,
+        context=knowledge_layer.skill_context(db, skill_id))
     if not narrative:
         return
     weak = list(dict.fromkeys(

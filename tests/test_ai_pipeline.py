@@ -151,16 +151,19 @@ def test_retry_suffix_mentions_missing_key_risk(fake):
 
 
 def test_token_budgets_realistic(fake):
-    """Quiz ops request anti-truncation budgets (task-13 follow-up)."""
+    """Quiz ops request trimmed, truncation-resistant budgets (SS-AI perf).
+
+    max_tokens was cut from max(650, n*230) to min(700, max(180, n*95)) so
+    per-skill and single-skill-batch completions finish much faster on small
+    local GPUs; the batched role quiz uses min(700, len(batch)*190)."""
     obj = _one_question_obj()
     eng = fake(obj)
     pipe.generate_skill_quiz("SQL", 1, 2)
-    assert eng.kwargs[0]["max_tokens"] == max(650, 2 * 230)
+    assert eng.kwargs[0]["max_tokens"] == min(700, max(180, 2 * 95))
     eng2 = fake({"questions": [{"skill": "SQL", **_one_question_obj()["questions"][0]}]})
     pipe.generate_role_quiz("Dev", [{"name": "SQL", "difficulty": 1}])
-    # role quiz now generates per skill via generate_skill_quiz(n=2):
-    # max(650, 2 * 230) = 650.
-    assert eng2.kwargs[0]["max_tokens"] == max(650, 2 * 230)
+    # role quiz runs a single-skill batch: min(700, 1 * 190) = 190.
+    assert eng2.kwargs[0]["max_tokens"] == min(700, 1 * 190)
 
 
 def test_review_level_low_sampling_temperature(fake):

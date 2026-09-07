@@ -37,6 +37,8 @@ Identify Decision → Draft ADR → Review → Accept/Reject → Implement → S
 | ADR-013 | Feature reduction to the 15-table core (admin CRUD completion, integrity layer, removal of gamification/notifications/sessions/granular roles) — see [adr-013.md](adr-013.md) | Accepted | adr-013.md |
 | ADR-014 | Referential-Integrity Policy (FK validation → 400, rename-uniqueness → 409, cycle guards → 400, restricted deletes with census payloads + ?force=true semantics) — see [adr-014.md](adr-014.md) | Accepted | adr-014.md |
 | ADR-015 | Local LLM Integration (in-process llama.cpp GGUF, bounded autonomy, two-phase wizard) — see [adr-015.md](adr-015.md) | Accepted | adr-015.md |
+| ADR-016 | Grounding the local LLM in project data + GPU runtime fix (no fine-tuning) — corrects ADR-015's CPU-only note; adds catalog grounding, CUDA loader-path fix, n_ctx 4096, opt-in grammar — see [adr-016.md](adr-016.md) | Accepted | adr-016.md |
+| ADR-017 | AI path-generation speed — batched role-quiz completions (`llm_batching`), trimmed `max_tokens` ceilings, decoupled wizard narrative via `narrative_ready` SSE (instant `/api/wizard/analysis`) — see [adr-017.md](adr-017.md) | Accepted | adr-017.md |
 
 ## Template
 ```markdown

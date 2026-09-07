@@ -98,7 +98,7 @@ def test_wizard_quiz_enrichment_banks_and_streams(api_client, inline_jobs,
     from backend.repositories import catalog_repository
 
     def fake_role_quiz(role, skills, exclude_texts=frozenset(), locale="en",
-                       on_skill=None):
+                       context=None, on_skill=None):
         out = []
         for s in skills:
             name = s["name"]

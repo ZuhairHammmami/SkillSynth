@@ -46,6 +46,17 @@
       {#if analysis.estimated_weeks != null}
         <div class="a-block"><span class="muted">{t('wizard.estimatedWeeks')}</span><strong>{analysis.estimated_weeks}</strong></div>
       {/if}
+      {#if !analysis.narrative}
+        <div class="a-block muted">{t('wizard.narrativeGenerating')}</div>
+      {:else}
+        <div class="a-block">
+          <span class="muted">{t('wizard.narrativeTitle')}</span>
+          <p class="n-text">{t('wizard.narrativeSummary')}: {analysis.narrative.summary}</p>
+          {#if analysis.narrative.next_steps}
+            <p class="n-text">{t('wizard.narrativeNext')}: {analysis.narrative.next_steps}</p>
+          {/if}
+        </div>
+      {/if}
       {#if analysis.strengths?.length}
         <div class="a-block"><span class="muted">{t('wizard.strengths')}</span>
           <div class="chips">{#each analysis.strengths as s}<span class="chip ok">{s}</span>{/each}</div>
@@ -92,5 +103,6 @@
   .p-name { font-weight: 600; color: var(--ink); }
   .p-level { color: var(--ochre-deep); }
   .p-weak { color: var(--clay); font-style: italic; }
+  .n-text { margin: 0.3rem 0 0; color: var(--ink-soft); line-height: 1.45; }
   .center-spin { display: flex; justify-content: center; padding: 1.2rem; }
 </style>

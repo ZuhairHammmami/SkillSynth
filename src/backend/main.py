@@ -16,7 +16,6 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from slowapi.errors import RateLimitExceeded
@@ -150,15 +149,6 @@ def integrity_conflict_handler(request: Request, exc: IntegrityError):
         status_code=409,
         content={"detail": "Database conflict: the operation violates a "
                            "data constraint."})
-
-
-@app.exception_handler(RequestValidationError)
-def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """Flatten pydantic errors into a single detail string + body."""
-    messages = [e.get("msg", str(e)) for e in exc.errors()]
-    return JSONResponse(
-        status_code=422,
-        content={"detail": "; ".join(messages) if messages else "Validation error"})
 
 
 @app.exception_handler(Exception)

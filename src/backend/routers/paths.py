@@ -6,6 +6,10 @@ Wires /api/generate-path, /api/paths, /api/steps, /api/progress/dashboard,
 usePathApi.ts and useSystemApi.ts.
 """
 
+import logging
+import threading
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -29,6 +33,7 @@ from backend.services.analytics_service import MASTERY_LEVEL
 from backend.services.assess_service import normalize_key
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/generate-path/", response_model=PathDetailOut)
@@ -268,21 +273,39 @@ def _analysis_from_bank(skills, answers, bank, previous):
     return rows, weak, strong
 
 
-def _attach_narrative(report: dict, per_skill: list, locale: str = "en",
-                      topics: list = None) -> None:
-    """Enrich a results report with the AI narrative when allowed.
+def _spawn(fn) -> None:
+    """Run fn on a daemon thread so wizard_analysis returns instantly.
 
-    Callee of wizard_analysis; gated on settings.AI_ENABLED +
-    llm_pipeline._engine_available, calls analyze_diagnostic and flips
-    narrative_available only on success (mutates report in place). New
-    optional params focus recommendations on topics and select output
-    locale for the generated narrative.
+    Called by wizard_analysis when the AI narrative is wanted; tests replace
+    this seam inline to run the job synchronously.
     """
-    if settings_service.is_ai_enabled() and llm_pipeline._engine_available():
+    threading.Thread(target=fn, daemon=True).start()
+
+
+def _narrative_job(user_id: int, analysis_id: str, per_skill: list,
+                   locale: str, topics: list) -> None:
+    """Compute the AI narrative off the request thread; emit narrative_ready.
+
+    Spawned by wizard_analysis when AI is enabled + engine ready. Opens its own
+    SessionLocal (a bg thread cannot reuse the request one), threads the catalog
+    digest (knowledge_layer) for grounding, and publishes an SSE narrative_ready
+    frame carrying analysis_id so the frontend correlates it to the stored
+    analysis. Soft-failing: any error just skips the frame.
+    """
+    from backend.database import SessionLocal
+    from backend.services import knowledge_layer
+    db = SessionLocal()
+    try:
         narrative = llm_pipeline.analyze_diagnostic(
-            per_skill, topics=topics, locale=locale)
+            per_skill, topics=topics, locale=locale,
+            context=knowledge_layer.knowledge_digest(db))
         if narrative:
-            report.update(narrative=narrative, narrative_available=True)
+            send_event(user_id, "narrative_ready",
+                       {"analysis_id": analysis_id, "narrative": narrative})
+    except Exception as exc:  # noqa: BLE001 — soft, never crash the app
+        logger.warning("narrative job %s failed: %s", analysis_id, exc)
+    finally:
+        db.close()
 
 
 @router.post("/wizard/analysis")
@@ -292,9 +315,9 @@ def wizard_analysis(data: WizardAnalysisIn, db: Session = Depends(get_db),
 
     Grades via learning_service._score_answers(persist=False) +
     _build_report_rows, or purely through _analysis_from_bank when
-    data.quiz_job_id resolves in routers.ai.AI_QUIZ_BANK; optionally
-    enriches via _attach_narrative. Performs ZERO writes. Consumed by
-    PathWizard ResultsStep (frontend Task 10).
+    data.quiz_job_id resolves in routers.ai.AI_QUIZ_BANK; spawns an async
+    narrative job (SSE narrative_ready) instead of blocking on the LLM.
+    Performs ZERO writes. Consumed by PathWizard ResultsStep (Task 10).
     """
     role = catalog_repository.get_job_role_by_title(db, data.goal)
     if not role:
@@ -317,15 +340,20 @@ def wizard_analysis(data: WizardAnalysisIn, db: Session = Depends(get_db),
             db, skills, data.answers or {}, levels, previous)
         below = [s for s in skills if levels[s.id] < MASTERY_LEVEL]
     hours = sum((s.estimated_hours or 10) for s in below)
+    analysis_id = uuid.uuid4().hex
     report = {
+        "analysis_id": analysis_id,
         "per_skill": per_skill, "weaknesses": weaknesses,
         "strengths": strengths,
         "recommended_focus": weaknesses[:5],
         "estimated_weeks": max(1, round(hours / max(data.weekly_hours, 1))),
         "narrative": None, "narrative_available": False,
     }
-    _attach_narrative(report, per_skill, locale=data.locale or "en",
-                      topics=[t for s in skills for t in (s.topics or [])])
+    if settings_service.is_ai_enabled() and llm_pipeline._engine_available():
+        topics = [t for s in skills for t in (s.topics or [])]
+        _spawn(lambda: _narrative_job(
+            current_user.id, analysis_id, per_skill,
+            data.locale or "en", topics))
     return report
 
 

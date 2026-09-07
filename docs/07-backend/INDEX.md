@@ -32,7 +32,7 @@ main.py            # app factory, lifespan (create_all + admin autoseed), middle
 database.py        # SQLAlchemy engine: MODE=dev→SQLite skillsynth.db, prod→DATABASE_URL (pooled)
 limiter.py         # slowapi limiters: global 100/min, auth 10/min, admin 60/min (Redis store if REDIS_URL in prod)
 routers/ (10)       # auth · learning · paths · assessments · analytics · admin · catalog_admin · realtime · ai (+ error_mapping.py)
-services/ (11)      # auth · catalog · catalog_integrity · learning · assess · wizard · analytics · admin · llm_engine · llm_pipeline · llm_prompts
+services/ (14)      # auth · catalog · catalog_integrity · learning · assess · wizard · analytics · admin · llm_engine · llm_pipeline · llm_prompts · llm_validation · knowledge_layer · llm_batching
 repositories/ (6)  # identity · catalog · learning · assess · engagement · integrity
 entities/ (6)      # base.py + identity/catalog/learning/assessment/engagement modules → 15 tables
 dto/ (4)           # auth · catalog · learning · admin (Pydantic)

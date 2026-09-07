@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SkillSynth thesis — full jacket spread. Media 1251.07 x 859.89 pt = front 595.28 + spine 42.52 (15.0mm) + back 595.28, 9pt bleed all edges.
+  Arabic (RTL) book: the spine bonds to the RIGHT edge of the FRONT cover; open by lifting the LEFT fore-edge.
+  Print geometry: trim 595.28x841.89 per panel · safe 27.0pt · spine fold/scores at x = 604.28 / 646.80 · media bleed edges x = 9.00 / 1242.07.
+  RGB source — convert to CMYK at the binder; do not print the RGB PDF directly.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" viewBox="0 0 1251.07 859.89" width="1251.07" height="859.89">
+<defs>
+<clipPath id="trim-back"><rect x="0" y="0" width="595.28" height="841.89"/></clipPath>
+<clipPath id="trim-front"><rect x="0" y="0" width="595.28" height="841.89"/></clipPath>
+<g id="front-bleed-art" inkscape:label="front bleed decor (unclipped)"><g id="f-bleed" inkscape:label="00 bleed decor (ground + identity field)">
+<g id="f-ground" inkscape:label="01 ground">
+<rect x="0" y="0" width="595.28" height="841.89" fill="#FBF6EC"/>
+</g>
+<g id="f-colors" inkscape:label="02 identity field (rings, panel, mound, route, dots)">
+<path d="M-9,744 C 92,732 196,710 297.64,710 C 399.28,710 503.28,732 604.28,744 L604.28,850.89 L-9.00,850.89 Z" fill="#7C8A6B"/>
+<path d="M-9,745 C 92,733 196,711 297.64,711 C 399.28,711 503.28,733 604.28,745" stroke="#B5862E" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="5 4" fill="none"/>
+<circle cx="127.64" cy="721.00" r="4.0" fill="#B5862E"/>
+<circle cx="297.64" cy="710.00" r="5.5" fill="#5F6C50"/>
+<circle cx="467.64" cy="721.00" r="4.0" fill="#B5862E"/>
+<rect x="125.64" y="462.00" width="344.00" height="204.00" rx="10.00" fill="#F3EDE1" stroke="#CFC3AE" stroke-width="0.75"/>
+<rect x="131.64" y="468.00" width="332.00" height="192.00" rx="6.00" fill="#FFFDF7" stroke="#CFC3AE" stroke-width="0.5"/>
+<rect x="269.64" y="472.00" width="56.00" height="3.00" fill="#B5862E"/>
+<line x1="255.64" y1="578.00" x2="339.64" y2="578.00" stroke="#CFC3AE" stroke-width="0.75"/>
+<circle cx="520.00" cy="83.00" r="74.00" stroke="#8A7B6C" stroke-width="1.2" fill="none"/>
+<circle cx="520.00" cy="83.00" r="58.00" stroke="#B5862E" stroke-width="2.2" fill="none"/>
+</g>
+</g>
+</g>
+<g id="front-core-art" inkscape:label="front core (trim-clipped)"><g id="f-grid" inkscape:label="03 grid (hairline, toggle)">
+<g id="f-grid-lines" inkscape:label="grid lines" stroke="#E4DAC8" stroke-width="0.75" stroke-opacity="0.4">
+<path d="M36.00,0 V841.8897637795277"/>
+<path d="M72.00,0 V841.8897637795277"/>
+<path d="M108.00,0 V841.8897637795277"/>
+<path d="M144.00,0 V841.8897637795277"/>
+<path d="M180.00,0 V841.8897637795277"/>
+<path d="M216.00,0 V841.8897637795277"/>
+<path d="M252.00,0 V841.8897637795277"/>
+<path d="M288.00,0 V841.8897637795277"/>
+<path d="M324.00,0 V841.8897637795277"/>
+<path d="M360.00,0 V841.8897637795277"/>
+<path d="M396.00,0 V841.8897637795277"/>
+<path d="M432.00,0 V841.8897637795277"/>
+<path d="M468.00,0 V841.8897637795277"/>
+<path d="M504.00,0 V841.8897637795277"/>
+<path d="M540.00,0 V841.8897637795277"/>
+<path d="M576.00,0 V841.8897637795277"/>
+<path d="M0,36.00 H595.2755905511812"/>
+<path d="M0,72.00 H595.2755905511812"/>
+<path d="M0,108.00 H595.2755905511812"/>
+<path d="M0,144.00 H595.2755905511812"/>
+<path d="M0,180.00 H595.2755905511812"/>
+<path d="M0,216.00 H595.2755905511812"/>
+<path d="M0,252.00 H595.2755905511812"/>
+<path d="M0,288.00 H595.2755905511812"/>
+<path d="M0,324.00 H595.2755905511812"/>
+<path d="M0,360.00 H595.2755905511812"/>
+<path d="M0,396.00 H595.2755905511812"/>
+<path d="M0,432.00 H595.2755905511812"/>
+<path d="M0,468.00 H595.2755905511812"/>
+<path d="M0,504.00 H595.2755905511812"/>
+<path d="M0,540.00 H595.2755905511812"/>
+<path d="M0,576.00 H595.2755905511812"/>
+<path d="M0,612.00 H595.2755905511812"/>
+<path d="M0,648.00 H595.2755905511812"/>
+<path d="M0,684.00 H595.2755905511812"/>
+<path d="M0,720.00 H595.2755905511812"/>
+<path d="M0,756.00 H595.2755905511812"/>
+<path d="M0,792.00 H595.2755905511812"/>
+<path d="M0,828.00 H595.2755905511812"/>
+</g>
+</g>
+<g id="f-emblem" inkscape:label="04 official university emblem (Aleppo Univ — replaceable PNG, top-right block)">
+<image x="474.00" y="37.00" width="92.00" height="92.00" preserveAspectRatio="xMidYMid meet" xlink:href="university-logo.png"/>
+</g>
+<g id="f-univ" inkscape:label="05 official university block (document letterhead, right-aligned)">
+<text x="566.00" y="176.00" text-anchor="end" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="19.18" font-weight="700" fill="#2A2521">جامعة حلب</text>
+<text x="566.00" y="200.00" text-anchor="end" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="15.77" font-weight="600" fill="#4A4238">كلية الهندسة المعلوماتية</text>
+<text x="566.00" y="224.00" text-anchor="end" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="600" fill="#8A6520">مشروع السنة الرابعة</text>
+</g>
+<g id="f-title" inkscape:label="06 academic project title (EN Bricolage)">
+<text x="297.64" y="268.00" text-anchor="middle" font-family="Bricolage Grotesque, Public Sans, Noto Sans, sans-serif" font-size="34.43" font-weight="700" fill="#2A2521" letter-spacing="-0.01em"><tspan fill="#2A2521">Skill</tspan><tspan fill="#B5862E">Synth</tspan></text>
+<path d="M210,279.00 C 224,283.00 238,279.00 252,283.00 S 278,279.00 292,283.00 S 318,279.00 332,283.00 S 358,279.00 372,283.00 S 382,280.00 385,282.00" stroke="#8A6520" stroke-width="6" stroke-linecap="round" fill="none"/>
+</g>
+<g id="f-description" inkscape:label="07 project description (AR, under the title)">
+<text x="297.64" y="330.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="400" fill="#4A4238">منظومة ذكية للتعلم التكيفي وبناء المهارات</text>
+<text x="297.64" y="358.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="400" fill="#4A4238">تُرسم مسارًا مهنيًا شخصيًا خطوة بخطوة</text>
+</g>
+<g id="f-authors" inkscape:label="08 authors (إعداد الطلبة, 2×2 grid, top half of the panel)">
+<text x="297.64" y="494.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="600" fill="#8A6520">إعداد الطلبة</text>
+<text x="207.64" y="522.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.00" font-weight="500" fill="#2A2521">علي عثمان عبد الملك</text>
+<text x="387.64" y="522.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.00" font-weight="500" fill="#2A2521">زهير حمامي</text>
+<text x="207.64" y="552.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.00" font-weight="500" fill="#2A2521">مصطفى منلا محمد</text>
+<text x="387.64" y="552.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.00" font-weight="500" fill="#2A2521">أحمد أحمد</text>
+</g>
+<g id="f-supervisors" inkscape:label="09 supervisors (إشراف, bottom half of the panel, below the section rule)">
+<text x="297.64" y="600.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="600" fill="#8A6520">إشراف</text>
+<text x="202.64" y="630.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.00" font-weight="500" fill="#2A2521">د. بدر الدين قصاب</text>
+<text x="392.64" y="630.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.00" font-weight="500" fill="#2A2521">د. سهيل خواتمي</text>
+</g>
+<g id="f-dividers" inkscape:label="10 hairline divider (under the description)">
+<line x1="197.64" y1="404.00" x2="397.64" y2="404.00" stroke="#CFC3AE" stroke-width="1.0"/>
+</g>
+<g id="f-year" inkscape:label="11 academic year (large tab on the sage mound)">
+<rect x="242.64" y="756.00" width="110.00" height="48.00" rx="6" fill="#FBF6EC" stroke="#CFC3AE" stroke-width="1"/>
+<text x="297.64" y="784.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="19.18" font-weight="600" fill="#2A2521">٢٠٢٥–٢٠٢٦</text>
+</g>
+</g>
+<g id="spine-art" inkscape:label="spine art"><g id="s-ground" inkscape:label="01 ground (paper-2)">
+<rect x="0" y="0" width="42.52" height="841.89" fill="#F3EDE1"/>
+</g>
+<g id="s-borders" inkscape:label="02 edge hairlines">
+<line x1="2" y1="27" x2="2" y2="814.89" stroke="#CFC3AE" stroke-width="0.75" stroke-opacity="0.6"/>
+<line x1="40.52" y1="27" x2="40.52" y2="814.89" stroke="#CFC3AE" stroke-width="0.75" stroke-opacity="0.6"/>
+</g>
+<g id="s-tick" inkscape:label="06 crest-echo tick (family continuity, dashed)">
+<line x1="12.26" y1="250.00" x2="30.26" y2="250.00" stroke="#B5862E" stroke-width="1.2" stroke-dasharray="4 3" stroke-linecap="round"/>
+</g>
+<g id="s-mark" inkscape:label="05 mark (single ink)">
+<g id="s-mark-group" inkscape:label="sprout mark (32-grid)" transform="translate(1.26 90.00) scale(1.25)">
+<path d="M16 28C9 28 5 23 5 16c0-5 4-9 11-9s11 4 11 9c0 7-4 12-11 12z" stroke="#2A2521" stroke-width="1.8" fill="none"/>
+<path d="M16 27V13M16 18c-3-1-5-3-5-6M16 18c3-1 5-3 5-6" stroke="#2A2521" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+<circle cx="16" cy="9" r="2.2" fill="#2A2521"/>
+</g>
+</g>
+<g id="s-title" inkscape:label="03 title (EN, Bricolage, ascending bottom-to-top)">
+<text transform="translate(21.26 710.00) rotate(-90)" text-anchor="start" font-family="Bricolage Grotesque, Public Sans, Noto Sans, sans-serif" font-size="13.85" font-weight="700" letter-spacing="-0.01em" fill="#2A2521">SkillSynth</text>
+</g>
+<g id="s-year" inkscape:label="04 academic year (ascending bottom-to-top)">
+<text transform="translate(21.26 598.00) rotate(-90)" text-anchor="start" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="10.67" font-weight="500" fill="#8A6520">٢٠٢٥–٢٠٢٦</text>
+</g>
+</g>
+<g id="back-art" inkscape:label="back cover art"><g id="b-ground" inkscape:label="01 ground (paper-2)">
+<rect x="0" y="0" width="595.28" height="841.89" fill="#F3EDE1"/>
+</g>
+<g id="b-grid" inkscape:label="02 grid (hairline, toggle)">
+<g id="b-grid-lines" inkscape:label="grid lines" stroke="#CFC3AE" stroke-width="0.75" stroke-opacity="0.28">
+<path d="M36.00,0 V841.8897637795277"/>
+<path d="M72.00,0 V841.8897637795277"/>
+<path d="M108.00,0 V841.8897637795277"/>
+<path d="M144.00,0 V841.8897637795277"/>
+<path d="M180.00,0 V841.8897637795277"/>
+<path d="M216.00,0 V841.8897637795277"/>
+<path d="M252.00,0 V841.8897637795277"/>
+<path d="M288.00,0 V841.8897637795277"/>
+<path d="M324.00,0 V841.8897637795277"/>
+<path d="M360.00,0 V841.8897637795277"/>
+<path d="M396.00,0 V841.8897637795277"/>
+<path d="M432.00,0 V841.8897637795277"/>
+<path d="M468.00,0 V841.8897637795277"/>
+<path d="M504.00,0 V841.8897637795277"/>
+<path d="M540.00,0 V841.8897637795277"/>
+<path d="M576.00,0 V841.8897637795277"/>
+<path d="M0,36.00 H595.2755905511812"/>
+<path d="M0,72.00 H595.2755905511812"/>
+<path d="M0,108.00 H595.2755905511812"/>
+<path d="M0,144.00 H595.2755905511812"/>
+<path d="M0,180.00 H595.2755905511812"/>
+<path d="M0,216.00 H595.2755905511812"/>
+<path d="M0,252.00 H595.2755905511812"/>
+<path d="M0,288.00 H595.2755905511812"/>
+<path d="M0,324.00 H595.2755905511812"/>
+<path d="M0,360.00 H595.2755905511812"/>
+<path d="M0,396.00 H595.2755905511812"/>
+<path d="M0,432.00 H595.2755905511812"/>
+<path d="M0,468.00 H595.2755905511812"/>
+<path d="M0,504.00 H595.2755905511812"/>
+<path d="M0,540.00 H595.2755905511812"/>
+<path d="M0,576.00 H595.2755905511812"/>
+<path d="M0,612.00 H595.2755905511812"/>
+<path d="M0,648.00 H595.2755905511812"/>
+<path d="M0,684.00 H595.2755905511812"/>
+<path d="M0,720.00 H595.2755905511812"/>
+<path d="M0,756.00 H595.2755905511812"/>
+<path d="M0,792.00 H595.2755905511812"/>
+<path d="M0,828.00 H595.2755905511812"/>
+</g>
+</g>
+<g id="b-echo" inkscape:label="03 university echo line">
+<text x="297.64" y="66.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="600" fill="#4A4238">جامعة حلب — كلية الهندسة المعلوماتية</text>
+</g>
+<g id="b-rule" inkscape:label="04 top rule">
+<line x1="217.64" y1="92.00" x2="377.64" y2="92.00" stroke="#CFC3AE" stroke-width="1.0"/>
+</g>
+<g id="b-abstract" inkscape:label="05 abstract (الملخص)">
+<text x="297.64" y="168.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="15.77" font-weight="700" fill="#8A6520">الملخص</text>
+<text x="297.64" y="206.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="400" fill="#4A4238">يتناول هذا المشروع تصميم منصّة تعليمية تكيّفيّة</text>
+<text x="297.64" y="238.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="400" fill="#4A4238">تقيس كفاءات المتدرّب، وتحلّل فجوات مهاراته،</text>
+<text x="297.64" y="270.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="400" fill="#4A4238">وترسم له مسارًا شخصيًا منظّمًا نحو الهدف الوظيفي،</text>
+<text x="297.64" y="302.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="400" fill="#4A4238">مع تقييمات فورية ومساعد ذكاء اصطناعي محليّ</text>
+<text x="297.64" y="334.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="13.85" font-weight="400" fill="#4A4238">يحافظ على خصوصية المستخدم وسلامة بياناته.</text>
+</g>
+<g id="b-rule2" inkscape:label="06 rule under abstract">
+<line x1="237.64" y1="384.00" x2="357.64" y2="384.00" stroke="#CFC3AE" stroke-width="1.0"/>
+</g>
+<g id="b-colors" inkscape:label="07 identity motif (route line · dots · year)">
+<line x1="187.64" y1="640.00" x2="407.64" y2="640.00" stroke="#5F6C50" stroke-width="2" stroke-dasharray="6 5" stroke-linecap="round" fill="none"/>
+<circle cx="249.64" cy="652.00" r="4.0" fill="#B5862E"/>
+<circle cx="297.64" cy="640.00" r="5.5" fill="#5F6C50"/>
+<circle cx="345.64" cy="652.00" r="4.0" fill="#B5862E"/>
+<line x1="237.64" y1="690.00" x2="357.64" y2="690.00" stroke="#CFC3AE" stroke-width="1.0"/>
+<text x="297.64" y="720.00" text-anchor="middle" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="10.67" font-weight="500" fill="#8A6520">٢٠٢٥–٢٠٢٦</text>
+</g>
+<g id="b-mark" inkscape:label="08 single-ink project mark (project side)">
+<g id="b-mark-group" inkscape:label="sprout mark (32-grid)" transform="translate(256.04 500.00) scale(2.60)">
+<path d="M16 28C9 28 5 23 5 16c0-5 4-9 11-9s11 4 11 9c0 7-4 12-11 12z" stroke="#2A2521" stroke-width="1.8" fill="none"/>
+<path d="M16 27V13M16 18c-3-1-5-3-5-6M16 18c3-1 5-3 5-6" stroke="#2A2521" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+<circle cx="16" cy="9" r="2.2" fill="#2A2521"/>
+</g>
+</g>
+</g>
+</defs>
+
+<rect x="0" y="0" width="1251.07" height="859.89" fill="#FBF6EC"/>
+<rect x="0" y="0" width="604.28" height="859.89" fill="#FBF6EC"/>
+<rect x="604.28" y="0" width="646.80" height="859.89" fill="#F3EDE1"/>
+<g id="print-guides" inkscape:label="print guides (crop marks · score lines · section labels)">
+<path d="M0.00, 18.00 V24.00 M18.00, 0.00 H24.00" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M604.28, 18.00 V24.00 M598.28, 0.00 H604.28" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M646.80, 18.00 V24.00 M640.80, 0.00 H646.80" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M1251.07, 18.00 V24.00 M1221.07, 0.00 H1227.07" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M0.00, 829.89 V835.89 M18.00, 859.89 H24.00" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M604.28, 829.89 V835.89 M598.28, 859.89 H604.28" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M646.80, 829.89 V835.89 M640.80, 859.89 H646.80" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M1251.07, 829.89 V835.89 M1221.07, 859.89 H1227.07" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<line x1="604.28" y1="6.00" x2="604.28" y2="853.89" stroke="#8A6520" stroke-width="1" stroke-dasharray="7 4" stroke-opacity="0.8"/>
+<text x="610.28" y="36.00" text-anchor="start" font-family="Public Sans, sans-serif" font-size="7" fill="#8A6520" font-weight="600">score 604.28</text>
+<line x1="646.80" y1="6.00" x2="646.80" y2="853.89" stroke="#8A6520" stroke-width="1" stroke-dasharray="7 4" stroke-opacity="0.8"/>
+<text x="652.80" y="36.00" text-anchor="start" font-family="Public Sans, sans-serif" font-size="7" fill="#8A6520" font-weight="600">score 646.80</text>
+<text x="302.14" y="40.00" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="9" fill="#4A4238" font-weight="700" letter-spacing="0.2em">FRONT</text>
+<text x="625.54" y="40.00" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="9" fill="#4A4238" font-weight="700" letter-spacing="0.2em">SPINE</text>
+<text x="948.93" y="40.00" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="9" fill="#4A4238" font-weight="700" letter-spacing="0.2em">BACK</text>
+</g>
+<use href="#front-bleed-art" transform="translate(9.00 9.00)"/>
+<use href="#front-core-art" clip-path="url(#trim-front)" transform="translate(9.00 9.00)"/>
+<use href="#spine-art" transform="translate(604.28 9.00)"/>
+<use href="#back-art" clip-path="url(#trim-back)" transform="translate(646.80 9.00)"/>
+</svg>

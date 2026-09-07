@@ -16,7 +16,7 @@ from backend.services import settings_service
 
 def _fake_role_quiz(role_title, skills, exclude_texts=frozenset(),
                     proficiency_level=None, topics=None, locale="en",
-                    on_skill=None):
+                    context=None, on_skill=None):
     """Deterministic role quiz: two MCQs per requested skill, correct=0.
 
     Replaces llm_pipeline.generate_role_quiz in enrichment tests; the job
