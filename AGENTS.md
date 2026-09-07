@@ -73,7 +73,7 @@ PYTHONPATH=src python tools/verify_schema.py   # prints SCHEMA MATCH on success
 **Backend Layer Structure (`src/backend/`)**  
 ```
 routers/       → 8 thin handlers + catalog_admin merged under /api/admin + shared error_mapping (auth · learning · paths · assessments · analytics · admin · realtime · ai)
-services/      → 11 business-logic modules (auth · catalog · catalog_integrity · wizard · learning · assess · analytics · admin · llm_engine · llm_pipeline · llm_prompts)
+services/      → 14 business-logic modules (auth · catalog · catalog_integrity · wizard · learning · assess · analytics · admin · llm_engine · llm_pipeline · llm_prompts · llm_validation · knowledge_layer · llm_batching)
 repositories/  → 6 data-access modules (identity · catalog · learning · assess · engagement · integrity)
 entities/      → 5 consolidated model modules (+base.py) — 15 tables
 dto/           → 4 Pydantic schema modules (auth · catalog · learning · admin)
@@ -112,7 +112,7 @@ Note: `mappers/`, `validators/`, `commands/`, `queries/`, `cache/`, `infrastruct
 | *(total)* | 88 OpenAPI operations across 69 paths (8 routers): Admin 37 ops/21 paths · Learning Engine 7/7 · AI + wizard 6/6 · Analytics 5/5 · Catalog browse 5/5 · Paths & Progress 8/6 · Auth 9/8 · Assessments 4/4 · Real-time 4/4 · untagged utility ops 3 (`/`, `/api/public/stats`, `/api/wizard-options`) + `/api/events` SSE alias |
 | `/api/auth/*` | register, token, me (GET/PUT), change-password, forgot/reset (stateless signed token), sse-token, csrf |
 | `/api/generate-path/` + `/api/learning/*` | Path generation (wizard scoring), graph, gaps; `/api/learning/generate` alias |
-| `/api/wizard/analysis` + `/api/ai/*` | Two-phase wizard: PURE analysis before path creation; AI quiz/test/explain behind `AI_ENABLED` gate (503 when off); quizzes ephemeral via SSE, practice tests persist as `[AI] <Skill> — adaptive` (ADR-015) |
+| `/api/wizard/analysis` + `/api/ai/*` | Two-phase wizard: PURE analysis before path creation (returns instantly; AI narrative arrives async via `narrative_ready` SSE, ADR-017); AI quiz/test/explain behind `AI_ENABLED` gate (503 when off); quizzes ephemeral via SSE, practice tests persist as `[AI] <Skill> — adaptive` (ADR-015) |
 | `/api/paths/` + `/api/steps/*` | Path CRUD, step complete/undo, progress dashboard |
 | `/api/catalog/skills/{id}` + `/api/catalog/roles` | Learner catalog: skill detail with prerequisite/recommended strips; lean role list |
 | `/api/generate-path/skill/{id}` | Per-skill path generation (reuses prerequisite topo-sort); duplicate/mastered → 409 |

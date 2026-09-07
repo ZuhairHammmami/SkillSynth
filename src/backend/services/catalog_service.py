@@ -33,6 +33,8 @@ def invalidate_skill_cache(skill_id: int | None = None):
     _category_cache.clear()
     _prereq_graph_cache.clear()
     _job_role_cache.clear()
+    from backend.services import knowledge_layer
+    knowledge_layer.invalidate()
 
 
 def _skill_ids(raw: list | None) -> list[int]:
@@ -105,11 +107,13 @@ def _serialize_category(db, category, skill_map=None,
 def list_skills(db) -> list[dict]:
     """All skills serialized; admin skills page.
 
-    Batch-fetches prerequisites and resources to eliminate N+1 queries."""
+    Batch-fetches prerequisites and resources to eliminate N+1 queries.
+    Ordered newest-first (id desc) so a freshly created skill lands on page 1
+    for the admin skills table."""
     skills = repo.get_all_skills(db)
     prereq_map, resource_map = _build_skill_maps(db, skills)
     return [_serialize_skill(db, s, prereq_map, resource_map)
-            for s in skills]
+            for s in sorted(skills, key=lambda s: s.id, reverse=True)]
 
 
 def create_skill(db, data: SkillCreate) -> tuple[dict | None, str | None]:

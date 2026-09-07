@@ -2,6 +2,7 @@
   import { apiFetch, ApiError } from '$lib/api/client';
   import { query } from '$lib/query';
   import { goto } from '$app/navigation';
+  import { onMount } from 'svelte';
   import Panel from '$lib/components/ui/Panel.svelte';
   import Button from '$lib/components/ui/Button.svelte';
   import Input from '$lib/components/ui/Input.svelte';
@@ -61,6 +62,18 @@
     apiFetch('/ai/status')
       .then((d) => { aiEnabled = !!(d && d.ai_enabled); })
       .catch(() => { aiEnabled = false; });
+  });
+
+  onMount(() => {
+    const onNarrative = (e: CustomEvent) => {
+      const d = e.detail;
+      if (d?.analysis_id && analysis && analysis.analysis_id === d.analysis_id
+          && d.narrative) {
+        analysis = { ...analysis, narrative: d.narrative, narrative_available: true };
+      }
+    };
+    window.addEventListener('sse:narrative_ready', onNarrative as EventListener);
+    return () => window.removeEventListener('sse:narrative_ready', onNarrative as EventListener);
   });
 
   let fieldItems = $derived((!options ? [] : Object.entries(options.career_fields ?? {}).map(([f, rs]: any) => { const ss = Array.from(new Set((rs ?? []).flatMap((r: any) => r.skills ?? []))); return { value: f, label: f, badge: t('wizard.rolesCount', { count: rs.length }), chips: ss.slice(0, 4), keywords: ss.join(' ') }; })));

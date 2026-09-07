@@ -1,0 +1,415 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4990" height="1846" viewBox="0 0 4990 1846" font-family="Calibri, Tajawal, sans-serif">
+<defs><marker id="crow" viewBox="0 0 12 12" refX="12" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0,6 L 12,0 M 0,6 L 12,12 M 0,6 L 6,6" stroke="#5F6C50" stroke-width="1.5" fill="none"/></marker><marker id="bar" viewBox="0 0 6 12" refX="0" refY="6" markerWidth="6" markerHeight="12" orient="auto"><line x1="6" y1="0" x2="6" y2="12" stroke="#5F6C50" stroke-width="2"/></marker></defs>
+<rect width="4990" height="1846" fill="#FFFDF7"/>
+<rect x="80" y="14" width="4830" height="54" rx="8" fill="#2A2521"/>
+<text x="2495.0" y="36" text-anchor="middle" font-size="18" font-weight="bold" fill="#FBF6EC" font-family="Calibri">SkillSynth — Database Entity Relationship Diagram</text>
+<text x="2495.0" y="55" text-anchor="middle" font-size="12" fill="#CFC3AE">نموذج البيانات: ١٥ جدولاً · الشكل الطبيعي الثالث (STRICT 3NF) · التقسيم الهرمي حسب الاعتماديات (Layered)</text>
+<rect x="2518.0" y="70" width="1424.0" height="216" rx="10" fill="#5F6C5012"/>
+<rect x="2518.0" y="504" width="1424.0" height="304" rx="10" fill="#B5862E12"/>
+<rect x="2028.0" y="938" width="2894.0" height="260" rx="10" fill="#5F6C5012"/>
+<rect x="2518.0" y="1372" width="1424.0" height="194" rx="10" fill="#8A652012"/>
+<g fill="none" stroke="#5F6C50" stroke-width="1.8">
+<path d="M 3230 514 L 2250 514 L 2250 80 L 2740 80" marker-start="url(#crow)" marker-end="url(#bar)"/>
+<text x="2985" y="291" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:1</text>
+<path d="M 2740 948 L 1760 948 L 1760 514 L 3230 514" marker-start="url(#crow)" marker-end="url(#crow)"/>
+<text x="2985" y="725" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:M</text>
+<path d="M 2740 948 L 1770 948 L 1770 514 L 3230 514" marker-start="url(#crow)" marker-end="url(#crow)"/>
+<text x="2985" y="725" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:M</text>
+<path d="M 4210 948 L 5190 948 L 5190 80 L 3720 80" marker-start="url(#crow)" marker-end="url(#crow)"/>
+<text x="3965" y="508" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:M</text>
+<path d="M 4210 948 L 1780 948 L 1780 514 L 3230 514" marker-start="url(#crow)" marker-end="url(#crow)"/>
+<text x="3720" y="725" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:M</text>
+<path d="M 3230 948 L 1790 948 L 1790 514 L 3230 514" marker-start="url(#crow)" marker-end="url(#bar)"/>
+<text x="3230" y="725" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:1</text>
+<path d="M 2250 948 L 1800 948 L 1800 514 L 3230 514" marker-start="url(#crow)" marker-end="url(#bar)"/>
+<text x="2740" y="725" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:1</text>
+<path d="M 2740 1382 L 1810 1382 L 1810 948 L 2250 948" marker-start="url(#crow)" marker-end="url(#bar)"/>
+<text x="2495" y="1159" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:1</text>
+<path d="M 3230 1382 L 1820 1382 L 1820 948 L 2250 948" marker-start="url(#crow)" marker-end="url(#bar)"/>
+<text x="2740" y="1159" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:1</text>
+<path d="M 3230 1382 L 1830 1382 L 1830 80 L 3230 80" marker-start="url(#crow)" marker-end="url(#bar)"/>
+<text x="3230" y="725" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:1</text>
+<path d="M 3720 948 L 1840 948 L 1840 80 L 3230 80" marker-start="url(#crow)" marker-end="url(#crow)"/>
+<text x="3475" y="508" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:M</text>
+<path d="M 3720 948 L 1850 948 L 1850 514 L 3230 514" marker-start="url(#crow)" marker-end="url(#crow)"/>
+<text x="3475" y="725" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:M</text>
+<path d="M 3720 514 L 2260 514 L 2260 80 L 3230 80" marker-start="url(#crow)" marker-end="url(#bar)"/>
+<text x="3475" y="291" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:1</text>
+<path d="M 4700 948 L 5200 948 L 5200 514 L 3720 514" marker-start="url(#crow)" marker-end="url(#bar)"/>
+<text x="4210" y="725" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:1</text>
+<path d="M 4700 948 L 1860 948 L 1860 514 L 3230 514" marker-start="url(#crow)" marker-end="url(#bar)"/>
+<text x="3965" y="725" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:1</text>
+<path d="M 3720 1382 L 5210 1382 L 5210 948 L 4700 948" marker-start="url(#crow)" marker-end="url(#crow)"/>
+<text x="4210" y="1159" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:M</text>
+<path d="M 3720 1382 L 1870 1382 L 1870 80 L 3230 80" marker-start="url(#crow)" marker-end="url(#crow)"/>
+<text x="3475" y="725" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:M</text>
+<path d="M 2740 514 L 2270 514 L 2270 80 L 3230 80" marker-start="url(#crow)" marker-end="url(#bar)"/>
+<text x="2985" y="291" text-anchor="middle" font-size="9" fill="#5F6C50" font-family="Calibri" font-weight="bold">N:1</text>
+</g>
+<rect x="2533.0" y="83" width="420" height="130" rx="5" fill="#00000010"/>
+<rect x="2530.0" y="80" width="420" height="130" rx="5" fill="#FFFFFF" stroke="#CFC3AE" stroke-width="1.2"/>
+<rect x="2530.0" y="80" width="420" height="32" rx="5" fill="#5F6C50"/>
+<rect x="2530.0" y="107" width="420" height="5" fill="#5F6C50"/>
+<text x="2740.0" y="102" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF" font-family="Calibri">categories</text>
+<text x="2942.0" y="102" text-anchor="end" font-size="9" fill="#FFFFFF" fill-opacity="0.8" font-family="Calibri">الفهرس</text>
+<rect x="2538.0" y="116" width="30" height="15" rx="3" fill="#5F6C50"/>
+<text x="2553.0" y="127.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK</text>
+<text x="2572.0" y="128" font-size="11" font-family="monospace" fill="#2A2521">id</text>
+<text x="2942.0" y="128" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="2538.0" y="138" width="30" height="15" rx="3" fill="#8A7B6C"/>
+<text x="2553.0" y="149.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">UK</text>
+<text x="2572.0" y="150" font-size="11" font-family="monospace" fill="#2A2521">name</text>
+<text x="2942.0" y="150" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="2542.0" y="172" font-size="11" font-family="monospace" fill="#2A2521">description</text>
+<text x="2942.0" y="172" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TEXT</text>
+<rect x="2538.0" y="182" width="30" height="15" rx="3" fill="#B5862E"/>
+<text x="2553.0" y="193.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">FK</text>
+<text x="2572.0" y="194" font-size="11" font-family="monospace" fill="#2A2521">parent_id</text>
+<text x="2942.0" y="194" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="3023.0" y="517" width="420" height="218" rx="5" fill="#00000010"/>
+<rect x="3020.0" y="514" width="420" height="218" rx="5" fill="#FFFFFF" stroke="#CFC3AE" stroke-width="1.2"/>
+<rect x="3020.0" y="514" width="420" height="32" rx="5" fill="#5F6C50"/>
+<rect x="3020.0" y="541" width="420" height="5" fill="#5F6C50"/>
+<text x="3230.0" y="536" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF" font-family="Calibri">skills</text>
+<text x="3432.0" y="536" text-anchor="end" font-size="9" fill="#FFFFFF" fill-opacity="0.8" font-family="Calibri">الفهرس</text>
+<rect x="3028.0" y="550" width="30" height="15" rx="3" fill="#5F6C50"/>
+<text x="3043.0" y="561.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK</text>
+<text x="3062.0" y="562" font-size="11" font-family="monospace" fill="#2A2521">id</text>
+<text x="3432.0" y="562" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="3028.0" y="572" width="30" height="15" rx="3" fill="#8A7B6C"/>
+<text x="3043.0" y="583.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">UK</text>
+<text x="3062.0" y="584" font-size="11" font-family="monospace" fill="#2A2521">name</text>
+<text x="3432.0" y="584" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="3032.0" y="606" font-size="11" font-family="monospace" fill="#2A2521">description</text>
+<text x="3432.0" y="606" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TEXT</text>
+<text x="3032.0" y="628" font-size="11" font-family="monospace" fill="#2A2521">difficulty_level</text>
+<text x="3432.0" y="628" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="3032.0" y="650" font-size="11" font-family="monospace" fill="#2A2521">estimated_hours</text>
+<text x="3432.0" y="650" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="3032.0" y="672" font-size="11" font-family="monospace" fill="#2A2521">icon</text>
+<text x="3432.0" y="672" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="3032.0" y="694" font-size="11" font-family="monospace" fill="#2A2521">color</text>
+<text x="3432.0" y="694" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<rect x="3028.0" y="704" width="30" height="15" rx="3" fill="#B5862E"/>
+<text x="3043.0" y="715.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">FK</text>
+<text x="3062.0" y="716" font-size="11" font-family="monospace" fill="#2A2521">category_id</text>
+<text x="3432.0" y="716" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="2533.0" y="951" width="420" height="86" rx="5" fill="#00000010"/>
+<rect x="2530.0" y="948" width="420" height="86" rx="5" fill="#FFFFFF" stroke="#CFC3AE" stroke-width="1.2"/>
+<rect x="2530.0" y="948" width="420" height="32" rx="5" fill="#5F6C50"/>
+<rect x="2530.0" y="975" width="420" height="5" fill="#5F6C50"/>
+<text x="2740.0" y="970" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF" font-family="Calibri">skill_prerequisites</text>
+<text x="2942.0" y="970" text-anchor="end" font-size="9" fill="#FFFFFF" fill-opacity="0.8" font-family="Calibri">الفهرس</text>
+<rect x="2538.0" y="984" width="38" height="15" rx="3" fill="#8A6520"/>
+<text x="2557.0" y="995.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK/FK</text>
+<text x="2580.0" y="996" font-size="11" font-family="monospace" fill="#2A2521">skill_id</text>
+<text x="2942.0" y="996" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="2538.0" y="1006" width="38" height="15" rx="3" fill="#8A6520"/>
+<text x="2557.0" y="1017.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK/FK</text>
+<text x="2580.0" y="1018" font-size="11" font-family="monospace" fill="#2A2521">prerequisite_id</text>
+<text x="2942.0" y="1018" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="3513.0" y="83" width="420" height="130" rx="5" fill="#00000010"/>
+<rect x="3510.0" y="80" width="420" height="130" rx="5" fill="#FFFFFF" stroke="#CFC3AE" stroke-width="1.2"/>
+<rect x="3510.0" y="80" width="420" height="32" rx="5" fill="#5F6C50"/>
+<rect x="3510.0" y="107" width="420" height="5" fill="#5F6C50"/>
+<text x="3720.0" y="102" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF" font-family="Calibri">job_roles</text>
+<text x="3922.0" y="102" text-anchor="end" font-size="9" fill="#FFFFFF" fill-opacity="0.8" font-family="Calibri">الفهرس</text>
+<rect x="3518.0" y="116" width="30" height="15" rx="3" fill="#5F6C50"/>
+<text x="3533.0" y="127.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK</text>
+<text x="3552.0" y="128" font-size="11" font-family="monospace" fill="#2A2521">id</text>
+<text x="3922.0" y="128" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="3518.0" y="138" width="30" height="15" rx="3" fill="#8A7B6C"/>
+<text x="3533.0" y="149.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">UK</text>
+<text x="3552.0" y="150" font-size="11" font-family="monospace" fill="#2A2521">title</text>
+<text x="3922.0" y="150" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="3522.0" y="172" font-size="11" font-family="monospace" fill="#2A2521">description</text>
+<text x="3922.0" y="172" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TEXT</text>
+<text x="3522.0" y="194" font-size="11" font-family="monospace" fill="#2A2521">career_field</text>
+<text x="3922.0" y="194" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<rect x="4003.0" y="951" width="420" height="86" rx="5" fill="#00000010"/>
+<rect x="4000.0" y="948" width="420" height="86" rx="5" fill="#FFFFFF" stroke="#CFC3AE" stroke-width="1.2"/>
+<rect x="4000.0" y="948" width="420" height="32" rx="5" fill="#5F6C50"/>
+<rect x="4000.0" y="975" width="420" height="5" fill="#5F6C50"/>
+<text x="4210.0" y="970" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF" font-family="Calibri">job_role_skills</text>
+<text x="4412.0" y="970" text-anchor="end" font-size="9" fill="#FFFFFF" fill-opacity="0.8" font-family="Calibri">الفهرس</text>
+<rect x="4008.0" y="984" width="38" height="15" rx="3" fill="#8A6520"/>
+<text x="4027.0" y="995.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK/FK</text>
+<text x="4050.0" y="996" font-size="11" font-family="monospace" fill="#2A2521">job_role_id</text>
+<text x="4412.0" y="996" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="4008.0" y="1006" width="38" height="15" rx="3" fill="#8A6520"/>
+<text x="4027.0" y="1017.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK/FK</text>
+<text x="4050.0" y="1018" font-size="11" font-family="monospace" fill="#2A2521">skill_id</text>
+<text x="4412.0" y="1018" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="3023.0" y="951" width="420" height="240" rx="5" fill="#00000010"/>
+<rect x="3020.0" y="948" width="420" height="240" rx="5" fill="#FFFFFF" stroke="#CFC3AE" stroke-width="1.2"/>
+<rect x="3020.0" y="948" width="420" height="32" rx="5" fill="#5F6C50"/>
+<rect x="3020.0" y="975" width="420" height="5" fill="#5F6C50"/>
+<text x="3230.0" y="970" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF" font-family="Calibri">resources</text>
+<text x="3432.0" y="970" text-anchor="end" font-size="9" fill="#FFFFFF" fill-opacity="0.8" font-family="Calibri">الفهرس</text>
+<rect x="3028.0" y="984" width="30" height="15" rx="3" fill="#5F6C50"/>
+<text x="3043.0" y="995.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK</text>
+<text x="3062.0" y="996" font-size="11" font-family="monospace" fill="#2A2521">id</text>
+<text x="3432.0" y="996" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="3032.0" y="1018" font-size="11" font-family="monospace" fill="#2A2521">title</text>
+<text x="3432.0" y="1018" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="3032.0" y="1040" font-size="11" font-family="monospace" fill="#2A2521">url</text>
+<text x="3432.0" y="1040" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="3032.0" y="1062" font-size="11" font-family="monospace" fill="#2A2521">type</text>
+<text x="3432.0" y="1062" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="3032.0" y="1084" font-size="11" font-family="monospace" fill="#2A2521">language</text>
+<text x="3432.0" y="1084" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="3032.0" y="1106" font-size="11" font-family="monospace" fill="#2A2521">is_free</text>
+<text x="3432.0" y="1106" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">BOOLEAN</text>
+<text x="3032.0" y="1128" font-size="11" font-family="monospace" fill="#2A2521">is_official</text>
+<text x="3432.0" y="1128" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">BOOLEAN</text>
+<text x="3032.0" y="1150" font-size="11" font-family="monospace" fill="#2A2521">author_or_platform</text>
+<text x="3432.0" y="1150" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<rect x="3028.0" y="1160" width="30" height="15" rx="3" fill="#B5862E"/>
+<text x="3043.0" y="1171.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">FK</text>
+<text x="3062.0" y="1172" font-size="11" font-family="monospace" fill="#2A2521">skill_id</text>
+<text x="3432.0" y="1172" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="3023.0" y="83" width="420" height="196" rx="5" fill="#00000010"/>
+<rect x="3020.0" y="80" width="420" height="196" rx="5" fill="#FFFFFF" stroke="#CFC3AE" stroke-width="1.2"/>
+<rect x="3020.0" y="80" width="420" height="32" rx="5" fill="#5F6C50"/>
+<rect x="3020.0" y="107" width="420" height="5" fill="#5F6C50"/>
+<text x="3230.0" y="102" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF" font-family="Calibri">users</text>
+<text x="3432.0" y="102" text-anchor="end" font-size="9" fill="#FFFFFF" fill-opacity="0.8" font-family="Calibri">الفهرس</text>
+<rect x="3028.0" y="116" width="30" height="15" rx="3" fill="#5F6C50"/>
+<text x="3043.0" y="127.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK</text>
+<text x="3062.0" y="128" font-size="11" font-family="monospace" fill="#2A2521">id</text>
+<text x="3432.0" y="128" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="3028.0" y="138" width="30" height="15" rx="3" fill="#8A7B6C"/>
+<text x="3043.0" y="149.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">UK</text>
+<text x="3062.0" y="150" font-size="11" font-family="monospace" fill="#2A2521">email</text>
+<text x="3432.0" y="150" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="3032.0" y="172" font-size="11" font-family="monospace" fill="#2A2521">hashed_password</text>
+<text x="3432.0" y="172" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="3032.0" y="194" font-size="11" font-family="monospace" fill="#2A2521">full_name</text>
+<text x="3432.0" y="194" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="3032.0" y="216" font-size="11" font-family="monospace" fill="#2A2521">is_admin</text>
+<text x="3432.0" y="216" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">BOOLEAN</text>
+<text x="3032.0" y="238" font-size="11" font-family="monospace" fill="#2A2521">created_at</text>
+<text x="3432.0" y="238" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TIMESTAMP</text>
+<text x="3032.0" y="260" font-size="11" font-family="monospace" fill="#2A2521">updated_at</text>
+<text x="3432.0" y="260" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TIMESTAMP</text>
+<rect x="2043.0" y="951" width="420" height="196" rx="5" fill="#00000010"/>
+<rect x="2040.0" y="948" width="420" height="196" rx="5" fill="#FFFFFF" stroke="#CFC3AE" stroke-width="1.2"/>
+<rect x="2040.0" y="948" width="420" height="32" rx="5" fill="#8A6520"/>
+<rect x="2040.0" y="975" width="420" height="5" fill="#8A6520"/>
+<text x="2250.0" y="970" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF" font-family="Calibri">assessments</text>
+<text x="2452.0" y="970" text-anchor="end" font-size="9" fill="#FFFFFF" fill-opacity="0.8" font-family="Calibri">التقييم</text>
+<rect x="2048.0" y="984" width="30" height="15" rx="3" fill="#5F6C50"/>
+<text x="2063.0" y="995.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK</text>
+<text x="2082.0" y="996" font-size="11" font-family="monospace" fill="#2A2521">id</text>
+<text x="2452.0" y="996" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="2048.0" y="1006" width="30" height="15" rx="3" fill="#B5862E"/>
+<text x="2063.0" y="1017.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">FK</text>
+<text x="2082.0" y="1018" font-size="11" font-family="monospace" fill="#2A2521">skill_id</text>
+<text x="2452.0" y="1018" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="2052.0" y="1040" font-size="11" font-family="monospace" fill="#2A2521">title</text>
+<text x="2452.0" y="1040" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="2052.0" y="1062" font-size="11" font-family="monospace" fill="#2A2521">description</text>
+<text x="2452.0" y="1062" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TEXT</text>
+<text x="2052.0" y="1084" font-size="11" font-family="monospace" fill="#2A2521">pass_score</text>
+<text x="2452.0" y="1084" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="2052.0" y="1106" font-size="11" font-family="monospace" fill="#2A2521">created_at</text>
+<text x="2452.0" y="1106" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TIMESTAMP</text>
+<text x="2052.0" y="1128" font-size="11" font-family="monospace" fill="#2A2521">updated_at</text>
+<text x="2452.0" y="1128" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TIMESTAMP</text>
+<rect x="2533.0" y="1385" width="420" height="174" rx="5" fill="#00000010"/>
+<rect x="2530.0" y="1382" width="420" height="174" rx="5" fill="#FFFFFF" stroke="#CFC3AE" stroke-width="1.2"/>
+<rect x="2530.0" y="1382" width="420" height="32" rx="5" fill="#8A6520"/>
+<rect x="2530.0" y="1409" width="420" height="5" fill="#8A6520"/>
+<text x="2740.0" y="1404" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF" font-family="Calibri">assessment_questions</text>
+<text x="2942.0" y="1404" text-anchor="end" font-size="9" fill="#FFFFFF" fill-opacity="0.8" font-family="Calibri">التقييم</text>
+<rect x="2538.0" y="1418" width="30" height="15" rx="3" fill="#5F6C50"/>
+<text x="2553.0" y="1429.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK</text>
+<text x="2572.0" y="1430" font-size="11" font-family="monospace" fill="#2A2521">id</text>
+<text x="2942.0" y="1430" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="2538.0" y="1440" width="30" height="15" rx="3" fill="#B5862E"/>
+<text x="2553.0" y="1451.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">FK</text>
+<text x="2572.0" y="1452" font-size="11" font-family="monospace" fill="#2A2521">assessment_id</text>
+<text x="2942.0" y="1452" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="2542.0" y="1474" font-size="11" font-family="monospace" fill="#2A2521">position</text>
+<text x="2942.0" y="1474" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="2542.0" y="1496" font-size="11" font-family="monospace" fill="#2A2521">prompt</text>
+<text x="2942.0" y="1496" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TEXT</text>
+<text x="2542.0" y="1518" font-size="11" font-family="monospace" fill="#2A2521">options</text>
+<text x="2942.0" y="1518" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">JSON</text>
+<text x="2542.0" y="1540" font-size="11" font-family="monospace" fill="#2A2521">correct_index</text>
+<text x="2942.0" y="1540" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="3023.0" y="1385" width="420" height="174" rx="5" fill="#00000010"/>
+<rect x="3020.0" y="1382" width="420" height="174" rx="5" fill="#FFFFFF" stroke="#CFC3AE" stroke-width="1.2"/>
+<rect x="3020.0" y="1382" width="420" height="32" rx="5" fill="#8A6520"/>
+<rect x="3020.0" y="1409" width="420" height="5" fill="#8A6520"/>
+<text x="3230.0" y="1404" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF" font-family="Calibri">assessment_results</text>
+<text x="3432.0" y="1404" text-anchor="end" font-size="9" fill="#FFFFFF" fill-opacity="0.8" font-family="Calibri">التقييم</text>
+<rect x="3028.0" y="1418" width="30" height="15" rx="3" fill="#5F6C50"/>
+<text x="3043.0" y="1429.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK</text>
+<text x="3062.0" y="1430" font-size="11" font-family="monospace" fill="#2A2521">id</text>
+<text x="3432.0" y="1430" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="3028.0" y="1440" width="30" height="15" rx="3" fill="#B5862E"/>
+<text x="3043.0" y="1451.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">FK</text>
+<text x="3062.0" y="1452" font-size="11" font-family="monospace" fill="#2A2521">user_id</text>
+<text x="3432.0" y="1452" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="3028.0" y="1462" width="30" height="15" rx="3" fill="#B5862E"/>
+<text x="3043.0" y="1473.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">FK</text>
+<text x="3062.0" y="1474" font-size="11" font-family="monospace" fill="#2A2521">assessment_id</text>
+<text x="3432.0" y="1474" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="3032.0" y="1496" font-size="11" font-family="monospace" fill="#2A2521">score</text>
+<text x="3432.0" y="1496" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="3032.0" y="1518" font-size="11" font-family="monospace" fill="#2A2521">passed</text>
+<text x="3432.0" y="1518" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">BOOLEAN</text>
+<text x="3032.0" y="1540" font-size="11" font-family="monospace" fill="#2A2521">completed_at</text>
+<text x="3432.0" y="1540" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TIMESTAMP</text>
+<rect x="3513.0" y="951" width="420" height="130" rx="5" fill="#00000010"/>
+<rect x="3510.0" y="948" width="420" height="130" rx="5" fill="#FFFFFF" stroke="#CFC3AE" stroke-width="1.2"/>
+<rect x="3510.0" y="948" width="420" height="32" rx="5" fill="#8A6520"/>
+<rect x="3510.0" y="975" width="420" height="5" fill="#8A6520"/>
+<text x="3720.0" y="970" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF" font-family="Calibri">user_skills</text>
+<text x="3922.0" y="970" text-anchor="end" font-size="9" fill="#FFFFFF" fill-opacity="0.8" font-family="Calibri">التقييم</text>
+<rect x="3518.0" y="984" width="38" height="15" rx="3" fill="#8A6520"/>
+<text x="3537.0" y="995.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK/FK</text>
+<text x="3560.0" y="996" font-size="11" font-family="monospace" fill="#2A2521">user_id</text>
+<text x="3922.0" y="996" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="3518.0" y="1006" width="38" height="15" rx="3" fill="#8A6520"/>
+<text x="3537.0" y="1017.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK/FK</text>
+<text x="3560.0" y="1018" font-size="11" font-family="monospace" fill="#2A2521">skill_id</text>
+<text x="3922.0" y="1018" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="3522.0" y="1040" font-size="11" font-family="monospace" fill="#2A2521">proficiency_level</text>
+<text x="3922.0" y="1040" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="3522.0" y="1062" font-size="11" font-family="monospace" fill="#2A2521">last_assessed_at</text>
+<text x="3922.0" y="1062" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TIMESTAMP</text>
+<rect x="3513.0" y="517" width="420" height="284" rx="5" fill="#00000010"/>
+<rect x="3510.0" y="514" width="420" height="284" rx="5" fill="#FFFFFF" stroke="#CFC3AE" stroke-width="1.2"/>
+<rect x="3510.0" y="514" width="420" height="32" rx="5" fill="#7C8A6B"/>
+<rect x="3510.0" y="541" width="420" height="5" fill="#7C8A6B"/>
+<text x="3720.0" y="536" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF" font-family="Calibri">paths</text>
+<text x="3922.0" y="536" text-anchor="end" font-size="9" fill="#FFFFFF" fill-opacity="0.8" font-family="Calibri">التعلّم</text>
+<rect x="3518.0" y="550" width="30" height="15" rx="3" fill="#5F6C50"/>
+<text x="3533.0" y="561.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK</text>
+<text x="3552.0" y="562" font-size="11" font-family="monospace" fill="#2A2521">id</text>
+<text x="3922.0" y="562" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="3518.0" y="572" width="30" height="15" rx="3" fill="#B5862E"/>
+<text x="3533.0" y="583.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">FK</text>
+<text x="3552.0" y="584" font-size="11" font-family="monospace" fill="#2A2521">user_id</text>
+<text x="3922.0" y="584" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="3522.0" y="606" font-size="11" font-family="monospace" fill="#2A2521">title</text>
+<text x="3922.0" y="606" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="3522.0" y="628" font-size="11" font-family="monospace" fill="#2A2521">description</text>
+<text x="3922.0" y="628" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TEXT</text>
+<text x="3522.0" y="650" font-size="11" font-family="monospace" fill="#2A2521">target_role</text>
+<text x="3922.0" y="650" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="3522.0" y="672" font-size="11" font-family="monospace" fill="#2A2521">status</text>
+<text x="3922.0" y="672" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="3522.0" y="694" font-size="11" font-family="monospace" fill="#2A2521">total_estimated_hours</text>
+<text x="3922.0" y="694" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="3522.0" y="716" font-size="11" font-family="monospace" fill="#2A2521">total_estimated_weeks</text>
+<text x="3922.0" y="716" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="3522.0" y="738" font-size="11" font-family="monospace" fill="#2A2521">deleted_at</text>
+<text x="3922.0" y="738" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TIMESTAMP</text>
+<text x="3522.0" y="760" font-size="11" font-family="monospace" fill="#2A2521">created_at</text>
+<text x="3922.0" y="760" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TIMESTAMP</text>
+<text x="3522.0" y="782" font-size="11" font-family="monospace" fill="#2A2521">updated_at</text>
+<text x="3922.0" y="782" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TIMESTAMP</text>
+<rect x="4493.0" y="951" width="420" height="240" rx="5" fill="#00000010"/>
+<rect x="4490.0" y="948" width="420" height="240" rx="5" fill="#FFFFFF" stroke="#CFC3AE" stroke-width="1.2"/>
+<rect x="4490.0" y="948" width="420" height="32" rx="5" fill="#7C8A6B"/>
+<rect x="4490.0" y="975" width="420" height="5" fill="#7C8A6B"/>
+<text x="4700.0" y="970" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF" font-family="Calibri">path_steps</text>
+<text x="4902.0" y="970" text-anchor="end" font-size="9" fill="#FFFFFF" fill-opacity="0.8" font-family="Calibri">التعلّم</text>
+<rect x="4498.0" y="984" width="30" height="15" rx="3" fill="#5F6C50"/>
+<text x="4513.0" y="995.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK</text>
+<text x="4532.0" y="996" font-size="11" font-family="monospace" fill="#2A2521">id</text>
+<text x="4902.0" y="996" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="4498.0" y="1006" width="30" height="15" rx="3" fill="#B5862E"/>
+<text x="4513.0" y="1017.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">FK</text>
+<text x="4532.0" y="1018" font-size="11" font-family="monospace" fill="#2A2521">path_id</text>
+<text x="4902.0" y="1018" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="4498.0" y="1028" width="30" height="15" rx="3" fill="#B5862E"/>
+<text x="4513.0" y="1039.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">FK</text>
+<text x="4532.0" y="1040" font-size="11" font-family="monospace" fill="#2A2521">skill_id</text>
+<text x="4902.0" y="1040" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="4502.0" y="1062" font-size="11" font-family="monospace" fill="#2A2521">position</text>
+<text x="4902.0" y="1062" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="4502.0" y="1084" font-size="11" font-family="monospace" fill="#2A2521">title</text>
+<text x="4902.0" y="1084" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="4502.0" y="1106" font-size="11" font-family="monospace" fill="#2A2521">description</text>
+<text x="4902.0" y="1106" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TEXT</text>
+<text x="4502.0" y="1128" font-size="11" font-family="monospace" fill="#2A2521">estimated_hours</text>
+<text x="4902.0" y="1128" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="4502.0" y="1150" font-size="11" font-family="monospace" fill="#2A2521">resource_ids</text>
+<text x="4902.0" y="1150" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">JSON</text>
+<text x="4502.0" y="1172" font-size="11" font-family="monospace" fill="#2A2521">assessment_ids</text>
+<text x="4902.0" y="1172" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">JSON</text>
+<rect x="3513.0" y="1385" width="420" height="130" rx="5" fill="#00000010"/>
+<rect x="3510.0" y="1382" width="420" height="130" rx="5" fill="#FFFFFF" stroke="#CFC3AE" stroke-width="1.2"/>
+<rect x="3510.0" y="1382" width="420" height="32" rx="5" fill="#7C8A6B"/>
+<rect x="3510.0" y="1409" width="420" height="5" fill="#7C8A6B"/>
+<text x="3720.0" y="1404" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF" font-family="Calibri">step_progress</text>
+<text x="3922.0" y="1404" text-anchor="end" font-size="9" fill="#FFFFFF" fill-opacity="0.8" font-family="Calibri">التعلّم</text>
+<rect x="3518.0" y="1418" width="38" height="15" rx="3" fill="#8A6520"/>
+<text x="3537.0" y="1429.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK/FK</text>
+<text x="3560.0" y="1430" font-size="11" font-family="monospace" fill="#2A2521">user_id</text>
+<text x="3922.0" y="1430" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="3518.0" y="1440" width="38" height="15" rx="3" fill="#8A6520"/>
+<text x="3537.0" y="1451.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK/FK</text>
+<text x="3560.0" y="1452" font-size="11" font-family="monospace" fill="#2A2521">step_id</text>
+<text x="3922.0" y="1452" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="3522.0" y="1474" font-size="11" font-family="monospace" fill="#2A2521">completed_at</text>
+<text x="3922.0" y="1474" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TIMESTAMP</text>
+<text x="3522.0" y="1496" font-size="11" font-family="monospace" fill="#2A2521">score</text>
+<text x="3922.0" y="1496" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="2533.0" y="517" width="420" height="262" rx="5" fill="#00000010"/>
+<rect x="2530.0" y="514" width="420" height="262" rx="5" fill="#FFFFFF" stroke="#CFC3AE" stroke-width="1.2"/>
+<rect x="2530.0" y="514" width="420" height="32" rx="5" fill="#B5862E"/>
+<rect x="2530.0" y="541" width="420" height="5" fill="#B5862E"/>
+<text x="2740.0" y="536" text-anchor="middle" font-size="13" font-weight="bold" fill="#FFFFFF" font-family="Calibri">activity_log</text>
+<text x="2942.0" y="536" text-anchor="end" font-size="9" fill="#FFFFFF" fill-opacity="0.8" font-family="Calibri">التفاعل</text>
+<rect x="2538.0" y="550" width="30" height="15" rx="3" fill="#5F6C50"/>
+<text x="2553.0" y="561.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">PK</text>
+<text x="2572.0" y="562" font-size="11" font-family="monospace" fill="#2A2521">id</text>
+<text x="2942.0" y="562" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<rect x="2538.0" y="572" width="30" height="15" rx="3" fill="#B5862E"/>
+<text x="2553.0" y="583.5" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="Calibri">FK</text>
+<text x="2572.0" y="584" font-size="11" font-family="monospace" fill="#2A2521">user_id</text>
+<text x="2942.0" y="584" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">INTEGER</text>
+<text x="2542.0" y="606" font-size="11" font-family="monospace" fill="#2A2521">category</text>
+<text x="2942.0" y="606" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="2542.0" y="628" font-size="11" font-family="monospace" fill="#2A2521">action</text>
+<text x="2942.0" y="628" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="2542.0" y="650" font-size="11" font-family="monospace" fill="#2A2521">entity_type</text>
+<text x="2942.0" y="650" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="2542.0" y="672" font-size="11" font-family="monospace" fill="#2A2521">entity_id</text>
+<text x="2942.0" y="672" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="2542.0" y="694" font-size="11" font-family="monospace" fill="#2A2521">data</text>
+<text x="2942.0" y="694" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">JSON</text>
+<text x="2542.0" y="716" font-size="11" font-family="monospace" fill="#2A2521">ip_address</text>
+<text x="2942.0" y="716" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="2542.0" y="738" font-size="11" font-family="monospace" fill="#2A2521">user_agent</text>
+<text x="2942.0" y="738" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">VARCHAR</text>
+<text x="2542.0" y="760" font-size="11" font-family="monospace" fill="#2A2521">created_at</text>
+<text x="2942.0" y="760" text-anchor="end" font-size="10.5" fill="#8A7B6C" font-family="monospace">TIMESTAMP</text>
+<rect x="80" y="1570" width="4830" height="240" rx="8" fill="#FBF6EC" stroke="#CFC3AE" stroke-width="1.2"/>
+<text x="98" y="1598" font-size="16" font-weight="bold" fill="#2A2521" font-family="Calibri">مفتاح العلامات وشرح العلاقات — Key Badges &amp; Relationship Guide</text>
+<rect x="98.0" y="1618" width="42" height="17" rx="3" fill="#5F6C50"/>
+<text x="119.0" y="1630.5" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff" font-family="Calibri">PK</text>
+<text x="148.0" y="1631" font-size="11.5" fill="#2A2521" font-family="Calibri">مفتاح أساسي Primary Key</text>
+<rect x="2513.0" y="1618" width="42" height="17" rx="3" fill="#8A7B6C"/>
+<text x="2534.0" y="1630.5" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff" font-family="Calibri">UK</text>
+<text x="2563.0" y="1631" font-size="11.5" fill="#2A2521" font-family="Calibri">مفتاح فريد Unique</text>
+<rect x="98.0" y="1644" width="42" height="17" rx="3" fill="#8A6520"/>
+<text x="119.0" y="1656.5" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff" font-family="Calibri">PK/FK</text>
+<text x="148.0" y="1657" font-size="11.5" fill="#2A2521" font-family="Calibri">مفتاح مدمج في جدول وسيط Junction</text>
+<rect x="2513.0" y="1644" width="42" height="17" rx="3" fill="#B5862E"/>
+<text x="2534.0" y="1656.5" text-anchor="middle" font-size="9" font-weight="bold" fill="#fff" font-family="Calibri">FK</text>
+<text x="2563.0" y="1657" font-size="11.5" fill="#2A2521" font-family="Calibri">مفتاح أجنبي Foreign Key</text>
+<text x="98" y="1680" font-size="13" font-weight="bold" fill="#8A6520" font-family="Calibri">العلاقات وأوصاف الأساس — Relationship Cardinality</text>
+<text x="98" y="1702" font-size="11" fill="#2A2521" font-family="Calibri">1:N — واحد إلى متعدد: سجل أب واحد يرتبط بعدة سجلات</text>
+<text x="98" y="1722" font-size="11" fill="#2A2521" font-family="Calibri">N:M — متعدد إلى متعدد: عبر جدول وسيط (skill_prerequisites, user_skills, step_progress)</text>
+<text x="98" y="1742" font-size="11" fill="#2A2521" font-family="Calibri">CASCADE — حذف الأب يحذف جميع التابعين تلقائيًا</text>
+<text x="98" y="1762" font-size="11" fill="#2A2521" font-family="Calibri">SET NULL — حذف الأب يُفرّغ المفتاح الأجنبي</text>
+<text x="98" y="1782" font-size="11" fill="#2A2521" font-family="Calibri">DAG — لا يمكن إدراج مسار لمهارة قبل اكتمال متطلباتها (خوارزمية Kahn)</text>
+<text x="98" y="1808" font-size="11.5" font-weight="bold" fill="#8A6520" font-family="Calibri">استثناءات JSON الأربعة (المُوثّقة):</text>
+<text x="98" y="1826" font-size="11" fill="#2A2521" font-family="Calibri">assessment_questions.options · path_steps.resource_ids · path_steps.assessment_ids · activity_log.data</text>
+</svg>

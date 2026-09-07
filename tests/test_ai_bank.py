@@ -94,14 +94,22 @@ def test_ai_quiz_grades_via_bank_with_narrative(
               "recommended_focus": [], "next_steps": ""}
     monkeypatch.setattr(llm_pipeline, "analyze_diagnostic",
                         lambda rows, *a, **k: dict(canned))
+    from backend.routers import paths as paths_router
+    monkeypatch.setattr(paths_router, "_spawn", lambda fn: fn())
+    narrative_frames = []
+    monkeypatch.setattr(paths_router, "send_event",
+                        lambda uid, t, d=None: narrative_frames.append((t, d)))
     r2 = api_client.post("/api/wizard/analysis", headers=headers, json={
         "goal": "Frontend Developer", "weekly_hours": 10,
         "answers": {"javascript_q0": 1, "javascript_q1": 1},
         "quiz_job_id": job_id})
     assert r2.status_code == 200, r2.text
     body = r2.json()
-    assert body["narrative_available"] is True
-    assert body["narrative"]["summary"] == "ok"
+    # analysis returns instantly; the narrative streams in via SSE
+    assert body["narrative_available"] is False and body["narrative"] is None
+    ev = [d for t, d in narrative_frames if t == "narrative_ready"]
+    assert ev and ev[0]["analysis_id"] == body["analysis_id"]
+    assert ev[0]["narrative"]["summary"] == "ok"
     row = next(p for p in body["per_skill"] if p["skill"] == "JavaScript")
     assert row["correct"] == 2 and row["total"] == 2
     assert row["assessed_level"] == 5

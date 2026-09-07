@@ -19,7 +19,9 @@ def test_ai_defaults_off(monkeypatch):
     # prior variant, which emitted invalid JSON and broke 3/5 ops).
     assert m.AI_MODEL_PATH.endswith(
         "Llama-3.2-3B-Instruct-Q6_K.gguf")
-    assert m.AI_N_CTX == 1024 and m.AI_TEMPERATURE == 0.3
+    # AI_N_CTX default raised to 4096 (benchmarked on GTX 1650 Ti 4 GB: ~3.0 GB
+    # VRAM at 26 auto-fitted GPU layers, ~1 GB headroom, no speed penalty).
+    assert m.AI_N_CTX == 4096 and m.AI_TEMPERATURE == 0.3
     assert isinstance(m.AI_MAX_NEW_TOKENS, int)
 
 

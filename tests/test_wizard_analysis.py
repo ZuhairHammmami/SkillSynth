@@ -86,3 +86,35 @@ def test_unknown_role_404(api_client):
                         json={"goal": "No Such Role", "weekly_hours": 10,
                               "answers": {}})
     assert r.status_code == 404
+
+
+def test_analysis_decoupled_narrative_via_sse(api_client, db_session, monkeypatch):
+    """wizard_analysis returns instantly with analysis_id; the AI narrative is
+    emitted asynchronously as an SSE narrative_ready frame (not blocking)."""
+    from backend.config import app_settings as settings
+    from backend.services import llm_engine
+    from backend.routers import paths as paths_router
+    monkeypatch.setattr(settings, "AI_ENABLED", True)
+    monkeypatch.setattr(settings_service, "is_ai_enabled", lambda: True)
+    monkeypatch.setattr(llm_engine, "available", lambda: True)
+    monkeypatch.setattr("backend.services.llm_pipeline._engine_available",
+                        lambda: True)
+    narrative = {"summary": "s", "strengths": [], "weaknesses": [],
+                 "recommended_focus": [], "next_steps": "n"}
+    monkeypatch.setattr("backend.services.llm_pipeline.analyze_diagnostic",
+                        lambda *a, **k: narrative)
+    # run the spawned job inline and capture its SSE frame
+    sent = []
+    monkeypatch.setattr(paths_router, "_spawn", lambda fn: fn())
+    monkeypatch.setattr(paths_router, "send_event",
+                        lambda uid, t, d=None: sent.append((t, d)))
+    headers = _headers(api_client)
+    r = api_client.post("/api/wizard/analysis", headers=headers, json={
+        "goal": "Frontend Developer", "weekly_hours": 10, "answers": {}})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["narrative"] is None and body["narrative_available"] is False
+    assert body["analysis_id"]
+    events = [d for t, d in sent if t == "narrative_ready"]
+    assert events and events[0]["analysis_id"] == body["analysis_id"]
+    assert events[0]["narrative"]["summary"] == "s"

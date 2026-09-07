@@ -1,16 +1,27 @@
-"""LLM pipeline — validated ops over llm_engine (SS-AI). Sole consumer of llm_engine.complete and llm_prompts templates; called by routers/ai.py and the assess review hook. Each op gates on _engine_available() and degrades gracefully; _extract_json is the strict parse and _salvage_* recover sub-objects from broken output."""
+"""LLM pipeline — validated ops over llm_engine (SS-AI). Sole consumer of llm_engine.complete and llm_prompts templates; called by routers/ai.py and the assess review hook. Each op gates on _engine_available() and degrades gracefully; parsing/salvage helpers live in llm_validation and are re-exported here for backward compatibility. Grounding context (from knowledge_layer) is threaded into prompts so the model answers from project data."""
+
 import json
 import logging
-import re
 from typing import Callable
 
 from backend.config import app_settings as settings
 from backend.services import llm_prompts as prompts
 from backend.services import settings_service
+from backend.services import llm_validation as validation
 
 logger = logging.getLogger(__name__)
 
 _CONFIDENCES = ("high", "medium", "low")
+
+# Re-exported parsing/salvage helpers so existing callers/tests keep working.
+_extract_json = validation._extract_json
+_iter_objects = validation._iter_objects
+_valid_question = validation._valid_question
+_salvage_questions = validation._salvage_questions
+_salvage_diagnostic = validation._salvage_diagnostic
+_salvage_explanations = validation._salvage_explanations
+_salvage_topics = validation._salvage_topics
+sanitize_topic = validation.sanitize_topic
 
 
 class LLMOperationError(Exception):
@@ -29,91 +40,11 @@ def _engine_factory():
     return llm_engine
 
 
-def _extract_json(text: str) -> dict:
-    """Parse the FIRST JSON object, ignoring chatter. Deps: json.JSONDecoder().raw_decode. Impl: scans to first "{" and decodes one object, raising ValueError when none parses so the caller retries."""
-    idx = text.find("{")
-    if idx == -1:
-        raise ValueError("no JSON object found")
-    obj, _ = json.JSONDecoder().raw_decode(text[idx:])
-    return obj
-
-
-def _iter_objects(text: str) -> list[dict]:
-    """Yield every balanced {...} substring decoded as a dict. Deps: json.loads per brace pair. Impl: stack scan recovers objects the model emitted concatenated/wrapped/nested in a malformed outer doc; braces in strings are rare (backticks used instead)."""
-    objs: list[dict] = []
-    stack: list[int] = []
-    for i, ch in enumerate(text):
-        if ch == "{":
-            stack.append(i)
-        elif ch == "}" and stack:
-            start = stack.pop()
-            try:
-                objs.append(json.loads(text[start:i + 1]))
-            except Exception:  # noqa: BLE001 — skip non-JSON fragments
-                pass
-    return objs
-
-
-def _salvage_questions(text: str) -> dict | None:
-    """Recover valid MCQs from broken quiz output. Deps: _iter_objects, _valid_question. Impl: scans each balanced object and nested lists for dicts passing _valid_question, returning {"questions":[...]} or None."""
-    out: list[dict] = []
-
-    def consider(q):
-        if not isinstance(q, dict):
-            return
-        if _valid_question(q, {x["text"] for x in out}, set()):
-            item = {"text": q["text"].strip(),
-                    "options": [o.strip() for o in q["options"]],
-                    "correct_index": q["correct_index"]}
-            if q.get("skill"):
-                item["skill"] = q["skill"]
-            out.append(item)
-
-    for obj in _iter_objects(text):
-        if not isinstance(obj, dict):
-            continue
-        consider(obj)
-        for value in obj.values():
-            if isinstance(value, list):
-                for item in value:
-                    consider(item)
-    return {"questions": out} if out else None
-
-
-def _salvage_diagnostic(text: str) -> dict | None:
-    """Recover the narrative report from broken diagnostic output. Deps: _iter_objects. Impl: returns the object carrying the most diagnostic keys (summary/strengths/weaknesses/recommended_focus/next_steps), else None."""
-    keys = ("summary", "strengths", "weaknesses",
-            "recommended_focus", "next_steps")
-    best = None
-    best_score = 0
-    for obj in _iter_objects(text):
-        if isinstance(obj, dict):
-            score = sum(k in obj for k in keys)
-            if score > best_score:
-                best, best_score = obj, score
-    return best
-
-
-def _salvage_explanations(text: str) -> dict | None:
-    """Recover the explanation list from broken explain output. Deps: _iter_objects. Impl: prefers a {"explanations":[...]} wrapper; else gathers {"question_index":int,"why":str} objects (wrapper items skipped to avoid double-count). Returns {"explanations":[...]} or None."""
-    objs = _iter_objects(text)
-    for obj in objs:
-        if (isinstance(obj, dict) and "explanations" in obj
-                and isinstance(obj["explanations"], list)):
-            expls = [e for e in obj["explanations"]
-                     if isinstance(e, dict) and "question_index" in e]
-            if expls:
-                return {"explanations": expls}
-    expls = [obj for obj in objs
-             if isinstance(obj, dict) and "question_index" in obj
-             and "why" in obj and "explanations" not in obj]
-    return {"explanations": expls} if expls else None
-
-
 def _complete_json(contract: dict, *, max_tokens: int,
                    temperature: float | None = None,
-                   salvage: Callable[[str], dict | None] | None = None) -> dict:
-    """Complete a prompts contract with ONE corrective retry. Deps: _engine_factory().complete, _extract_json, optional salvage hook. Impl: reads contract system/user, appends prior parse error to a retry turn, forwards a temperature override; on failure offers raw payload to salvage, else raises LLMOperationError."""
+                   salvage: Callable[[str], dict | None] | None = None,
+                   grammar: str | None = None) -> dict:
+    """Complete a prompts contract with ONE corrective retry. Deps: _engine_factory().complete, _extract_json, optional salvage hook. Impl: reads contract system/user, appends prior parse error to a retry turn, forwards a temperature override and an optional constrained grammar; on failure offers raw payload to salvage, else raises LLMOperationError."""
     engine = _engine_factory()
     last_err = ""
     raw = None
@@ -126,8 +57,9 @@ def _complete_json(contract: dict, *, max_tokens: int,
         try:
             raw = engine.complete(
                 contract["system"] + "\n\n" + contract["user"] + suffix,
-                max_tokens=max_tokens, temperature=temperature)
-            return _extract_json(raw)
+                max_tokens=max_tokens, temperature=temperature,
+                grammar=grammar if _grammar_wanted() else None)
+            return validation._extract_json(raw)
         except (ValueError, json.JSONDecodeError) as exc:
             last_err = str(exc)[:120]
     if salvage is not None and raw is not None:
@@ -137,32 +69,15 @@ def _complete_json(contract: dict, *, max_tokens: int,
     raise LLMOperationError(f"invalid JSON after retry: {last_err}")
 
 
-def sanitize_topic(text: str, limit: int = 120) -> str:
-    """Strip braces/backticks/control chars; clamp length. Deps: re.sub. Impl: removes {,},<,>,`,\\ and control chars, trims, clamps to `limit`; used on skill/role names before prompts (injection hardening)."""
-    cleaned = re.sub(r"[{}<>`\\]|[\x00-\x1f]", "", str(text))
-    return cleaned.strip()[:limit]
+def _grammar_wanted() -> bool:
+    """Whether constrained grammar output is enabled. Deps: settings.AI_GRAMMAR (default false). Impl: a runtime switch so grammar (validated on this build) can be opted in without touching call sites; off by default keeps behavior unchanged."""
+    return bool(getattr(settings, "AI_GRAMMAR", False))
 
 
-def _valid_question(q, seen_texts: set[str], exclude_texts: set[str]) -> bool:
-    """Schema gate for one MCQ; True iff usable. Deps: builtins only. Impl: enforces 4 non-empty string options, correct_index 0..3, and a fresh text not in seen_texts or exclude_texts."""
-    if not isinstance(q, dict):
-        return False
-    text, opts = q.get("text"), q.get("options")
-    idx = q.get("correct_index")
-    return (isinstance(text, str) and text.strip()
-            and isinstance(opts, list) and len(opts) == 4
-            and all(isinstance(o, str) and o.strip() for o in opts)
-            and isinstance(idx, int) and 0 <= idx <= 3
-            and text.strip() not in seen_texts
-            and text.strip() not in exclude_texts)
-
-
-def _salvage_topics(text: str) -> dict | None:
-    """Recover a topics list from broken topic output. Deps: _iter_objects. Impl: returns the first balanced object carrying a non-empty "topics" list, else None."""
-    for obj in _iter_objects(text):
-        if isinstance(obj, dict) and isinstance(obj.get("topics"), list):
-            return obj
-    return None
+def _seeded_topics(skill_name: str, level: int) -> list[str]:
+    """Deterministic fallback topic list for a skill at a level. Deps: builtins. Impl: produces min(3, level+1) reproducible strings so tests need no LLM."""
+    return [f"Topic {i} for {skill_name} (level {level})"
+            for i in range(1, min(3, level + 1) + 1)]
 
 
 def generate_skill_topics(skill_name: str, level: int) -> list[str]:
@@ -182,17 +97,12 @@ def generate_skill_topics(skill_name: str, level: int) -> list[str]:
     return _seeded_topics(skill_name, level)
 
 
-def _seeded_topics(skill_name: str, level: int) -> list[str]:
-    """Deterministic fallback topic list for a skill at a level. Deps: builtins. Impl: produces min(3, level+1) reproducible strings so tests need no LLM."""
-    return [f"Topic {i} for {skill_name} (level {level})"
-            for i in range(1, min(3, level + 1) + 1)]
-
-
 def generate_skill_quiz(skill_name: str, difficulty: int, n: int = 5,
                          exclude_texts=frozenset(),
                          proficiency_level: int = None,
-                         topics: list = None, locale: str = "en") -> list[dict]:
-    """Validated single-skill MCQs for practice tests. Deps: _engine_available, sanitize_topic, prompts.skill_quiz_prompt, _complete_json, _valid_question. Impl: gates on engine (raise "AI unavailable"), validates output, raises LLMOperationError when nothing survives so callers fall back to seeded quizzes. New optional params target the learner level, focus on topics, and select output locale."""
+                         topics: list = None, locale: str = "en",
+                         context: str | None = None) -> list[dict]:
+    """Validated single-skill MCQs for practice tests. Deps: _engine_available, sanitize_topic, prompts.skill_quiz_prompt, _complete_json, _valid_question. Impl: gates on engine (raise "AI unavailable"), validates output, raises LLMOperationError when nothing survives so callers fall back to seeded quizzes. New optional params target the learner level, focus on topics, select output locale, and inject a grounded context block (from knowledge_layer) so answers match the real skill."""
     if not _engine_available():
         raise LLMOperationError("AI unavailable")
     topic = sanitize_topic(skill_name)
@@ -202,8 +112,8 @@ def generate_skill_quiz(skill_name: str, difficulty: int, n: int = 5,
             topic, difficulty, n, sorted(exclude),
             proficiency_level=proficiency_level,
             topics=[sanitize_topic(t) for t in topics] if topics else None,
-            locale=locale),
-        max_tokens=max(650, n * 230),
+            locale=locale, context=context),
+        max_tokens=min(700, max(180, n * 95)),
         salvage=_salvage_questions)
     out: list[dict] = []
     for q in data.get("questions", []):
@@ -220,35 +130,42 @@ def generate_role_quiz(role_title: str, skills: list[dict],
                         exclude_texts=frozenset(),
                         proficiency_level: int = None,
                         topics: list = None, locale: str = "en",
+                        context: str | None = None,
                         on_skill: Callable[[str, list[dict]], None] | None = None
                         ) -> list[dict]:
-    """Validated role diagnostic quiz; items carry exact skill tag. Deps: _engine_available, sanitize_topic, generate_skill_quiz, _valid_question, logger. Impl: instead of one oversized call (which truncates on small GPUs), loops per skill calling generate_skill_quiz (n=2, small/reliable JSON) and merges/tags each passing _valid_question with its exact skill name; a per-skill failure is caught and skipped so one bad skill never kills the whole quiz. Optional on_skill(name, chunk) hook fires after each skill so callers can stream progress. Raises LLMOperationError only when zero questions survive."""
+    """Validated role diagnostic quiz; items carry exact skill tag (batched).
+
+    Deps: _engine_available, sanitize_topic, llm_batching.run_batch, _valid_
+    question, logger. Impl: groups skills into batches, running ONE completion
+    per batch instead of one per skill (a role has 12-20 skills → ~4x fewer
+    completions on slow GPUs) via llm_batching, which splits and retries empty
+    batches so coverage is never lost. Fires optional on_skill(name, chunk) per
+    skill to stream progress. Raises LLMOperationError only when zero questions
+    survive overall."""
     if not _engine_available():
         raise LLMOperationError("AI unavailable")
+    from backend.services import llm_batching
     exclude = set(exclude_texts)
+    batch_size = llm_batching.batch_size()
+    named = [(sanitize_topic(s.get("name", "")), s)
+             for s in skills if sanitize_topic(s.get("name", ""))]
     out: list[dict] = []
-    for s in skills:
-        name = sanitize_topic(s.get("name", ""))
-        if not name:
-            continue
-        s_topics = [sanitize_topic(t) for t in (s.get("topics") or [])] or None
-        try:
-            qs = generate_skill_quiz(
-                name, int(s.get("difficulty") or 1), n=2,
-                exclude_texts=exclude, proficiency_level=proficiency_level,
-                topics=s_topics, locale=locale)
-        except LLMOperationError as exc:
-            logger.warning("role quiz: skipped skill %r: %s", name, exc)
-            continue
-        chunk: list[dict] = []
-        for q in qs:
-            base = {k: q[k] for k in ("text", "options", "correct_index")}
-            if _valid_question(base, {x["text"] for x in out}, exclude):
-                item = {**base, "skill": name, "text": base["text"].strip()}
-                out.append(item)
-                chunk.append(item)
-        if chunk and on_skill is not None:
-            on_skill(name, chunk)
+    seen: set[str] = set()
+    for i in range(0, len(named), batch_size):
+        batch = [s for _, s in named[i:i + batch_size]]
+        by_skill = llm_batching.run_batch(batch, exclude, proficiency_level,
+                                          topics, locale, context)
+        for name, qs in by_skill.items():
+            chunk: list[dict] = []
+            for base in qs:
+                if _valid_question(base, seen, exclude):
+                    item = {**base, "skill": name,
+                            "text": base["text"].strip()}
+                    out.append(item)
+                    seen.add(item["text"])
+                    chunk.append(item)
+            if chunk and on_skill is not None:
+                on_skill(name, chunk)
     if not out:
         raise LLMOperationError("no valid role-quiz questions")
     return out
@@ -256,8 +173,9 @@ def generate_role_quiz(role_title: str, skills: list[dict],
 
 def analyze_diagnostic(per_skill: list[dict],
                        proficiency_level: int = None,
-                       topics: list = None, locale: str = "en") -> dict | None:
-    """Narrative report for pre-path results; None ⇒ deterministic fallback. Deps: _engine_available, prompts.diagnostic_analysis_prompt, _complete_json, _salvage_diagnostic, logger. Impl: normalizes gap_to_mastery→gap (pipeline-owned), caps narrative fields, converts any failure into None so callers render numbers-only. New optional params focus recommendations on topics, target the learner level, and select output locale."""
+                       topics: list = None, locale: str = "en",
+                       context: str | None = None) -> dict | None:
+    """Narrative report for pre-path results; None ⇒ deterministic fallback. Deps: _engine_available, prompts.diagnostic_analysis_prompt, _complete_json, _salvage_diagnostic, logger. Impl: normalizes gap_to_mastery→gap (pipeline-owned), caps narrative fields, converts any failure into None so callers render numbers-only. New optional params focus recommendations on topics, target the learner level, select output locale, and inject grounded context."""
     if not _engine_available():
         logger.info("analyze_diagnostic skipped: AI unavailable")
         return None
@@ -268,8 +186,8 @@ def analyze_diagnostic(per_skill: list[dict],
             prompts.diagnostic_analysis_prompt(
                 rows, proficiency_level=proficiency_level,
                 topics=[sanitize_topic(t) for t in topics] if topics else None,
-                locale=locale),
-            max_tokens=750,
+                locale=locale, context=context),
+            max_tokens=400,
             salvage=_salvage_diagnostic)
         return {
             "summary": str(data.get("summary", ""))[:800],
@@ -291,7 +209,7 @@ def explain_result(responses: list[dict]) -> dict | None:
         return None
     try:
         data = _complete_json(
-            prompts.explain_result_prompt(responses), max_tokens=950,
+            prompts.explain_result_prompt(responses), max_tokens=500,
             salvage=_salvage_explanations)
         known = {r["question_index"] for r in responses}
         expl = [{"question_index": e.get("question_index"),

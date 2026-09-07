@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SkillSynth thesis — spine cover panel. A4 trim 595.28 x 841.89 pt, 9pt bleed, 27pt safe.
+  Fully layered, Inkscape-editable, fonts kept as text. RGB source — convert to CMYK at print shop.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" viewBox="0 0 42.52 841.89" width="42.52" height="841.89">
+<defs>
+<clipPath id="trim"><rect x="0" y="0" width="42.52" height="841.89"/></clipPath>
+<g id="spine-art" inkscape:label="spine art"><g id="s-ground" inkscape:label="01 ground (paper-2)">
+<rect x="0" y="0" width="42.52" height="841.89" fill="#F3EDE1"/>
+</g>
+<g id="s-borders" inkscape:label="02 edge hairlines">
+<line x1="2" y1="27" x2="2" y2="814.89" stroke="#CFC3AE" stroke-width="0.75" stroke-opacity="0.6"/>
+<line x1="40.52" y1="27" x2="40.52" y2="814.89" stroke="#CFC3AE" stroke-width="0.75" stroke-opacity="0.6"/>
+</g>
+<g id="s-tick" inkscape:label="06 crest-echo tick (family continuity, dashed)">
+<line x1="12.26" y1="250.00" x2="30.26" y2="250.00" stroke="#B5862E" stroke-width="1.2" stroke-dasharray="4 3" stroke-linecap="round"/>
+</g>
+<g id="s-mark" inkscape:label="05 mark (single ink)">
+<g id="s-mark-group" inkscape:label="sprout mark (32-grid)" transform="translate(1.26 90.00) scale(1.25)">
+<path d="M16 28C9 28 5 23 5 16c0-5 4-9 11-9s11 4 11 9c0 7-4 12-11 12z" stroke="#2A2521" stroke-width="1.8" fill="none"/>
+<path d="M16 27V13M16 18c-3-1-5-3-5-6M16 18c3-1 5-3 5-6" stroke="#2A2521" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+<circle cx="16" cy="9" r="2.2" fill="#2A2521"/>
+</g>
+</g>
+<g id="s-title" inkscape:label="03 title (EN, Bricolage, ascending bottom-to-top)">
+<text transform="translate(21.26 710.00) rotate(-90)" text-anchor="start" font-family="Bricolage Grotesque, Public Sans, Noto Sans, sans-serif" font-size="13.85" font-weight="700" letter-spacing="-0.01em" fill="#2A2521">SkillSynth</text>
+</g>
+<g id="s-year" inkscape:label="04 academic year (ascending bottom-to-top)">
+<text transform="translate(21.26 598.00) rotate(-90)" text-anchor="start" font-family="El Messiri, Noto Sans Arabic, sans-serif" font-size="10.67" font-weight="500" fill="#8A6520">٢٠٢٥–٢٠٢٦</text>
+</g>
+</g>
+</defs>
+
+<use href="#spine-art" clip-path="url(#trim)"/>
+</svg>

@@ -23,12 +23,13 @@ def _status_for(level: int) -> str:
 
 def _path_progress_list(db, user_id: int, paths: list) -> list[dict]:
     """Per-path completion blocks used inside learner_dashboard."""
-    all_ids = [s.id for p in paths for s in lrepo.get_steps(db, p.id)]
+    steps_by_path = lrepo.get_steps_by_path_ids(db, [p.id for p in paths])
+    all_ids = [s.id for steps in steps_by_path.values() for s in steps]
     comps = lrepo.completions_by_step_ids(db, all_ids)
     done = {c.step_id for c in comps if c.user_id == user_id}
     out = []
     for p in paths:
-        steps = lrepo.get_steps(db, p.id)
+        steps = steps_by_path.get(p.id, [])
         completed = sum(1 for s in steps if s.id in done)
         out.append({
             "path_id": p.id, "path_title": p.title,

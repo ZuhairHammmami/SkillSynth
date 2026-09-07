@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SkillSynth thesis — 1-up jacket print-spec technical drawing.
+  Media 1251.07 x 859.89 pt = front 595.28 + spine 42.52 (15 mm) + back 595.28, 9 pt bleed all edges.
+  Arabic (RTL): spine bonds to the RIGHT edge of the FRONT cover; open by lifting the LEFT fore-edge.
+  Fold/score lines at x = 604.28 / 646.80; safe 27 pt; crop-mark arms 24 pt at 6 pt offset.
+  RGB source — convert to CMYK at the print shop only.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" viewBox="0 0 1570 1180" width="1570" height="1180">
+<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#4A4238"/></marker></defs>
+
+<g id="print-spec-drawing" inkscape:label="print-spec-drawing">
+<rect x="165.00" y="150.00" width="1251.07" height="859.89" fill="#FBF6EC" stroke="#2A2521" stroke-width="1.20"/>
+<text x="790.54" y="130.00" text-anchor="middle" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="9.00" font-weight="700" fill="#2A2521">MEDIA 1251.07 x 859.89 pt  /  441.4 x 303.4 mm</text>
+<rect x="174.00" y="159.00" width="595.28" height="841.89" fill="#FBF6EC" stroke="#CFC3AE" stroke-width="0.60"/>
+<text x="389.14" y="196.00" text-anchor="middle" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="9.50" font-weight="700" fill="#2A2521" letter-spacing="0.2em">FRONT</text>
+<rect x="769.28" y="159.00" width="42.52" height="841.89" fill="#F3EDE1" stroke="#CFC3AE" stroke-width="0.60"/>
+<text x="708.04" y="196.00" text-anchor="middle" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="9.50" font-weight="700" fill="#2A2521" letter-spacing="0.2em">SPINE</text>
+<rect x="811.80" y="159.00" width="595.28" height="841.89" fill="#F3EDE1" stroke="#CFC3AE" stroke-width="0.60"/>
+<text x="1026.93" y="196.00" text-anchor="middle" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="9.50" font-weight="700" fill="#2A2521" letter-spacing="0.2em">BACK</text>
+<line x1="769.28" y1="150.00" x2="769.28" y2="1009.89" stroke="#8A6520" stroke-width="1" stroke-dasharray="7 4" stroke-opacity="0.8"/>
+<text x="763.28" y="168.00" text-anchor="end" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="7.00" font-weight="600" fill="#8A6520">score 604.28</text>
+<line x1="811.80" y1="150.00" x2="811.80" y2="1009.89" stroke="#8A6520" stroke-width="1" stroke-dasharray="7 4" stroke-opacity="0.8"/>
+<text x="805.80" y="168.00" text-anchor="end" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="7.00" font-weight="600" fill="#8A6520">score 646.80</text>
+<rect x="201.00" y="186.00" width="541.28" height="787.89" fill="none" stroke="#CFC3AE" stroke-width="0.60" stroke-dasharray="4 3"/>
+<rect x="838.80" y="186.00" width="541.28" height="787.89" fill="none" stroke="#CFC3AE" stroke-width="0.60" stroke-dasharray="4 3"/>
+<text x="1380.07" y="180.00" text-anchor="end" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="7.00" font-weight="600" fill="#4A4238">safe 27pt</text>
+<rect x="174.00" y="159.00" width="1233.07" height="841.89" fill="none" stroke="#B5862E" stroke-width="0.60" stroke-dasharray="4 3"/>
+<text x="174.00" y="1009.89" text-anchor="start" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="7.00" font-weight="600" fill="#B5862E">bleed 9pt / 3.17mm</text>
+<path d="M174.00,150.00 V144.00" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M174.00,1009.89 V1015.89" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M769.28,150.00 V144.00" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M769.28,1009.89 V1015.89" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M811.80,150.00 V144.00" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M811.80,1009.89 V1015.89" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M1407.07,150.00 V144.00" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M1407.07,1009.89 V1015.89" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M174.00,150.00 H144.00" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M174.00,1009.89 H144.00" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M1407.07,150.00 H1377.07" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<path d="M1407.07,1009.89 H1377.07" stroke="#4A4238" stroke-width="0.75" fill="none"/>
+<line x1="165.00" y1="110.00" x2="1416.07" y2="110.00" stroke="#4A4238" stroke-width="0.8" marker-start="url(#ah) " marker-end="url(#ah)"/>
+<text x="790.54" y="104.00" text-anchor="middle" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="7.5" font-weight="600" fill="#4A4238">1251.07 pt / 441.68 mm</text>
+<line x1="769.28" y1="82.00" x2="811.80" y2="82.00" stroke="#4A4238" stroke-width="0.8" marker-start="url(#ah) " marker-end="url(#ah)"/>
+<text x="790.54" y="76.00" text-anchor="middle" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="7.5" font-weight="600" fill="#4A4238">42.52 pt / 15.00 mm</text>
+<line x1="1461.07" y1="150.00" x2="1461.07" y2="991.89" stroke="#4A4238" stroke-width="0.8" marker-start="url(#ah) " marker-end="url(#ah)"/>
+<text x="1461.07" y="560.94" text-anchor="middle" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="7.5" font-weight="600" fill="#4A4238">841.89 pt / 297 mm</text>
+<text x="171.00" y="1055.89" text-anchor="start" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="8.00" font-weight="600" fill="#4A4238">All exports RGB. Convert to CMYK at the print shop only.</text>
+<text x="171.00" y="1101.89" text-anchor="start" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="7.50" font-weight="600" fill="#4A4238">legend -</text>
+<rect x="235.00" y="1093.89" width="10" height="10" fill="#2A2521" stroke="#8A6520" stroke-width="0.5"/>
+<text x="240.00" y="1102.89" text-anchor="middle" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="7.00" font-weight="500" fill="#4A4238">ink</text>
+<rect x="325.00" y="1093.89" width="10" height="10" fill="#FBF6EC" stroke="#8A6520" stroke-width="0.5"/>
+<text x="330.00" y="1102.89" text-anchor="middle" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="7.00" font-weight="500" fill="#4A4238">paper</text>
+<rect x="415.00" y="1093.89" width="10" height="10" fill="#B5862E" stroke="#8A6520" stroke-width="0.5"/>
+<text x="420.00" y="1102.89" text-anchor="middle" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="7.00" font-weight="500" fill="#4A4238">ochre</text>
+<rect x="505.00" y="1093.89" width="10" height="10" fill="#CFC3AE" stroke="#8A6520" stroke-width="0.5"/>
+<text x="510.00" y="1102.89" text-anchor="middle" font-family="Public Sans, Bricolage Grotesque, Noto Sans, sans-serif" font-size="7.00" font-weight="500" fill="#4A4238">line</text>
+</g>
+
+</svg>

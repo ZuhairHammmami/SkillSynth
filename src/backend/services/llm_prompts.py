@@ -14,7 +14,8 @@ _BASE_SYSTEM = (
 
 def skill_quiz_prompt(skill_name: str, difficulty: int, n: int,
                       avoid: list[str], proficiency_level: int = None,
-                      topics: list[str] = None, locale: str = "en") -> dict:
+                      topics: list[str] = None, locale: str = "en",
+                      context: str | None = None) -> dict:
     """Single-skill MCQ generation contract (practice tests).
 
     Dependencies: uses the module-level _BASE_SYSTEM examiner preamble.
@@ -22,7 +23,9 @@ def skill_quiz_prompt(skill_name: str, difficulty: int, n: int,
     difficulty, listing prior items to avoid (truncated to 20×80 chars). When
     proficiency_level is supplied the model targets that learner level (not a
     fixed hardness); when topics are supplied it focuses on them; locale
-    selects the output language (Arabic for "ar", English otherwise). Returns a
+    selects the output language (Arabic for "ar", English otherwise). When
+    context (a knowledge_layer skill block) is supplied it is injected as a
+    project reference so answers stay grounded in the real skill. Returns a
     strict {"system","user"} JSON contract consumed by the pipeline; field
     names (text/options/correct_index) stay stable.
     """
@@ -37,11 +40,12 @@ def skill_quiz_prompt(skill_name: str, difficulty: int, n: int,
         focus = " Focus specifically on these topics: " + "; ".join(
             str(t) for t in topics[:15]) + "."
     lang = " Arabic" if locale == "ar" else " English"
+    grounding = f"\n{context}\n" if context else ""
     user = (
         f'Write {n} multiple-choice questions about "{skill_name}" '
         f"(difficulty {difficulty}/5).{target}{focus} Avoid duplicating these "
-        f'existing items: [{avoided}]. Write ALL generated text (questions, '
-        f'options, explanations) in{lang}. '
+        f'existing items: [{avoided}].{grounding}'
+        f'Write ALL generated text (questions, options, explanations) in{lang}. '
         f'Schema: {{"questions":[{{"text":str,'
         f'"options":[str,str,str,str],"correct_index":0..3}}]}} '
         "Every question MUST contain exactly the keys text, options, "
@@ -55,15 +59,17 @@ def skill_quiz_prompt(skill_name: str, difficulty: int, n: int,
 
 def role_quiz_prompt(role_title: str, skills: list[dict],
                      proficiency_level: int = None,
-                     topics: list[str] = None, locale: str = "en") -> dict:
+                     topics: list[str] = None, locale: str = "en",
+                     context: str | None = None) -> dict:
     """Role-wide diagnostic quiz contract; each question tagged by skill.
 
     Dependencies: uses the module-level _BASE_SYSTEM preamble. Implementation:
     renders one row per skill (name + difficulty, defaulting to 1), asks for
     exactly 2 questions each tagged with the exact skill name, optionally
     focuses on topics and targets a learner level, and selects output language
-    via locale; returns the strict {"system","user"} JSON contract for the
-    pipeline to parse.
+    via locale. When context (a knowledge_layer digest) is supplied it is
+    injected as a project reference so coverage matches the real catalog.
+    Returns the strict {"system","user"} JSON contract for the pipeline.
     """
     rows = "; ".join(
         f'{s["name"]} (difficulty {s.get("difficulty", 1)})' for s in skills)
@@ -76,8 +82,53 @@ def role_quiz_prompt(role_title: str, skills: list[dict],
         focus = " Focus specifically on these topics: " + "; ".join(
             str(t) for t in topics[:20]) + "."
     lang = " Arabic" if locale == "ar" else " English"
+    grounding = f"\n{context}\n" if context else ""
     user = (
         f'Diagnostic quiz for the job role "{role_title}". Skills: {rows}.{target}{focus} '
+        f"{grounding}"
+        f"For EACH listed skill write exactly 2 distinct questions. "
+        f'Write ALL generated text (questions, options) in{lang}. '
+        f'Schema: {{"questions":[{{"skill":exact-skill-name,"text":str,'
+        f'"options":[str,str,str,str],"correct_index":0..3}}]}} '
+        "Every question MUST contain exactly the keys skill, text, options, "
+        "correct_index; correct_index is the INTEGER 0..3 of the correct "
+        "option. Example of one valid question: "
+        '{"skill":"JavaScript","text":"Which declares a constant?",'
+        '"options":["let x","const x","var x","def x"],"correct_index":1}'
+    )
+    return {"system": _BASE_SYSTEM, "user": user}
+
+
+def role_quiz_batch_prompt(batch: list[dict],
+                           proficiency_level: int = None,
+                           topics: list[str] = None, locale: str = "en",
+                           context: str | None = None) -> dict:
+    """Batched role-diagnostic contract: one completion for several skills.
+
+    Dependencies: uses the module-level _BASE_SYSTEM preamble. Implementation:
+    renders one row per skill in the batch (name + difficulty, defaulting
+    to 1), asks for exactly 2 questions each tagged with the exact skill
+    name, optionally focuses on topics and targets a learner level, selects
+    output language via locale, and injects a role-level grounded context.
+    Returns the {"system","user"} JSON contract feeding _complete_json; the
+    pipeline merges batch results and fires per-skill so streaming still works
+    even though this is a single LLM call instead of one-per-skill.
+    """
+    rows = "; ".join(
+        f'{s["name"]} (difficulty {s.get("difficulty", 1)})' for s in batch)
+    target = ""
+    if proficiency_level is not None:
+        target = (f" Target the learner's current proficiency LEVEL "
+                  f"{proficiency_level}/5 when calibrating complexity.")
+    focus = ""
+    if topics:
+        focus = " Focus specifically on these topics: " + "; ".join(
+            str(t) for t in topics[:20]) + "."
+    lang = " Arabic" if locale == "ar" else " English"
+    grounding = f"\n{context}\n" if context else ""
+    user = (
+        f'Diagnostic quiz (batch). Skills covered in this batch: {rows}.{target}{focus} '
+        f"{grounding}"
         f"For EACH listed skill write exactly 2 distinct questions. "
         f'Write ALL generated text (questions, options) in{lang}. '
         f'Schema: {{"questions":[{{"skill":exact-skill-name,"text":str,'
@@ -94,15 +145,17 @@ def role_quiz_prompt(role_title: str, skills: list[dict],
 def diagnostic_analysis_prompt(per_skill: list[dict],
                                 proficiency_level: int = None,
                                 topics: list[str] = None,
-                                locale: str = "en") -> dict:
+                                locale: str = "en",
+                                context: str | None = None) -> dict:
     """Two-phase wizard analysis narrative contract (pre-path results).
 
     Dependencies: uses the module-level _BASE_SYSTEM preamble. Implementation:
     serializes one row per skill (correct/total, assessed_level, gap) and
     requests a strict summary/strengths/weaknesses/recommended_focus/next_steps
     schema; optionally focuses on topics and targets the learner level, and
-    selects output language via locale; returns the {"system","user"} contract
-    the pipeline caps and returns. Field names stay stable.
+    selects output language via locale. When context (a knowledge_layer digest)
+    is supplied it is injected as a project reference so recommendations align
+    with real skills. Returns the {"system","user"} contract the pipeline caps.
     """
     rows = "; ".join(
         f'{r["skill"]}: correct {r["correct"]}/{r["total"]}, '
@@ -112,8 +165,10 @@ def diagnostic_analysis_prompt(per_skill: list[dict],
         focus = " Concentrate the recommendations on these topics: " + "; ".join(
             str(t) for t in topics[:20]) + "."
     lang = " Arabic" if locale == "ar" else " English"
+    grounding = f"\n{context}\n" if context else ""
     user = (
         f"Learner diagnostic results before path creation: {rows}.{focus} "
+        f"{grounding}"
         f'Write ALL generated text (summary, notes, reasons, focus, '
         f'next_steps) in{lang}. '
         f'Schema: {{"summary":str,"strengths":[{{"skill":str,"note":str}}],'

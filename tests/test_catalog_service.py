@@ -49,3 +49,11 @@ def test_serialize_category_empty_skills(db_session):
     finally:
         db_session.delete(cat)
         db_session.commit()
+
+
+def test_list_skills_ordered_newest_first(db_session):
+    """Admin skill listing returns ids in descending order so a newly created
+    skill appears on page 1 (fixes the 'new skill does not appear' bug)."""
+    rows = svc.list_skills(db_session)
+    ids = [r["id"] for r in rows]
+    assert ids == sorted(ids, reverse=True)

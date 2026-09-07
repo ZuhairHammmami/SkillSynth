@@ -1,0 +1,718 @@
+# Review package: 67f19251fd5e07fb0a17c7d933eb241e1f7000d5..d9ff0436
+
+## Commits
+d9ff0436 feat: refined primary button hover/focus/active states for CTA prominence (SS-T-4)
+6f27c22c feat: comprehensive analytics dashboard with CSS activity chart (SS-T-3)
+4d45f2cd fix: show real estimated path duration in path detail (SS-T-2)
+5ed1ddd7 chore: remove manual assessment dialog from path detail (SS-T-1)
+
+## Files changed
+ .../src/lib/components/ActivityBarChart.svelte     | 43 +++++++++++++
+ .../src/lib/components/TakeQuizDialog.svelte       | 51 ---------------
+ src/frontend/src/lib/components/ui/Button.svelte   | 37 +++++++----
+ src/frontend/src/lib/i18n/messages/ar.json         | 19 ++++--
+ src/frontend/src/lib/i18n/messages/en.json         | 19 ++++--
+ .../src/routes/(app)/analytics/+page.svelte        | 72 +++++++++++++++++-----
+ .../src/routes/(app)/learn/[id]/+page.svelte       | 22 ++-----
+ 7 files changed, 156 insertions(+), 107 deletions(-)
+
+## Diff
+diff --git a/src/frontend/src/lib/components/ActivityBarChart.svelte b/src/frontend/src/lib/components/ActivityBarChart.svelte
+new file mode 100644
+index 00000000..4f956dba
+--- /dev/null
++++ b/src/frontend/src/lib/components/ActivityBarChart.svelte
+@@ -0,0 +1,43 @@
++<!-- This-week activity bar chart. Plain CSS bars (RTL-safe via flex flow),
++     day labels localized. Empty state via i18n when no activity exists. -->
++<script lang="ts">
++  import { t } from '$lib/i18n';
++  import { i18n } from '$lib/i18n';
++
++  let { data = [] }: { data?: { date: string; count: number }[] } = $props();
++
++  const CHART_H = 130;
++  const max = $derived(Math.max(1, ...data.map((d) => d.count)));
++
++  function shortDay(iso: string): string {
++    const d = new Date(iso + 'T00:00:00');
++    return d.toLocaleDateString(i18n.locale === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'short' });
++  }
++</script>
++
++{#if data.length === 0}
++  <p class="muted empty">{t('analyticsPage.noActivity')}</p>
++{:else}
++  <div class="chart">
++    {#each data as d (d.date)}
++      <div class="col">
++        <div class="track" style="height: {CHART_H}px">
++          {#if d.count > 0}
++            <div class="bar" style="height: {(d.count / max) * CHART_H}px"></div>
++          {/if}
++        </div>
++        <span class="lbl">{shortDay(d.date)}</span>
++      </div>
++    {/each}
++  </div>
++{/if}
++
++<style>
++  .empty { padding: 1rem 0; }
++  .chart { display: flex; gap: 0.6rem; align-items: flex-end; }
++  .col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; min-width: 0; }
++  .track { width: 100%; max-width: 42px; display: flex; align-items: flex-end; justify-content: center;
++    background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--radius); }
++  .bar { width: 100%; background: var(--accent-deep); border-radius: var(--radius); transition: height 0.4s ease; }
++  .lbl { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
++</style>
+diff --git a/src/frontend/src/lib/components/TakeQuizDialog.svelte b/src/frontend/src/lib/components/TakeQuizDialog.svelte
+deleted file mode 100644
+index bcd5d0ff..00000000
+--- a/src/frontend/src/lib/components/TakeQuizDialog.svelte
++++ /dev/null
+@@ -1,51 +0,0 @@
+-<!-- AI practice-test launcher. Degrades gracefully when AI is disabled (503). -->
+-<script lang="ts">
+-  import { apiFetch, ApiError } from '$lib/api/client';
+-  import Panel from '$lib/components/ui/Panel.svelte';
+-  import Button from '$lib/components/ui/Button.svelte';
+-  import Dialog from '$lib/components/ui/Dialog.svelte';
+-  import Select from '$lib/components/ui/Select.svelte';
+-  import Field from '$lib/components/ui/Field.svelte';
+-  import Spinner from '$lib/components/ui/Spinner.svelte';
+-  import { error as toastError, info, success } from '$lib/components/ui/toast';
+-  import { t } from '$lib/i18n';
+-
+-  let { open = $bindable(false), skills = [] }: { open?: boolean; skills?: { id: number; name: string }[] } = $props();
+-  let skillId = $state<number | null>(null);
+-  let n = $state(5);
+-  let busy = $state(false);
+-
+-  $effect(() => { if (skills.length && skillId == null) skillId = skills[0].id; });
+-
+-  async function start() {
+-    if (skillId == null) return;
+-    busy = true;
+-    try {
+-      await apiFetch('/ai/tests/generate', { method: 'POST', body: { skill_id: skillId, n_questions: n } });
+-      success(t('wizard.assessmentQueued'));
+-      open = false;
+-    } catch (e) {
+-      if (e instanceof ApiError && e.status === 503) {
+-        info('AI features are currently disabled');
+-      } else {
+-        toastError(e instanceof ApiError ? e.detail : 'Request failed');
+-      }
+-      open = false;
+-    } finally {
+-      busy = false;
+-    }
+-  }
+-</script>
+-
+-<Dialog bind:open title={t('wizard.assessmentTitle')}>
+-  <Field label={t('wizard.summaryGoal')}>
+-    <Select bind:value={skillId} options={skills.map((s) => ({ value: s.id, label: s.name }))} />
+-  </Field>
+-  <Field label={t('wizard.questionLabel')}>
+-    <Select bind:value={n} options={[3, 5, 10].map((x) => ({ value: x, label: String(x) }))} />
+-  </Field>
+-  {#snippet footer()}
+-    <Button variant="ghost" onclick={() => (open = false)}>{t('common.cancel')}</Button>
+-    <Button onclick={start} disabled={busy}>{#if busy}<Spinner />{:else}{t('wizard.startAssessment')}{/if}</Button>
+-  {/snippet}
+-</Dialog>
+diff --git a/src/frontend/src/lib/components/ui/Button.svelte b/src/frontend/src/lib/components/ui/Button.svelte
+index 3be9c339..2ea95363 100644
+--- a/src/frontend/src/lib/components/ui/Button.svelte
++++ b/src/frontend/src/lib/components/ui/Button.svelte
+@@ -6,49 +6,62 @@
+     size = 'md',
+     type = 'button',
+     disabled = false,
+     loading = false,
+     onclick,
+     children,
+     ...rest
+   }: any = $props();
+ </script>
+ 
+-<button class="btn {variant} {size}" {type} {disabled} {onclick} {...rest}>
++<button
++  class="btn {variant} {size}"
++  {type}
++  {disabled}
++  aria-disabled={disabled || undefined}
++  aria-busy={loading || undefined}
++  {onclick}
++  {...rest}
++>
+   {#if loading}<span class="spinner" aria-hidden="true"></span>{/if}
+   {@render children()}
+ </button>
+ 
+ <style>
+   .btn {
+     font-family: var(--font-body);
+     font-weight: 600;
+     border-radius: var(--radius);
+     border: 1px solid transparent;
+     cursor: pointer;
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     gap: 0.5rem;
+-    line-height: 1;
+-    transition: transform 0.06s ease, background 0.15s ease, border-color 0.15s ease;
++    line-height: 1.2;
++    min-height: 44px;
++    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+   }
+-  .btn:active { transform: translateY(1px); }
++  .btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-glow); }
+   .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+-  .sm { padding: 0.4rem 0.7rem; font-size: 0.82rem; }
+-  .md { padding: 0.6rem 1.1rem; font-size: 0.95rem; }
+-  .lg { padding: 0.8rem 1.5rem; font-size: 1.05rem; }
+-  .primary { background: var(--ochre); color: #fff7e8; border-color: var(--ochre-deep); }
+-  .primary:hover:not(:disabled) { background: var(--ochre-deep); }
++  .sm { min-height: 36px; padding: 0.4rem 0.8rem; font-size: 0.85rem; }
++  .md { padding: 0.65rem 1.15rem; font-size: 0.95rem; }
++  .lg { padding: 0.85rem 1.6rem; font-size: 1.05rem; }
++  .icon { padding: 0; width: 44px; }
++  .primary { background: var(--accent); color: #fff; border-color: var(--accent-deep); box-shadow: var(--shadow-sm); }
++  .primary:hover:not(:disabled) { background: var(--accent-deep); box-shadow: var(--shadow), 0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent); }
++  .primary:active:not(:disabled) { background: color-mix(in srgb, var(--accent-deep) 88%, var(--ink)); border-color: color-mix(in srgb, var(--accent-deep) 88%, var(--ink)); transform: translateY(1px); box-shadow: none; }
++  .primary:hover:not(:disabled):focus-visible { box-shadow: 0 0 0 3px var(--focus-glow), 0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent); }
++  .primary:active:not(:disabled):focus-visible { box-shadow: 0 0 0 3px var(--focus-glow); }
+   .ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); }
+   .ghost:hover:not(:disabled) { background: var(--paper-2); }
+-  .destructive { background: var(--danger); color: #fff; border-color: #7e2c1c; }
+-  .destructive:hover:not(:disabled) { background: #7e2c1c; }
+-  .link { background: transparent; color: var(--ochre-deep); border-color: transparent; padding-inline: 0; }
++  .destructive { background: var(--danger); color: #fff; border-color: var(--danger-deep); }
++  .destructive:hover:not(:disabled) { background: var(--danger-deep); }
++  .link { background: transparent; color: var(--accent-deep); border-color: transparent; padding-inline: 0; min-height: 0; }
+   .link:hover:not(:disabled) { text-decoration: underline; }
+   .spinner {
+     width: 0.9em; height: 0.9em; border-radius: 50%;
+     border: 2px solid currentColor; border-top-color: transparent;
+     display: inline-block; animation: spin 0.7s linear infinite;
+   }
+   @keyframes spin { to { transform: rotate(360deg); } }
+ </style>
+diff --git a/src/frontend/src/lib/i18n/messages/ar.json b/src/frontend/src/lib/i18n/messages/ar.json
+index 0eeba5bf..7c43974c 100644
+--- a/src/frontend/src/lib/i18n/messages/ar.json
++++ b/src/frontend/src/lib/i18n/messages/ar.json
+@@ -637,21 +637,20 @@
+     "step5Icon": "🗺️",
+     "step5Subtitle": "خطتك جاهزة",
+     "step5Title": "المسار",
+     "title": "مساعد مسار التعلم",
+     "goalTitle": "اختر هدفك",
+     "goalSubtitle": "اختر دوراً وظيفياً للبدء",
+     "levelTitle": "المستوى",
+     "levelSubtitle": "كيف تقيّم مهاراتك الحالية؟",
+     "preferencesTitle": "التفضيلات",
+     "preferencesSubtitle": "خصص تجربتك التعليمية",
+-    "assessmentTitle": "التقييم",
+     "assessmentSubtitle": "خصص مسارك أكثر",
+     "summaryTitle": "الملخص",
+     "summarySubtitle": "راجع اختياراتك قبل التوليد",
+     "stepOf": "الخطوة {current} من {total}",
+     "searchRoles": "ابحث عن الأدوار الوظيفية...",
+     "popularRoles": "الأدوار الشائعة",
+     "noResults": "لا توجد أدوار مطابقة",
+     "levelBeginner": "مبتدئ",
+     "levelIntermediate": "متوسط",
+     "levelAdvanced": "متقدم",
+@@ -667,21 +666,20 @@
+     "formatInteractive": "تفاعلي",
+     "formatBook": "كتب",
+     "formatAny": "أي تنسيق",
+     "languageLabel": "لغة المحتوى",
+     "languageEN": "الإنجليزية",
+     "languageAR": "العربية",
+     "freeContentLabel": "محتوى مجاني فقط",
+     "freeContentDesc": "عرض الموارد المجانية فقط في مساري",
+     "assessmentPrompt": "هل ترغب في إجراء تقييم سريع لتخصيص مسارك بناءً على معرفتك الحالية؟",
+     "skipAssessment": "تخطي",
+-    "startAssessment": "بدء التقييم",
+     "skipAssessmentLink": "أعرف مستواي بالفعل",
+     "assessmentQueued": "سيتم إجراء التقييم بعد توليد المسار",
+     "summaryGoal": "الدور الوظيفي",
+     "summaryLevel": "المستوى",
+     "summaryHours": "الساعات الأسبوعية",
+     "summaryFormat": "التنسيق المفضل",
+     "summaryLanguage": "اللغة",
+     "summaryFreeContent": "محتوى مجاني فقط",
+     "summaryYes": "نعم",
+     "summaryNo": "لا",
+@@ -765,25 +763,33 @@
+     "noSkills": "لا توجد مهارات متتبعة بعد."
+   },
+   "analytics": {
+     "loadError": "تعذّر تحميل التحليلات"
+   },
+   "analyticsPage": {
+     "title": "التحليلات",
+     "subtitle": "رؤى حول رحلتك التعليمية.",
+     "completion": "معدل الإكمال",
+     "masteredSkills": "المهارات المتقنة",
+-    "weaknesses": "مجالات تحتاج تحسينًا",
+     "learningVelocity": "سرعة التعلّم",
+-    "pathsOverview": "نظرة عامة على المسارات",
+-    "practiceTest": "اختبار تدريبي",
+-    "weaknessNote": "المهارات الأقل درجة تحتاج اهتمامًا أكبر."
++    "learningHours": "ساعات التعلّم",
++    "thisWeek": "هذا الأسبوع",
++    "noActivity": "لا نشاط هذا الأسبوع بعد.",
++    "pathsOverview": "تقدّم المسارات",
++    "noPaths": "لا توجد مسارات تعليمية بعد.",
++    "strengths": "نقاط القوة",
++    "weaknesses": "مجالات تحتاج تحسينًا",
++    "noStrengths": "لم يتم تحديد نقاط قوة بعد.",
++    "noWeaknesses": "لم يتم تحديد نقاط ضعف بعد.",
++    "knowledgeGaps": "الفجوات المعرفية",
++    "noKnowledgeGaps": "لا توجد فجوات معرفية — أنت على المسار الصحيح!",
++    "practiceTest": "إتقان المهارات"
+   },
+   "validation": {
+     "passwordsNoMatch": "كلمتا المرور غير متطابقتين"
+   },
+   "forgotPasswordForm": {
+     "email": "البريد الإلكتروني",
+     "submit": "إرسال رابط إعادة التعيين"
+   },
+   "resetPasswordForm": {
+     "password": "كلمة المرور الجديدة",
+@@ -791,20 +797,21 @@
+   },
+   "errors": {
+     "goBack": "رجوع",
+     "default": "حدث خطأ ما."
+   },
+   "units": {
+     "steps": "خطوات",
+     "step": "خطوة",
+     "hoursShort": "س",
+     "perWeek": "/أسبوع",
++    "weeks": "أسابيع",
+     "completed": "مكتمل",
+     "learning": "قيد التعلم",
+     "mastered": "متقن"
+   },
+   "stepTest": {
+     "title": "اختبار الخطوة",
+     "intro": "أجب عن هذه الأسئلة لإكمال الخطوة.",
+     "questionOf": "السؤال {n}",
+     "yourAnswer": "إجابتك",
+     "correctAnswer": "الإجابة الصحيحة",
+diff --git a/src/frontend/src/lib/i18n/messages/en.json b/src/frontend/src/lib/i18n/messages/en.json
+index 09d76454..a4f43d74 100644
+--- a/src/frontend/src/lib/i18n/messages/en.json
++++ b/src/frontend/src/lib/i18n/messages/en.json
+@@ -245,21 +245,20 @@
+     "errorTitle": "Sorry",
+     "errorMessage": "Failed to generate path. Please try again.",
+     "successMessage": "Path generated successfully!",
+     "generatePath": "Generate Path",
+     "goalTitle": "Choose Your Goal",
+     "goalSubtitle": "Select a job role to get started",
+     "levelTitle": "Skill Level",
+     "levelSubtitle": "How would you rate your current skills?",
+     "preferencesTitle": "Preferences",
+     "preferencesSubtitle": "Customize your learning experience",
+-    "assessmentTitle": "Assessment",
+     "assessmentSubtitle": "Personalize your path further",
+     "summaryTitle": "Summary",
+     "summarySubtitle": "Review your selections before generating",
+     "stepOf": "Step {current} of {total}",
+     "searchRoles": "Search job roles...",
+     "popularRoles": "Popular Roles",
+     "noResults": "No matching roles found",
+     "levelBeginner": "Beginner",
+     "levelIntermediate": "Intermediate",
+     "levelAdvanced": "Advanced",
+@@ -275,21 +274,20 @@
+     "formatInteractive": "Interactive",
+     "formatBook": "Books",
+     "formatAny": "Any Format",
+     "languageLabel": "Content language",
+     "languageEN": "English",
+     "languageAR": "Arabic",
+     "freeContentLabel": "Free content only",
+     "freeContentDesc": "Show only free resources in my path",
+     "assessmentPrompt": "Take a quick assessment to personalize your path based on your current knowledge?",
+     "skipAssessment": "Skip",
+-    "startAssessment": "Start Assessment",
+     "skipAssessmentLink": "I already know my level",
+     "assessmentQueued": "Assessment will be taken after path generation",
+     "summaryGoal": "Goal Role",
+     "summaryLevel": "Skill Level",
+     "summaryHours": "Weekly Hours",
+     "summaryFormat": "Format Preference",
+     "summaryLanguage": "Language",
+     "summaryFreeContent": "Free Content Only",
+     "summaryYes": "Yes",
+     "summaryNo": "No",
+@@ -765,25 +763,33 @@
+     "noSkills": "No skills tracked yet."
+   },
+   "analytics": {
+     "loadError": "Failed to load analytics"
+   },
+   "analyticsPage": {
+     "title": "Analytics",
+     "subtitle": "Insights into your learning journey.",
+     "completion": "Completion Rate",
+     "masteredSkills": "Mastered Skills",
+-    "weaknesses": "Areas to Improve",
+     "learningVelocity": "Learning Velocity",
+-    "pathsOverview": "Paths Overview",
+-    "practiceTest": "Practice Test",
+-    "weaknessNote": "Skills with the lowest scores need the most attention."
++    "learningHours": "Learning Hours",
++    "thisWeek": "This Week",
++    "noActivity": "No activity this week yet.",
++    "pathsOverview": "Path Progress",
++    "noPaths": "No learning paths yet.",
++    "strengths": "Strengths",
++    "weaknesses": "Areas to Improve",
++    "noStrengths": "No strengths identified yet.",
++    "noWeaknesses": "No weaknesses identified yet.",
++    "knowledgeGaps": "Knowledge Gaps",
++    "noKnowledgeGaps": "No knowledge gaps — you're on track!",
++    "practiceTest": "Skill Mastery"
+   },
+   "validation": {
+     "passwordsNoMatch": "Passwords do not match"
+   },
+   "forgotPasswordForm": {
+     "email": "Email",
+     "submit": "Send reset link"
+   },
+   "resetPasswordForm": {
+     "password": "New password",
+@@ -791,20 +797,21 @@
+   },
+   "errors": {
+     "goBack": "Go back",
+     "default": "Something went off the path."
+   },
+   "units": {
+     "steps": "steps",
+     "step": "step",
+     "hoursShort": "h",
+     "perWeek": "/wk",
++    "weeks": "weeks",
+     "completed": "Completed",
+     "learning": "Learning",
+     "mastered": "Mastered"
+   },
+   "stepTest": {
+     "title": "Step Check",
+     "intro": "Answer these questions to complete the step.",
+     "questionOf": "Question {n}",
+     "yourAnswer": "Your answer",
+     "correctAnswer": "Correct answer",
+diff --git a/src/frontend/src/routes/(app)/analytics/+page.svelte b/src/frontend/src/routes/(app)/analytics/+page.svelte
+index 91ba992a..1e58d0f3 100644
+--- a/src/frontend/src/routes/(app)/analytics/+page.svelte
++++ b/src/frontend/src/routes/(app)/analytics/+page.svelte
+@@ -1,35 +1,41 @@
+-<!-- Analytics dashboard. -->
++<!-- Comprehensive analytics dashboard: KPIs, this-week activity, path progress,
++     strengths vs weaknesses, knowledge gaps, and skill mastery. -->
+ <script lang="ts">
+   import { apiFetch, ApiError } from '$lib/api/client';
+   import { query } from '$lib/query';
+   import Panel from '$lib/components/ui/Panel.svelte';
+   import Badge from '$lib/components/ui/Badge.svelte';
+   import Spinner from '$lib/components/ui/Spinner.svelte';
+   import Button from '$lib/components/ui/Button.svelte';
+   import ProgressMeter from '$lib/components/ProgressMeter.svelte';
+   import TopSkills from '$lib/components/TopSkills.svelte';
++  import ActivityBarChart from '$lib/components/ActivityBarChart.svelte';
+   import Icon from '$lib/icons/Icon.svelte';
+   import { error as toastError } from '$lib/components/ui/toast';
+   import { t } from '$lib/i18n';
+ 
+   let dash = $state<any>(null);
+   let growth = $state<any>(null);
++  let analysis = $state<any>(null);
++  let history = $state<any>(null);
+   let loading = $state(true);
+   let loadError = $state('');
+   async function load() {
+     loading = true;
+     loadError = '';
+     try {
+-      [dash, growth] = await Promise.all([
++      [dash, growth, analysis, history] = await Promise.all([
+         query(['analyticsDashboard'], () => apiFetch('/analytics/dashboard')),
+-        query(['skillGrowth'], () => apiFetch('/analytics/skill-growth'))
++        query(['skillGrowth'], () => apiFetch('/analytics/skill-growth')),
++        query(['skillAnalysis'], () => apiFetch('/learning/analysis')),
++        query(['learningHistory'], () => apiFetch('/analytics/learning-history'))
+       ]);
+     } catch (e) {
+       loadError = e instanceof ApiError ? e.detail : t('analytics.loadError');
+       toastError(loadError);
+     } finally { loading = false; }
+   }
+   $effect(() => { load(); });
+ </script>
+ 
+ <h1>{t('analyticsPage.title')}</h1>
+@@ -50,52 +56,88 @@
+     <Panel title={t('analyticsPage.completion')}>
+       <div class="big">{Math.round(dash?.completion_rate ?? 0)}%</div>
+       <ProgressMeter value={dash?.completion_rate ?? 0} />
+     </Panel>
+     <Panel title={t('analyticsPage.masteredSkills')}>
+       <div class="big">{dash?.mastered_skills ?? 0}</div>
+     </Panel>
+     <Panel title={t('analyticsPage.learningVelocity')}>
+       <div class="big">{Math.round(dash?.learning_velocity ?? 0)}<small>{t('units.perWeek')}</small></div>
+     </Panel>
++    <Panel title={t('analyticsPage.learningHours')}>
++      <div class="big">{Math.round(dash?.learning_hours ?? 0)}<small>{t('units.hoursShort')}</small></div>
++    </Panel>
+   </div>
+ 
+   <div class="grid2">
+-    <Panel title={t('analyticsPage.pathsOverview')}>
+-      <ul class="kpis">
+-        <li><span>{t('dashboardPage.yourPaths')}</span><strong>{dash?.paths_count ?? 0}</strong></li>
+-        <li><span>{t('dashboardPage.completed')}</span><strong>{dash?.completed_steps ?? 0}</strong></li>
+-        <li><span>{t('dashboardPage.learningHours')}</span><strong>{Math.round(dash?.learning_hours ?? 0)}{t('units.hoursShort')}</strong></li>
++    <Panel title={t('analyticsPage.thisWeek')}>
++      <ActivityBarChart data={history?.daily_activity ?? []} />
++    </Panel>
++    <Panel title={t('analyticsPage.knowledgeGaps')}>
++      {#if growth?.knowledge_gaps?.length}
++        <div class="wrap">{#each growth.knowledge_gaps as g}<Badge tone="warn">{g}</Badge>{/each}</div>
++      {:else}
++        <p class="muted">{t('analyticsPage.noKnowledgeGaps')}</p>
++      {/if}
++    </Panel>
++  </div>
++
++  <Panel title={t('analyticsPage.pathsOverview')}>
++    {#if dash?.path_progress?.length}
++      <ul class="paths">
++        {#each dash.path_progress as p}
++          <li>
++            <div class="phead">
++              <span class="pname">{p.path_title}</span>
++              <span class="pmut">{p.completed_steps}/{p.total_steps} · {p.percentage}%</span>
++            </div>
++            <ProgressMeter value={p.percentage} />
++          </li>
++        {/each}
+       </ul>
++    {:else}
++      <p class="muted">{t('analyticsPage.noPaths')}</p>
++    {/if}
++  </Panel>
++
++  <div class="grid2">
++    <Panel title={t('analyticsPage.strengths')}>
++      {#if analysis?.strengths?.length}
++        <div class="wrap">{#each analysis.strengths as s}<Badge tone="ok">{s.skill_name}</Badge>{/each}</div>
++      {:else}
++        <p class="muted">{t('analyticsPage.noStrengths')}</p>
++      {/if}
+     </Panel>
+     <Panel title={t('analyticsPage.weaknesses')}>
+-      {#if dash?.weaknesses?.length}
+-        <div class="weak">{#each dash.weaknesses as w}<Badge tone="accent">{w}</Badge>{/each}</div>
++      {#if analysis?.weaknesses?.length}
++        <div class="wrap">{#each analysis.weaknesses as w}<Badge tone="accent">{w.skill_name}</Badge>{/each}</div>
+       {:else}
+-        <p class="muted">{t('analyticsPage.weaknessNote')}</p>
++        <p class="muted">{t('analyticsPage.noWeaknesses')}</p>
+       {/if}
+     </Panel>
+   </div>
+ 
+   <Panel title={t('analyticsPage.practiceTest')}>
+     <TopSkills
+       items={(growth?.skills ?? []).map((s: any) => ({
+         skill: s.skill,
+         proficiency: s.level,
+         status: s.status
+       }))}
+     />
+   </Panel>
+ {/if}
+ 
+ <style>
+   .center-spin { display: flex; justify-content: center; padding: 3rem; }
+-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
++  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin-top: 1rem; }
+   .big { font-family: var(--font-display); font-size: 2.2rem; color: var(--ochre-deep); line-height: 1; }
+   .big small { font-size: 1rem; color: var(--muted); }
+   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+-  .kpis { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+-  .kpis li { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--line); padding-bottom: 0.4rem; }
+-  .weak { display: flex; flex-wrap: wrap; gap: 0.4rem; }
++  .wrap { display: flex; flex-wrap: wrap; gap: 0.4rem; }
++  .paths { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.9rem; }
++  .phead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.3rem; gap: 1rem; }
++  .pname { font-weight: 600; }
++  .pmut { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+   .err-state { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6rem; color: var(--danger); }
+   @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+ </style>
+diff --git a/src/frontend/src/routes/(app)/learn/[id]/+page.svelte b/src/frontend/src/routes/(app)/learn/[id]/+page.svelte
+index b994cca1..a71fab8b 100644
+--- a/src/frontend/src/routes/(app)/learn/[id]/+page.svelte
++++ b/src/frontend/src/routes/(app)/learn/[id]/+page.svelte
+@@ -6,36 +6,33 @@
+   import { query, invalidate } from '$lib/query';
+   import { goto } from '$app/navigation';
+   import Panel from '$lib/components/ui/Panel.svelte';
+   import Button from '$lib/components/ui/Button.svelte';
+   import Badge from '$lib/components/ui/Badge.svelte';
+   import Dialog from '$lib/components/ui/Dialog.svelte';
+   import Spinner from '$lib/components/ui/Spinner.svelte';
+   import Icon from '$lib/icons/Icon.svelte';
+   import ProgressMeter from '$lib/components/ProgressMeter.svelte';
+   import { success, error as toastError, info } from '$lib/components/ui/toast';
+-  import TakeQuizDialog from '$lib/components/TakeQuizDialog.svelte';
+   import QuizRunner from '$lib/components/QuizRunner.svelte';
+   import { t } from '$lib/i18n';
+ 
+   const id = $derived($page.params.id ?? '');
+   let path = $state<any>(null);
+   let loading = $state(true);
+   let busyStep = $state<number | null>(null);
+   let showDelete = $state(false);
+   let dependents = $state<Record<string, number> | null>(null);
+-  let showQuiz = $state(false);
+   let showQuizRunner = $state(false);
+   let quizTest = $state<any>(null);
+   let quizStep = $state<any>(null);
+   let diagnostic = $state<any>(null);
+-  let skills = $derived((path?.steps ?? []).map((s: any) => s.skill).filter((s: any) => s && s.id).map((s: any) => ({ id: s.id, name: s.name })));
+   let progress = $derived(path?.steps && path.steps.length
+     ? path.steps.filter((s: any) => s.is_completed).length / path.steps.length
+     : 0);
+ 
+   async function load() {
+     loading = true;
+     try { path = await query(['path', id], () => apiFetch('/paths/' + id)); }
+     catch { path = null; }
+     finally { loading = false; }
+   }
+@@ -78,26 +75,20 @@
+         id: q.id, text: q.text, options: q.options ?? [], topic: q.topic ?? q.skill,
+       }));
+       quizTest = { assessment_id: assessmentId, skill: { name: res?.skill ?? '' }, questions: mapped };
+       quizStep = null;
+       showQuizRunner = true;
+     } catch (e) {
+       toastError(e instanceof ApiError ? e.detail : t('common.error'));
+     }
+   }
+ 
+-  function handlePracticeTestStart(test: any) {
+-    quizTest = test;
+-    quizStep = null;
+-    showQuizRunner = true;
+-  }
+-
+   async function submitPracticeTest(assessmentId: number, answers: Record<number, number>) {
+     const positional = quizTest?.questions.map((q: any) => answers[q.id] ?? -1) ?? [];
+     const raw = await apiFetch('/assessments/submit', { method: 'POST', body: { assessment_id: assessmentId, answers: positional } });
+     const responses = raw?.responses ?? [];
+     const questions = quizTest?.questions ?? [];
+     const correct = responses.filter((r: any) => r.is_correct).length;
+     const graded = responses.map((r: any) => {
+       const q = questions[r.question_index];
+       let correctIndex = r.selected_index;
+       if (q && r.correct_answer != null) {
+@@ -232,26 +223,25 @@
+   <div class="center-spin"><Spinner /></div>
+ {:else if !path}
+   <Panel><p class="muted">{t('pathDetailPage.notFound')}</p></Panel>
+ {:else}
+   <div class="head between">
+     <div>
+       <h1>{path.title}</h1>
+       <Badge tone="accent">{path.goal_job_role ?? path.goal ?? ''}</Badge>
+     </div>
+     <Button variant="destructive" onclick={() => doDelete(false)}><Icon name="trash" size={16} />{t('pathDetailPage.deleteConfirm')}</Button>
+-    <Button onclick={() => (showQuiz = true)}><Icon name="sparkles" size={16} />{t('wizard.assessmentTitle')}</Button>
+   </div>
+ 
+   <div class="stats">
+     <Panel title={t('pathDetailPage.progress')}><ProgressMeter value={progress * 100} /></Panel>
+-    <Panel title={t('pathDetailPage.duration')}><div class="big">{Math.round((path.steps ?? []).reduce((a: number, s: any) => a + (s.duration_hours ?? 0), 0))}h</div></Panel>
++    <Panel title={t('pathDetailPage.duration')}><div class="big">{path.total_estimated_hours ?? 0}{t('units.hoursShort')}</div>{#if path.total_estimated_weeks}<div class="muted">{path.total_estimated_weeks} {t('units.weeks')}</div>{/if}</Panel>
+     <Panel title={t('pathDetailPage.skillsTitle')}><div class="big">{(path.steps ?? []).length}</div></Panel>
+   </div>
+ 
+   <h2 class="section-title">{t('pathDetailPage.stepsTitle')}</h2>
+   <ol class="steps">
+     {#each (path.steps ?? []).slice().sort((a: any, b: any) => (a.order_index ?? a.step_number ?? 0) - (b.order_index ?? b.step_number ?? 0)) as step}
+       {@const stepLevel = step.current_level || step.selected_level || 1}
+       <li class:done={step.is_completed}>
+         <button class="toggle" onclick={() => toggle(step)} disabled={busyStep === step.id}>
+           {#if busyStep === step.id}<Spinner />{:else if step.is_completed}<Icon name="check" size={16} />{:else}<Icon name="plus" size={16} />{/if}
+@@ -264,24 +254,24 @@
+             <span class="ladder-dots">
+               {#each [1, 2, 3, 4, 5] as n}
+                 <button class="dot" class:active={n === stepLevel} class:reached={n <= stepLevel}
+                   title={`${t('learn.rateLevel')} — ${n}`} aria-label={`${t('learn.rateLevel')} ${n}`}
+                   onclick={() => rateLevel(step, n)} disabled={busyStep === step.id}></button>
+               {/each}
+             </span>
+             <span class="ladder-val">{stepLevel}</span>
+           </div>
+           <small class="muted">
+-            {step.duration_hours ?? 0}h
+-            {#if step.skill?.name} · {step.skill.name}{/if}
+-            {#if step.skill?.difficulty_level} · {t('pathDetailPage.skillLevel')}: {step.skill.difficulty_level}{/if}
+-            {#if step.current_topic} · {t('pathDetailPage.currentTopic')}: <strong>{step.current_topic}</strong>{/if}
++            {#if step.duration_hours}{step.duration_hours}{t('units.hoursShort')}{/if}
++            {#if step.skill?.name}{#if step.duration_hours} · {/if}{step.skill.name}{/if}
++            {#if step.skill?.difficulty_level}{#if step.duration_hours || step.skill?.name} · {/if}{t('pathDetailPage.skillLevel')}: {step.skill.difficulty_level}{/if}
++            {#if step.current_topic}{#if step.duration_hours || step.skill?.name || step.skill?.difficulty_level} · {/if}{t('pathDetailPage.currentTopic')}: <strong>{step.current_topic}</strong>{/if}
+           </small>
+           {#if (step.learning_objectives ?? []).length}
+             <ul class="obj">
+               {#each step.learning_objectives as obj}<li>{obj}</li>{/each}
+             </ul>
+           {/if}
+           {#if (step.resources ?? []).length}
+             <div class="res">
+               {#each step.resources as r}
+                 <a class="chip" href={r.url} target="_blank" rel="noopener noreferrer">{r.title}{#if r.type}<Badge tone="neutral">{r.type}</Badge>{/if}</a>
+@@ -300,22 +290,20 @@
+     <ul class="dep">
+       {#each Object.entries(dependents) as [table, count]}<li>{count} × {table}</li>{/each}
+     </ul>
+   {/if}
+   {#snippet footer()}
+     <Button variant="ghost" onclick={() => (showDelete = false)}>{t('common.cancel')}</Button>
+     <Button variant="destructive" onclick={() => doDelete(true)}>{t('common.forceDelete')}</Button>
+   {/snippet}
+ </Dialog>
+ 
+-<TakeQuizDialog bind:open={showQuiz} {skills} onstart={handlePracticeTestStart} />
+-
+ <QuizRunner
+   bind:open={showQuizRunner}
+   test={quizTest}
+   objectives={quizStep?.learning_objectives ?? []}
+   submit={quizStep ? submitStepTest : submitPracticeTest}
+   onresult={onQuizResult}
+   level={quizTest?.level ?? null}
+   difficulty={quizTest?.difficulty ?? null}
+   diagnostic={diagnostic}
+ />

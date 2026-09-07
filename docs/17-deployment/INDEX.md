@@ -60,11 +60,11 @@ skillsynth doctor --strict                      # gate: deps/AI/model/db all OK
 | ADMIN_EMAIL / ADMIN_PASSWORD | No | admin@skillsynth.io / unset | main.py lifespan admin autoseed |
 | PASSWORD_PEPPER | No | empty | auth_service password hashing |
 | REDIS_URL | prod optional | in-memory | limiter.py rate-limit storage |
-| AI_ENABLED / AI_MODEL_PATH / AI_N_GPU_LAYERS / AI_N_CTX / AI_TEMPERATURE / AI_REPEAT_PENALTY / AI_TOP_P / AI_MAX_NEW_TOKENS | No | false / src/data/Llama-3.2-3B-Instruct-Q6_K.gguf / -1 / 4096 / 0.3 / 1.15 / 0.95 / 700 | llm_engine.py + routers/ai.py (ADR-015) |
+| AI_ENABLED / AI_MODEL_PATH / AI_N_GPU_LAYERS / AI_N_CTX / AI_TEMPERATURE / AI_REPEAT_PENALTY / AI_TOP_P / AI_MAX_NEW_TOKENS / AI_GRAMMAR | No | false / src/data/Llama-3.2-3B-Instruct-Q6_K.gguf / -1 / 4096 / 0.3 / 1.15 / 0.95 / 700 / false | llm_engine.py + routers/ai.py + knowledge_layer.py (ADR-015, ADR-016) |
 
 Frontends read `NEXT_PUBLIC_API_BASE_URL` (default `http://localhost:8000/api`) from their env files.
 
-Note: `skillsynth run` launches the full stack (backend + both Next frontends) and is cross-platform — on Windows it uses `pnpm.cmd` discovery and `taskkill`/process-group teardown, on POSIX it uses session groups + `killpg`; the AI_* env block seeds the file-backed runtime AI setting (ADR-015 §8).
+Note: `skillsynth run` launches the full stack (backend + both Next frontends) and is cross-platform — on Windows it uses `pnpm.cmd` discovery and `taskkill`/process-group teardown, on POSIX it uses session groups + `killpg`; the AI_* env block seeds the file-backed runtime AI setting (ADR-015 §8). The backend runs the **CUDA build** with GPU offload: `skillsynth run` and `doctor` append the detected CUDA lib dir (`/opt/cuda/lib64`) to `LD_LIBRARY_PATH` so the in-process model loads without the `libcudart.so.13` loader error (ADR-016).
 
 Note: `.env.example` also lists legacy keys (SENDGRID_API_KEY, GITHUB_TOKEN). Current backend code does not consume these; they remain only as placeholders. The dead Phase-4 LLM blocks (LLM_*/OPENAI_*/OLLAMA_*, VECTOR_*/EMBEDDING_*) and the docker ollama service were removed — the local model is configured via the AI_* block above (ADR-015).
 

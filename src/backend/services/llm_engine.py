@@ -74,16 +74,23 @@ def available() -> bool:
 def health() -> dict:
     """Diagnostics payload for status endpoints/logs.
 
-    Dependencies: reads settings.AI_ENABLED/AI_MODEL_PATH and calls
-    available()/_model_path_exists(). Implementation: returns a snapshot of
-    enablement, artifact existence, load state and the live availability gate.
+    Dependencies: reads settings.AI_ENABLED/AI_MODEL_PATH/AI_N_GPU_LAYERS and
+    calls available()/_model_path_exists()/_free_vram_mb()/_fit_layers().
+    Implementation: returns a snapshot of enablement, artifact existence, load
+    state, the live availability gate, plus the GPU offload plan (fitted layer
+    count and free VRAM) so admin system-health surfaces real offload state.
     Consumed by admin system-health surfacing and tests.
     """
+    free_mb = _free_vram_mb()
+    import os
+    size = os.path.getsize(settings.AI_MODEL_PATH) if _model_path_exists() else 0
     return {"enabled": bool(settings_service.is_ai_enabled()),
             "path": settings.AI_MODEL_PATH,
             "artifact_exists": _model_path_exists(),
             "loaded": _llm is not None,
-            "available": available()}
+            "available": available(),
+            "gpu_layers": _fit_layers(free_mb, size, settings.AI_N_GPU_LAYERS),
+            "free_vram_mb": free_mb}
 
 
 def warmup() -> bool:
@@ -104,23 +111,31 @@ def warmup() -> bool:
 
 
 def complete(prompt: str, *, max_tokens: int,
-              temperature: float | None = None) -> str:
+              temperature: float | None = None,
+              grammar: str | None = None) -> str:
     """One serialized completion; raises LLMUnavailable when unusable.
 
     Dependencies: calls _get_llm(), reads settings for temperature/repeat/
     top_p defaults, and logs via logger. Implementation: the sole inference
     entry point (pipeline._complete_json); a semaphore keeps concurrent
     requests from interleaving token streams. Applies anti-degeneration
-    sampling unless the caller overrides temperature. Returns the text field
-    when the backend yields a dict, else the raw string.
+    sampling unless the caller overrides temperature. When grammar is supplied
+    it is wrapped via LlamaGrammar.from_string and passed to llama.cpp's
+    constrained sampler so the output is structurally valid (near-zero
+    malformed retries); default None keeps behavior unchanged. Returns the
+    text field when the backend yields a dict, else the raw string.
     """
+    import llama_cpp
     llm = _get_llm()
     temp = settings.AI_TEMPERATURE if temperature is None else temperature
+    kwargs = {}
+    if grammar is not None:
+        kwargs["grammar"] = llama_cpp.LlamaGrammar.from_string(grammar)
     with _semaphore:
         out = llm(prompt, max_tokens=max_tokens, temperature=temp,
                   repeat_penalty=settings.AI_REPEAT_PENALTY,
                   top_p=settings.AI_TOP_P,
-                  stop=["</s>", "\n\n\n"])
+                  stop=["</s>", "\n\n\n"], **kwargs)
     return out["choices"][0]["text"] if isinstance(out, dict) else str(out)
 
 

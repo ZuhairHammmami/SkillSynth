@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SkillSynth thesis — inside (verso) face of the cover sheet, same media 1251.07 x 859.89 pt.
+  Blank inside-front | inside-spine | inside-back on plain paper, ready for double-sided printing.
+  Mirrors the outside jacket so the two sides align; convertible to CMYK at the print shop only.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" viewBox="0 0 1251.07 859.89" width="1251.07" height="859.89">
+<defs>
+</defs>
+
+<g id="i-ground" inkscape:label="inside ground (plain paper)">
+<rect x="9.00" y="9.00" width="595.28" height="841.89" fill="#FBF6EC"/>
+<rect x="604.28" y="9.00" width="42.52" height="841.89" fill="#F3EDE1"/>
+<rect x="646.80" y="9.00" width="595.28" height="841.89" fill="#F3EDE1"/>
+</g>
+</svg>

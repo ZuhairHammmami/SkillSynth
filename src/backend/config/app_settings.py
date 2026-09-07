@@ -66,9 +66,11 @@ true; llama-cpp-python is optional."""
 AI_N_GPU_LAYERS = int(os.getenv("AI_N_GPU_LAYERS", "-1"))
 """int: GPU layers offloaded to llama.cpp. Env var AI_N_GPU_LAYERS (default -1,
 all). No effect without optional llama-cpp-python."""
-AI_N_CTX = int(os.getenv("AI_N_CTX", "1024"))
-"""int: LLM context window size. Env var AI_N_CTX (default 1024). 1024 fits a
-4 GB VRAM GPU with all layers offloaded (-1); override up if VRAM allows."""
+AI_N_CTX = int(os.getenv("AI_N_CTX", "4096"))
+"""int: LLM context window size. Env var AI_N_CTX (default 4096, benchmarked on
+GTX 1650 Ti 4 GB at 26 auto-fitted GPU layers: ~3.0 GB VRAM used, ~1 GB
+headroom, no speed penalty vs 1024). _fit_layers still caps offload to fit, so
+reducing AI_N_GPU_LAYERS or AI_N_CTX is available when VRAM is tight."""
 AI_TEMPERATURE = float(os.getenv("AI_TEMPERATURE", "0.3"))
 """float: sampling temperature. Env var AI_TEMPERATURE (default 0.3). Optional."""
 AI_REPEAT_PENALTY = float(os.getenv("AI_REPEAT_PENALTY", "1.15"))
@@ -78,3 +80,8 @@ AI_TOP_P = float(os.getenv("AI_TOP_P", "0.95"))
 AI_MAX_NEW_TOKENS = int(os.getenv("AI_MAX_NEW_TOKENS", "700"))
 """int: max tokens generated per response. Env var AI_MAX_NEW_TOKENS (default
 700). Optional."""
+AI_GRAMMAR = os.getenv("AI_GRAMMAR", "false").lower() == "true"
+"""bool: enable constrained GBNF grammar sampling for SS-AI JSON output. Env var
+AI_GRAMMAR (default "false"). When true, llm_pipeline forwards a per-op grammar
+to llama.cpp so quizzes/analyses are structurally valid JSON; off by default to
+keep behavior unchanged (salvage + retry remain the safety net)."""
